@@ -1,10 +1,12 @@
 # --- COMPILER ----------------------------------------
-CC = mpiicc 
+#CC = mpiicc 
+CC = mpicc
 
 # --- CFLAGS -----------------------------------------
 CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -msse4.2 -fopenmp 
-CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
-CFLAGS = $(CFLAGS_intel)
+#CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
+#CFLAGS = $(CFLAGS_intel)
+CFLAGS = $(CFLAGS_gnu)
 
 # --- DO NOT CHANGE -----------------------------------
 CPP = cpp
@@ -38,14 +40,15 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-LIMEFLAGS=-DHAVE_LIME -I$(LIMEDIR)/include
-LIMELIB= -L$(LIMEDIR)/lib -llime
+#LIMEFLAGS=-DHAVE_LIME -I$(LIMEDIR)/include
+#LIMELIB= -L$(LIMEDIR)/lib -llime
 
 # Available flags:
 # -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING
 # -DSINGLE_ALLREDUCE_ARNOLDI
 # -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DDEBUG
 OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES -DSSE -DOPENMP
+OPT_VERSION_FLAGS += -DPOLYPREC -DGCRODR
 DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DSSE -DOPENMP
 
 

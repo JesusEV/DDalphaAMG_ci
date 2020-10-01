@@ -69,6 +69,29 @@
     OPERATOR_TYPE_PRECISION *clover_doublet_oo_inv_vectorized;
 #endif
   } operator_PRECISION_struct;
+
+#if defined(GCRODR) || defined(POLYPREC)
+  // this is both eigensolver and generalized eigensolver
+  typedef struct {
+    int i;
+    // LAPACK objects/pointers go in here
+  } eigslvr_PRECISION_struct;
+#endif
+
+#ifdef GCRODR
+  typedef struct {
+    // blah -- only simple variables and pointers
+    int i;
+    eigslvr_PRECISION_struct eigslvr;
+  } gcrodr_PRECISION_struct;
+#endif
+#ifdef POLYPREC
+  typedef struct {
+    // blah -- only simple variables and pointers
+    int i;
+    eigslvr_PRECISION_struct eigslvr;
+  } polyprec_PRECISION_struct;
+#endif
   
   typedef struct {
     vector_PRECISION x, b, r, w, *V, *Z;
@@ -81,8 +104,16 @@
     long int total_storage;
     void (*preconditioner)();
     void (*eval_operator)();
+    
+#ifdef GCRODR
+    gcrodr_PRECISION_struct gcrodr_PRECISION;
+#endif
+#ifdef POLYPREC
+    polyprec_PRECISION_struct polyprec_PRECISION;
+#endif
+    
   } gmres_PRECISION_struct;
-  
+
   typedef struct {
     operator_PRECISION_struct op;
     vector_PRECISION buf1, buf2, buf3, buf4, buf5;
