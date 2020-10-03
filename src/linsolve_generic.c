@@ -22,6 +22,18 @@
 #include "main.h"
 
 
+void print_PRECISION_eigenvalues( char* desc, int n, double complex* w) {
+    int j;
+    printf( "\n %s\n", desc );
+
+    for( j = 0; j < n; j++ )
+    {
+        printf( " (%6.2f,%6.2f)", creal(w[j]), cimag(w[j]) );
+    }
+    printf( "\n" );
+}
+
+
 void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
 
 /*********************************************************************************
@@ -41,6 +53,49 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->s = NULL;
   p->preconditioner = NULL;
   p->eval_operator = NULL;
+
+  {
+    int i;
+    int N = 5;
+    double complex *A;
+
+    int lda = N, ldvl = N, ldvr = N, info;
+    double complex w[N], vl[N*N], vr[N*N];    
+
+    A = ( double complex * ) malloc( N * N * sizeof( double complex ) );
+
+    // Matrix Initialization
+    A[0*N + 1] = 1.;
+    A[0*N + 0] = 2. + sin( ( 0. + 1.) / N ) \
+                    + I*cos( ( 0. + 1.) / N );
+    
+    for( i = 1; i < N-1; i++ )
+    {
+        A[i*N + i - 1] = 1.;
+        A[i*N + i] = 2. + sin( ( (double complex) i + 1.) / N ) \
+                        + I*cos( ( (double complex) i + 1.) / N );
+        A[i*N + i + 1] = 1.;
+    }
+    
+    A[(N-1)*N + N-2] = 1.;
+    A[(N-1)*N + N-1] = 2. + sin( ( (double complex) (N-1) + 1.) / N ) \
+                          + I*cos( ( (double complex) (N-1) + 1.) / N );
+
+    info = LAPACKE_zgeev( LAPACK_ROW_MAJOR, 'N', 'N', N, A, lda, w, vl,
+             ldvl, vr, ldvr );
+
+    if( info > 0 )
+    {
+        printf( "The algorithm failed to compute eigenvalues.\n" );
+        exit( 1 );
+    }
+
+    // Print eigenvalues 
+    print_PRECISION_eigenvalues( "Eigenvalues", N, w );    
+
+    free(A);
+  }
+
 }
 
 

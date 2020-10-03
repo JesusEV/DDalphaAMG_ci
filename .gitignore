@@ -1,3 +1,4 @@
 !.gitignore
-
+dependencies/*
+!dependencies/install_dependencies.sh
 

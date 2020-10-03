@@ -50,6 +50,21 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES -DSSE -DOPENMP
 OPT_VERSION_FLAGS += -DPOLYPREC -DGCRODR
 DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DSSE -DOPENMP
+DEVEL_VERSION_FLAGS += -DPOLYPREC -DGCRODR
+
+#---------------------------------------------------
+LAPACK_DIR = dependencies/lapack-3.9.0
+LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
+LAPACKE_INCLUDE = $(LAPACKE_DIR)/include
+
+BLASLIB      = $(LAPACK_DIR)/librefblas.a
+LAPACKLIB    = $(LAPACK_DIR)/liblapack.a
+LAPACKELIB   = $(LAPACK_DIR)/liblapacke.a
+
+LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
+
+
+#---------------------------------------------------
 
 
 all: execs library exec-tests
@@ -63,8 +78,8 @@ install: copy
 .SUFFIXES:
 .SECONDARY:
 
-$(BINDIR)/DDalphaAMG : $(OBJ)
-	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) -lm
+$(BINDIR)/DDalphaAMG : $(OBJ) 
+	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(LAPACK_LIBRARIES) -lm -lgfortran
 
 DDalphaAMG : $(BINDIR)/DDalphaAMG
 	ln -sf $(BINDIR)/$@ $@
@@ -73,7 +88,7 @@ DDalphaAMG_devel: $(BINDIR)/DDalphaAMG_devel
 	ln -sf $(BINDIR)/$@ $@
 
 $(BINDIR)/DDalphaAMG_devel : $(OBJDB)
-	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) -lm
+	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(LAPACK_LIBRARIES) -lm -lgfortran
 
 $(LIBDIR)/libDDalphaAMG.a: $(OBJ)
 	ar rc $@ $(OBJ)
@@ -86,7 +101,7 @@ $(LIBDIR)/libDDalphaAMG_devel.a: $(OBJDB)
 	ranlib $@
 
 $(TSTDIR)/%: $(LIB) $(TSTDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) -lm 
+	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) -I$(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(LAPACK_LIBRARIES) -lm -lgfortran
 
 $(DOCDIR)/user_doc.pdf: $(DOCDIR)/user_doc.tex $(DOCDIR)/user_doc.bib
 	( cd $(DOCDIR); pdflatex user_doc; bibtex user_doc; pdflatex user_doc; pdflatex user_doc; )
@@ -95,10 +110,10 @@ $(INCDIR)/%: $(SRCDIR)/%
 	cp $(SRCDIR)/`basename $@` $@
 
 $(BUILDDIR)/%.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) $(OPT_VERSION_FLAGS) -c $< -o $@
+	$(CC) $(OPT_VERSION_FLAGS) -I$(LAPACKE_INCLUDE) -c $< -o $@
 
 $(BUILDDIR)/%_devel.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) -g $(DEVEL_VERSION_FLAGS) -c $< -o $@
+	$(CC) -g $(DEVEL_VERSION_FLAGS) -I$(LAPACKE_INCLUDE) -c $< -o $@
 
 $(GSRCDIR)/%.h: $(SRCDIR)/%.h $(firstword $(MAKEFILE_LIST))
 	cp $< $@
