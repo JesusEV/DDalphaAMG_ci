@@ -22,6 +22,7 @@
 #ifndef LAPACKWRAP_PRECISION_HEADER
   #define LAPACKWRAP_PRECISION_HEADER
 
-  void gen_eigslvr_PRECISION();
+  void gen_eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
+  void eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
 
 #endif

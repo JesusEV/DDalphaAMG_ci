@@ -84,6 +84,14 @@
   #define abs_double fabs
   #define abs_float fabsf
   
+#if defined(GCRODR) || defined(POLYPREC)
+  #define geev_double LAPACKE_zgeev 
+  #define geev_float LAPACKE_cgeev 
+#endif
+
+
+
+
 #ifdef SSE
   #define MALLOC( variable, kind, length ) do{ if ( variable != NULL ) { \
   printf0("malloc of \"%s\" failed: pointer is not NULL (%s:%d).\n", #variable, __FILE__, __LINE__ ); } \
@@ -554,6 +562,8 @@
 #endif
 #include "lime_io.h"
 
-//#if defined(GCRODR) || defined(POLYPREC)
+#if defined(GCRODR) || defined(POLYPREC)
   #include <lapacke.h>
-//#endif
+  #include "lapackwrap_double.h"
+  #include "lapackwrap_float.h"
+#endif

@@ -21,4 +21,17 @@
 
 #include "main.h"
 
-void gen_eigslvr_PRECISION(){}
+void gen_eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
+{
+
+
+}
+
+void eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
+{
+
+  eigen_struct->info = geev_PRECISION( LAPACK_ROW_MAJOR, eigen_struct->jobvl, eigen_struct->jobvr,
+                                      eigen_struct->N, eigen_struct->A, eigen_struct->lda, eigen_struct->w,
+                                      eigen_struct->vl, eigen_struct->ldvl, eigen_struct->vr, eigen_struct->ldvr );       
+
+}

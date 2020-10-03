@@ -73,8 +73,16 @@
 #if defined(GCRODR) || defined(POLYPREC)
   // this is both eigensolver and generalized eigensolver
   typedef struct {
-    int i;
-    // LAPACK objects/pointers go in here
+
+    char jobvl, jobvr;
+    int N, lda, ldvl, ldvr, info;
+    
+
+    vector_PRECISION vl, vr, w, A;  
+
+    void (*eigslvr_PRECISION)();
+    void (*gen_eigslvr_PRECISION)();
+
   } eigslvr_PRECISION_struct;
 #endif
 
