@@ -1326,7 +1326,9 @@ void coarse_n_hopping_term_PRECISION_vectorized( vector_PRECISION out, vector_PR
 
 
 void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
-  
+
+  int fgmres_iters=0;
+
   SYNC_CORES(threading)
   PROF_PRECISION_START( _SC, threading );
   coarse_diag_oo_inv_PRECISION( p->x, p->b, op, l, threading );
@@ -1334,8 +1336,13 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   PROF_PRECISION_START( _NC, threading );
   coarse_n_hopping_term_PRECISION( p->b, p->x, op, _EVEN_SITES, l, threading );
   PROF_PRECISION_STOP( _NC, 0, threading );
-  
-  fgmres_PRECISION( p, l, threading );
+
+#ifdef GCRODR
+  fgmres_iters = flgcrodr_PRECISION( p, l, threading );
+#else  
+  fgmres_iters = fgmres_PRECISION( p, l, threading );
+#endif
+  printf0("%d\n", fgmres_iters);
   
   // even to odd
   PROF_PRECISION_START( _NC, threading );
@@ -1403,8 +1410,12 @@ void g5D_coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PR
   coarse_gamma5_PRECISION( tmp, tmp, start_even, end_even, l );
   SYNC_CORES(threading)
   vector_PRECISION_plus( p->b, p->b, tmp, start_even, end_even, l );
-  
+
+#ifdef GCRODR
+  flgcrodr_PRECISION( p, l, threading );
+#else
   fgmres_PRECISION( p, l, threading );
+#endif
   SYNC_CORES(threading)
   coarse_gamma5_PRECISION( p->b, p->b, start_odd, end_odd, l );
   SYNC_CORES(threading)

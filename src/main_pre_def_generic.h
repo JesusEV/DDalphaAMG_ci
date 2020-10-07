@@ -78,7 +78,8 @@
     int N, lda, ldvl, ldvr, info;
     
 
-    vector_PRECISION vl, vr, w, A;  
+    vector_PRECISION vl, vr, w, A;
+    complex_PRECISION **Hc;
 
     void (*eigslvr_PRECISION)();
     void (*gen_eigslvr_PRECISION)();
@@ -91,6 +92,12 @@
     // blah -- only simple variables and pointers
     int i;
     eigslvr_PRECISION_struct eigslvr;
+    
+    vector_PRECISION* CU[2];
+    int k, CU_usable;
+    PRECISION b_norm;
+    complex_PRECISION **gev_A, **gev_B;
+    
   } gcrodr_PRECISION_struct;
 #endif
 #ifdef POLYPREC

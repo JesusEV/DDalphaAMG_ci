@@ -988,6 +988,10 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   read_parameter( &save_pt, "coarse grid tolerance:", "%le", 1, in, _DEFAULT_SET );
   save_pt = &(g.odd_even); g.odd_even = 1;
   read_parameter( &save_pt, "odd even preconditioning:", "%d", 1, in, _DEFAULT_SET );
+#ifdef GCRODR
+  save_pt = &(g.gcrodr_k); g.gcrodr_k = 15;
+  read_parameter( &save_pt, "coarse grid gcrodr_k:", "%d", 1, in, _DEFAULT_SET );
+#endif
 
   save_pt = &(g.setup_m0); g.setup_m0 = g.m0;
   read_parameter( &save_pt, "setup m0:", "%lf", 1, in, _DEFAULT_SET );

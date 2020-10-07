@@ -1,6 +1,6 @@
 #!/bin/bash
 
-make_cores=4
+make_cores=32
 lapack_version=3.9.0
 lapack_dir=lapack-${lapack_version}
 

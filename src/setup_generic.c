@@ -329,7 +329,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 
 
 void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, struct Thread *threading ) {
-  
+
   if ( !l->idle ) {
     vector_PRECISION buf1 = NULL;
     gmres_PRECISION_struct gmres;

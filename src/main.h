@@ -372,6 +372,9 @@
         interpolation, randomize, *num_eig_vect, num_coarse_eig_vect, kcycle, mixed_precision,
         restart, max_restart, kcycle_restart, kcycle_max_restart, coarse_iter, coarse_restart;
     double tol, coarse_tol, kcycle_tol, csw, rho, *relax_fac;
+#ifdef GCRODR
+    int gcrodr_k;
+#endif
 
     // profiling, analysis, output
     int coarse_iter_count, iter_count, iterator, print, conf_flag, setup_flag, in_setup;
@@ -561,6 +564,11 @@
 #include <lime_reader.h>
 #endif
 #include "lime_io.h"
+
+#ifdef GCRODR
+  #include "gcrodr_double.h"
+  #include "gcrodr_float.h"
+#endif
 
 #if defined(GCRODR) || defined(POLYPREC)
   #include <lapacke.h>
