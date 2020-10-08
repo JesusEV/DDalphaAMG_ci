@@ -24,7 +24,10 @@
 void gen_eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
 {
 
-
+  eigen_struct->info = ggev_PRECISION( LAPACK_COL_MAJOR, eigen_struct->jobvl, eigen_struct->jobvr,
+                                       eigen_struct->N, eigen_struct->A, eigen_struct->lda,
+                                       eigen_struct->B, eigen_struct->ldb, eigen_struct->w, eigen_struct->beta,
+                                       eigen_struct->vl, eigen_struct->ldvl, eigen_struct->vr, eigen_struct->ldvr );
 }
 
 void eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
@@ -33,5 +36,4 @@ void eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
   eigen_struct->info = geev_PRECISION( LAPACK_ROW_MAJOR, eigen_struct->jobvl, eigen_struct->jobvr,
                                       eigen_struct->N, eigen_struct->A, eigen_struct->lda, eigen_struct->w,
                                       eigen_struct->vl, eigen_struct->ldvl, eigen_struct->vr, eigen_struct->ldvr );       
-
 }

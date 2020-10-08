@@ -75,10 +75,9 @@
   typedef struct {
 
     char jobvl, jobvr;
-    int N, lda, ldvl, ldvr, info;
-    
+    int N, lda, ldb, ldvl, ldvr, info;
 
-    vector_PRECISION vl, vr, w, A;
+    vector_PRECISION vl, vr, w, beta, A, B;
     complex_PRECISION **Hc;
 
     void (*eigslvr_PRECISION)();
@@ -96,7 +95,7 @@
     vector_PRECISION* CU[2];
     int k, CU_usable;
     PRECISION b_norm;
-    complex_PRECISION **gev_A, **gev_B;
+    complex_PRECISION **gev_A, **gev_B, **Bbuff;
     
   } gcrodr_PRECISION_struct;
 #endif

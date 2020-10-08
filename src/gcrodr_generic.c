@@ -24,10 +24,59 @@
 
 // build A and B for the generalized eigenvalue problem within FL-GCRO-DR
 void gev_buildAB_PRECISION(complex_PRECISION **A, complex_PRECISION **B, complex_PRECISION **G,
-                           vector_PRECISION *W, vector_PRECISION *Z, int mk){
+                           vector_PRECISION *W, vector_PRECISION *Z, int mk, gmres_PRECISION_struct *p,
+                           level_struct *l, struct Thread *threading){
 
-  // TODO
+  int i,j,k;
+  complex_PRECISION **Bbuff = p->gcrodr_PRECISION.Bbuff;
+  complex_PRECISION tmp[mk+1];
 
+  // -------- building B
+
+  for ( j=0; j<mk; j++ ) {
+    process_multi_inner_product_PRECISION( mk+1, Bbuff[j], W, Z[j], p->v_start, p->v_end, l, threading );
+
+    START_MASTER(threading)
+    for( i=0; i<(mk+1); i++ )
+      tmp[i] = Bbuff[j][i];
+    if ( g.num_processes > 1 ) {
+      PROF_PRECISION_START( _ALLR );
+      MPI_Allreduce( tmp, Bbuff[j], mk+1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
+      PROF_PRECISION_STOP( _ALLR, 1 );
+    }
+    END_MASTER(threading)
+    SYNC_MASTER_TO_ALL(threading)
+
+  }
+
+  // FIXME : improve the following matrix-matrix multiplication by using more threads than <master>
+  START_MASTER(threading)
+  for ( j=0; j<mk; j++ ) {
+    for ( i=0; i<mk; i++ ) {
+      B[j][i] = 0.0;
+      for ( k=0; k<mk+1; k++ ) {
+        B[j][i] += conj_PRECISION(G[i][k])*(Bbuff[j][k]);
+      }
+    }
+  }
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)
+
+  // -------- building A
+
+  // FIXME : improve the following matrix-matrix multiplication by using more threads than <master>
+  START_MASTER(threading)
+  for ( j=0; j<mk; j++ ) {
+    for ( i=0; i<mk; i++ ) {
+      A[j][i] = 0.0;
+      for ( k=0; k<mk+1; k++ ) {
+        A[j][i] += conj_PRECISION(G[i][k])*(G[j][k]);
+      }
+    }
+  }
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)
+  
 }
 
 
@@ -137,6 +186,18 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
 
   fgmres_PRECISION_struct_alloc( m, n, vl, tol, type, prec_kind, precond, eval_op, p, l );
 
+  // g_ln is the length m+k of subspaces used in FL-GCRO-DR
+  int g_ln = p->restart_length + p->gcrodr_PRECISION.k;
+  int i;
+  MALLOC( p->gcrodr_PRECISION.Bbuff, complex_PRECISION*, g_ln );
+
+  p->gcrodr_PRECISION.Bbuff[0] = NULL;
+  // FIXME : gev_A and gev_B should (both) be of size g_ln*g_ln
+  MALLOC( p->gcrodr_PRECISION.Bbuff[0], complex_PRECISION, g_ln*(g_ln+1) );
+  for ( i=1; i<g_ln; i++ ) {
+    p->gcrodr_PRECISION.Bbuff[i] = p->gcrodr_PRECISION.Bbuff[0] + i*(g_ln+1);
+  }
+
   // TODO : add here extra stuff associated to FL-GCRO-DR
 
 }
@@ -145,6 +206,11 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
 void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) {
 
   fgmres_PRECISION_struct_free( p, l );
+
+  // g_ln is the length m+k of subspaces used in FL-GCRO-DR
+  int g_ln = p->restart_length + p->gcrodr_PRECISION.k;
+  FREE( p->gcrodr_PRECISION.Bbuff[0], complex_PRECISION, g_ln*(g_ln+1) );
+  FREE( p->gcrodr_PRECISION.Bbuff, complex_PRECISION*, g_ln );
 
   // TODO : add here extra stuff associated to FL-GCRO-DR
 
@@ -248,10 +314,27 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     // TODO : add code here to build C and U from scractch
     
     // call one cycle of FGMRES
-    fgmresx_PRECISION(p, l, threading);
+    int fgmresx_iter = 0;
+    fgmresx_iter = fgmresx_PRECISION(p, l, threading);
+    printf0("fgmresx_iter = %d\n", fgmresx_iter);
 
-    complex_PRECISION **A, **B;
-    gev_buildAB_PRECISION(A, B, p->H, p->V, p->Z, p->restart_length);
+    if ( p->preconditioner==NULL ) {
+      gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.eigslvr.Hc,
+                             p->V, p->V, p->restart_length, p, l, threading );
+    } else {
+      gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.eigslvr.Hc,
+                             p->V, p->Z, p->restart_length, p, l, threading );
+    }
+
+    // FIXME : improve the following matrix-matrix multiplication by using more threads than <master>
+    START_MASTER(threading)
+
+    // calling LAPACK's generalized eigenvalue solver through LAPACKE
+    p->gcrodr_PRECISION.eigslvr.N = p->restart_length;
+    gen_eigslvr_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
+
+    END_MASTER(threading)
+    SYNC_MASTER_TO_ALL(threading)
 
   } else{ error0("Invalid value for p->gcrodr_PRECISION.CU_usable \n"); }
 
