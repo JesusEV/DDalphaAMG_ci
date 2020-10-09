@@ -21,6 +21,8 @@
 
 #include "main.h"
 
+#if defined(GCRODR) || defined(POLYPREC)
+
 void gen_eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
 {
 
@@ -37,3 +39,5 @@ void eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
                                       eigen_struct->N, eigen_struct->A, eigen_struct->lda, eigen_struct->w,
                                       eigen_struct->vl, eigen_struct->ldvl, eigen_struct->vr, eigen_struct->ldvr );       
 }
+
+#endif

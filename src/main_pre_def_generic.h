@@ -82,6 +82,9 @@
 
     void (*eigslvr_PRECISION)();
     void (*gen_eigslvr_PRECISION)();
+    
+    int *ordr_idxs;
+    complex_PRECISION *ordr_keyscpy;
 
   } eigslvr_PRECISION_struct;
 #endif
@@ -91,11 +94,15 @@
     // blah -- only simple variables and pointers
     int i;
     eigslvr_PRECISION_struct eigslvr;
+
+    vector_PRECISION *Pk;
     
-    vector_PRECISION* CU[2];
+    vector_PRECISION *C, *U, *Yk;
     int k, CU_usable;
     PRECISION b_norm;
     complex_PRECISION **gev_A, **gev_B, **Bbuff;
+    
+    int syst_size;
     
   } gcrodr_PRECISION_struct;
 #endif

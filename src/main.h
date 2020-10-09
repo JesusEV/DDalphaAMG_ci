@@ -346,7 +346,11 @@
     
     // next coarser level
     struct level_struct *next_level;
-    
+
+#if defined(GCRODR) || defined(POLYPREC)
+    // 'bool', if on H will be copied
+    int dup_H;
+#endif
   } level_struct;
 
 
@@ -407,7 +411,6 @@
     
     complex_double **gamma;
     var_table vt;
-    
   } global_struct;
 
   extern global_struct g;

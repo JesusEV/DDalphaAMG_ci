@@ -21,4 +21,8 @@
 
 #include "main.h"
 
+#ifdef POLYPREC
+
 void apply_polyprec_PRECISION(){}
+
+#endif

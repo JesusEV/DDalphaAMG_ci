@@ -65,8 +65,8 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
 #endif
 
 #ifdef GCRODR
-  p->gcrodr_PRECISION.CU[0] = NULL;
-  p->gcrodr_PRECISION.CU[1] = NULL;
+  p->gcrodr_PRECISION.C = NULL;
+  p->gcrodr_PRECISION.U = NULL;
   p->gcrodr_PRECISION.gev_A = NULL;
   p->gcrodr_PRECISION.gev_B = NULL;
   p->gcrodr_PRECISION.Bbuff = NULL;
@@ -74,6 +74,8 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->gcrodr_PRECISION.eigslvr.beta = NULL;
   p->gcrodr_PRECISION.eigslvr.vl = NULL;
   p->gcrodr_PRECISION.eigslvr.vr = NULL;
+
+  p->gcrodr_PRECISION.Yk = NULL;
 #endif
 
 }
@@ -210,10 +212,14 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   } else {
     ASSERT( type < 3 );
   }
-  
+
+#if defined(GCRODR) || defined(POLYPREC)
+  if (l->level==0) {
+#endif
+
   // FIXME : is this function-pointer-assignment really necessary ?
 #if defined(GCRODR) || defined(POLYPREC)
-  p->polyprec_PRECISION.eigslvr.eigslvr_PRECISION = eigslvr_PRECISION;
+  //p->polyprec_PRECISION.eigslvr.eigslvr_PRECISION = eigslvr_PRECISION;
 #endif 
 
   // copy of Hesselnberg matrix
@@ -244,9 +250,20 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     error0("The value of k in GCRO-DR needs to be smaller than the restart length m\n");
   }
   p->gcrodr_PRECISION.k = g.gcrodr_k;
+
   p->gcrodr_PRECISION.CU_usable = 0;
-  MALLOC( p->gcrodr_PRECISION.CU[0], vector_PRECISION, p->gcrodr_PRECISION.k );
-  MALLOC( p->gcrodr_PRECISION.CU[1], vector_PRECISION, p->gcrodr_PRECISION.k );
+
+  // allocating C and U, which will contain the info associated to the recycling subspace
+  MALLOC( p->gcrodr_PRECISION.C, vector_PRECISION, p->gcrodr_PRECISION.k );
+  MALLOC( p->gcrodr_PRECISION.C[0], complex_PRECISION, vl * p->gcrodr_PRECISION.k );
+  for ( i=1; i<p->gcrodr_PRECISION.k; i++ ) {
+    p->gcrodr_PRECISION.C[i] = p->gcrodr_PRECISION.C[0] + i*vl;
+  }
+  MALLOC( p->gcrodr_PRECISION.U, vector_PRECISION, p->gcrodr_PRECISION.k );
+  MALLOC( p->gcrodr_PRECISION.U[0], complex_PRECISION, vl * p->gcrodr_PRECISION.k );
+  for ( i=1; i<p->gcrodr_PRECISION.k; i++ ) {
+    p->gcrodr_PRECISION.U[i] = p->gcrodr_PRECISION.U[0] + i*vl;
+  }
 
   // g_ln is the length m+k of subspaces used in FL-GCRO-DR
   int g_ln = m+p->gcrodr_PRECISION.k;
@@ -275,8 +292,22 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   p->gcrodr_PRECISION.eigslvr.ldb = p->restart_length + p->gcrodr_PRECISION.k;
   p->gcrodr_PRECISION.eigslvr.ldvl = p->restart_length + p->gcrodr_PRECISION.k;
   p->gcrodr_PRECISION.eigslvr.ldvr = p->restart_length + p->gcrodr_PRECISION.k;
+
+  // matrix Y containing Yk = Zm * Pk
+  MALLOC( p->gcrodr_PRECISION.Yk, complex_PRECISION*, p->gcrodr_PRECISION.k );
+  MALLOC( p->gcrodr_PRECISION.Yk[0], complex_PRECISION, vl * p->gcrodr_PRECISION.k );
+  for ( i=1; i<p->gcrodr_PRECISION.k; i++ ) {
+    p->gcrodr_PRECISION.Yk[i] = p->gcrodr_PRECISION.Yk[0] + i*vl;
+  }
+
+  MALLOC( p->gcrodr_PRECISION.Pk, complex_PRECISION*, p->gcrodr_PRECISION.k );
+
+  p->gcrodr_PRECISION.syst_size = vl;
 #endif
 
+#if defined(GCRODR) || defined(POLYPREC)
+  }
+#endif
 }
 
 
@@ -315,10 +346,11 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   p->D = NULL;
   p->clover = NULL;
 
-#ifdef GCRODR
-  FREE( p->gcrodr_PRECISION.CU[0], vector_PRECISION, p->gcrodr_PRECISION.k );
-  FREE( p->gcrodr_PRECISION.CU[1], vector_PRECISION, p->gcrodr_PRECISION.k );
+#if defined(GCRODR) || defined(POLYPREC)
+  if (l->level==0) {
+#endif
 
+#ifdef GCRODR
   // g_ln is the length m+k of subspaces used in FL-GCRO-DR
   int g_ln = p->restart_length+p->gcrodr_PRECISION.k;
 
@@ -332,6 +364,17 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   FREE( p->gcrodr_PRECISION.eigslvr.beta, complex_PRECISION, g_ln );
 
   FREE( p->gcrodr_PRECISION.eigslvr.vr, complex_PRECISION, g_ln*g_ln );
+
+  FREE( p->gcrodr_PRECISION.Yk[0], complex_PRECISION, p->gcrodr_PRECISION.syst_size * p->gcrodr_PRECISION.k );
+  // matrix Y containing Yk = Zm * Pk
+  FREE( p->gcrodr_PRECISION.Yk, complex_PRECISION*, p->gcrodr_PRECISION.k );
+
+  FREE( p->gcrodr_PRECISION.C[0], complex_PRECISION, p->gcrodr_PRECISION.syst_size * p->gcrodr_PRECISION.k );
+  FREE( p->gcrodr_PRECISION.C, vector_PRECISION, p->gcrodr_PRECISION.k );
+  FREE( p->gcrodr_PRECISION.U[0], complex_PRECISION, p->gcrodr_PRECISION.syst_size * p->gcrodr_PRECISION.k );
+  FREE( p->gcrodr_PRECISION.U, vector_PRECISION, p->gcrodr_PRECISION.k );
+
+  FREE( p->gcrodr_PRECISION.Pk, complex_PRECISION*, p->gcrodr_PRECISION.k );
 #endif
 
   // copy of Hesselnberg matrix
@@ -347,6 +390,10 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   int m = p->restart_length;
   FREE( p->polyprec_PRECISION.eigslvr.Hc[0], complex_PRECISION, m*(m+1) );
   FREE(p->polyprec_PRECISION.eigslvr.Hc, complex_PRECISION*, m);
+#endif
+
+#if defined(GCRODR) || defined(POLYPREC)
+  }
 #endif
 }
 
@@ -1029,13 +1076,16 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     vector_PRECISION_real_scale( V[j+1], w, 1/H[j][j+1], start, end, l );
 #endif
 
-  // copy of Hesselnberg matrix
+  // copy of Hesselnberg matrix (only level=0 currently)
 #if defined(GCRODR) && defined(POLYPREC)
-  memcpy( p->gcrodr_PRECISION.eigslvr.Hc[j], H[j], sizeof(complex_PRECISION)*(j+1) );
+  if (l->dup_H==1 && l->level==0)
+    memcpy( p->gcrodr_PRECISION.eigslvr.Hc[j], H[j], sizeof(complex_PRECISION)*(j+1) );
 #elif defined(GCRODR)
-  memcpy( p->gcrodr_PRECISION.eigslvr.Hc[j], H[j], sizeof(complex_PRECISION)*(j+1) );
+  if (l->dup_H==1 && l->level==0)
+    memcpy( p->gcrodr_PRECISION.eigslvr.Hc[j], H[j], sizeof(complex_PRECISION)*(j+1) );
 #elif defined(POLYPREC)
-  memcpy( p->polyprec_PRECISION.eigslvr.Hc[j], H[j], sizeof(complex_PRECISION)*(j+1) );
+  if (l->dup_H==1 && l->level==0)
+    memcpy( p->polyprec_PRECISION.eigslvr.Hc[j], H[j], sizeof(complex_PRECISION)*(j+1) );
 #endif
 
   return 1;

@@ -650,6 +650,10 @@ void l_init( level_struct *l ) {
   l->x = NULL;
   l->next_level = NULL;
   l->reqs = NULL;
+
+#if defined(GCRODR) || defined(POLYPREC)
+  l->dup_H = 0;
+#endif
 }
 
 
