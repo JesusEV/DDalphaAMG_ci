@@ -77,6 +77,7 @@ int main( int argc, char **argv ) {
   
   THREADED(g.num_openmp_processes)
   {
+    g.on_solve = 0;
     struct Thread threading;
     setup_threading(&threading, commonthreaddata, &l);
     setup_no_threading(no_threading, &l);
@@ -87,6 +88,7 @@ int main( int argc, char **argv ) {
     // iterative phase
     method_update( l.setup_iter, &l, &threading );
     
+    g.on_solve = 1;
     solve_driver( &l, &threading );
   }
   

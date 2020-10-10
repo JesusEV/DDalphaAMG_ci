@@ -40,4 +40,13 @@ void eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
                                       eigen_struct->vl, eigen_struct->ldvl, eigen_struct->vr, eigen_struct->ldvr );       
 }
 
+void dirctslvr_PRECISION(dirctslvr_PRECISION_struct* dirctslvr)
+{
+
+    memcpy( dirctslvr->x, dirctslvr->b, sizeof(complex_PRECISION)*(dirctslvr->N) );  
+
+    dirctslvr->info = gesv_PRECISION( LAPACK_COL_MAJOR, dirctslvr->N, dirctslvr->nrhs, dirctslvr->Hcc, 
+                                    dirctslvr->lda, dirctslvr->ipiv, dirctslvr->x, dirctslvr->ldb ); 
+}
+
 #endif
