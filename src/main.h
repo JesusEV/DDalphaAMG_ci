@@ -89,6 +89,12 @@
   #define geev_float LAPACKE_cgeev 
   #define ggev_double LAPACKE_zggev
   #define ggev_float LAPACKE_cggev
+  #define geqr2_double LAPACKE_zgeqr2
+  #define geqr2_float LAPACKE_cgeqr2
+  #define ungqr_double LAPACKE_zungqr
+  #define ungqr_float LAPACKE_cungqr
+  #define trtri_double LAPACKE_ztrtri
+  #define trtri_float LAPACKE_ctrtri
 #endif
 
 

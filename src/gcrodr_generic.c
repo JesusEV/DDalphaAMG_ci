@@ -24,11 +24,16 @@
 #ifdef GCRODR
 
 
+// declarations of aux functions
 int fgmresx_PRECISION( gmres_PRECISION_struct*, level_struct*, struct Thread* );
 void gev_buildAB_PRECISION(complex_PRECISION**, complex_PRECISION**, complex_PRECISION**, vector_PRECISION*, vector_PRECISION*,
                            int, gmres_PRECISION_struct*, level_struct*, struct Thread*);
 void order_pairs_PRECISION( vector_PRECISION, complex_PRECISION*, int*, int );
-void build_CU_PRECISION( gmres_PRECISION_struct*, level_struct*, struct Thread*, int );
+void build_CU_PRECISION( complex_PRECISION**, vector_PRECISION*, vector_PRECISION*,
+                         gmres_PRECISION_struct*, level_struct*, struct Thread*, int );
+
+
+// ------------------------------------------------------------------------------------------------------------------------
 
 
 void flgcrodr_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
@@ -37,9 +42,6 @@ void flgcrodr_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
 
   p->gcrodr_PRECISION.eigslvr.ordr_idxs = NULL;
   p->gcrodr_PRECISION.eigslvr.ordr_keyscpy = NULL;
-
-  // TODO : add here extra stuff associated to FL-GCRO-DR
-
 }
 
 
@@ -61,9 +63,6 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
 
   MALLOC( p->gcrodr_PRECISION.eigslvr.ordr_idxs, int, g_ln );
   MALLOC( p->gcrodr_PRECISION.eigslvr.ordr_keyscpy, complex_PRECISION, g_ln );
-
-  // TODO : add here extra stuff associated to FL-GCRO-DR
-
 }
 
 
@@ -78,9 +77,6 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
 
   FREE( p->gcrodr_PRECISION.eigslvr.ordr_idxs, int, g_ln );
   FREE( p->gcrodr_PRECISION.eigslvr.ordr_keyscpy, complex_PRECISION, g_ln );
-
-  // TODO : add here extra stuff associated to FL-GCRO-DR
-
 }
 
 
@@ -99,24 +95,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   // compute start and end indices for core
   // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
-
-  /*
-  PRECISION t0=0, t1=0;
-
-  START_LOCKED_MASTER(threading)
-  if ( l->depth==0 && ( p->timing || p->print ) ) prof_init( l );
-
-  if ( l->level==0 && g.num_levels > 1 && g.interpolation ) p->tol = g.coarse_tol;
-  if ( l->depth > 0 ) p->timing = 1;
-  if ( l->depth == 0 ) t0 = MPI_Wtime();
-#if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
-  if ( p->print && g.print > 0 ) printf0("+----------------------------------------------------------+\n");
-#endif
-  END_LOCKED_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
-  */
-
-  // ------- FL-GCRO-DR -------------------------------------
 
   // compute initial residual
   if( p->initial_guess_zero ) {
@@ -161,7 +139,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
                                 p->y, p->gamma, p->H, fgmresx_iter-1, (res==_NO_RES)?0:1, p, l, threading );
 
-    // TODO : add an update for r here ?
+    // TODO : add an update for r here ? (in a relatively cheap way)
 
     // check if this first call to fgmresx_PRECISION was enough
     PRECISION quot = cabs(p->gamma[fgmresx_iter])/creal(beta);
@@ -183,65 +161,29 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
                              p->V, p->Z, fgmresx_iter, p, l, threading );
     }
 
-    START_MASTER(threading)
     // FIXME : improve the following eigensolve by using more threads than <master>
+    START_MASTER(threading)
     // calling LAPACK's generalized eigenvalue solver through LAPACKE
     p->gcrodr_PRECISION.eigslvr.N = fgmresx_iter;
     gen_eigslvr_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
     // p->gcrodr_PRECISION.eigslvr.ordr_idxs contains the indices to access w and vr in ascending magnitude
     order_pairs_PRECISION( p->gcrodr_PRECISION.eigslvr.w, p->gcrodr_PRECISION.eigslvr.ordr_keyscpy,
                            p->gcrodr_PRECISION.eigslvr.ordr_idxs, fgmresx_iter );
-
-    //printf0("system size = %d, beg=%d, end=%d, beg_thr=%d, end_thr=%d\n", p->gcrodr_PRECISION.syst_size, p->v_start, p->v_end, start, end);
     END_MASTER(threading)
     SYNC_MASTER_TO_ALL(threading)
 
-    //START_MASTER(threading)
-    //complex_PRECISION *w = p->gcrodr_PRECISION.eigslvr.w;
-    //int *idxs = p->gcrodr_PRECISION.eigslvr.ordr_idxs;
-    //for ( int i=0; i<fgmresx_iter; i++ ){
-    //  printf0("%f+i%f (%f) \n", creal(w[idxs[i]]), cimag(w[idxs[i]]), cabs(w[idxs[i]]));
-    //}
-    //END_MASTER(threading)
-    //SYNC_MASTER_TO_ALL(threading)
-
-    //build_CU_PRECISION( p, l, threading, fgmresx_iter );
-
-    // TODO : add code here to build C and U from scractch
+    // build C and U from the previous eigensolution
+    if ( p->preconditioner==NULL ) {
+      build_CU_PRECISION( p->gcrodr_PRECISION.eigslvr.Hc, p->V, p->V, p, l, threading, fgmresx_iter );
+    } else {
+      build_CU_PRECISION( p->gcrodr_PRECISION.eigslvr.Hc, p->V, p->Z, p, l, threading, fgmresx_iter );
+    }
 
   } else{ error0("Invalid value for p->gcrodr_PRECISION.CU_usable \n"); }
 
-
-
   // TODO : add main loop for FL-GCRO-DR
 
-
-
   // --------------------------------------------------------
-
-  /*
-  START_LOCKED_MASTER(threading)
-  if ( l->depth == 0 ) { t1 = MPI_Wtime(); g.total_time = t1-t0; g.iter_count = fgmres_iter; }
-  END_LOCKED_MASTER(threading)
-
-  if ( l->depth == 0 && g.vt.p_end != NULL  ) {
-    if ( g.vt.p_end != NULL ) {
-      START_LOCKED_MASTER(threading)
-      printf0("solve iter: %d\n", fgmres_iter );
-      printf0("solve time: %le seconds\n", t1-t0 );
-      g.vt.p_end->values[_SLV_TIME] += (t1-t0)/((double)g.vt.average_over);
-      g.vt.p_end->values[_SLV_ITER] += fgmres_iter/((double)g.vt.average_over);
-      g.vt.p_end->values[_CRS_ITER] += (((double)g.coarse_iter_count)/((double)fgmres_iter))/((double)g.vt.average_over);
-      g.vt.p_end->values[_CRS_TIME] += g.coarse_time/((double)g.vt.average_over);
-    END_LOCKED_MASTER(threading)
-    }
-  }
-  if ( l->depth == 0 && ( p->timing || p->print ) && !(g.vt.p_end != NULL )  ) {
-    START_MASTER(threading)
-    if ( g.method != 6 ) prof_print( l );
-    END_MASTER(threading)
-  }
-  */
 
   int fgmres_iter=0;
   p->initial_guess_zero = 0;
@@ -257,9 +199,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 // ---------- AUXILIARY FUNCTIONS
 
 // build A and B for the generalized eigenvalue problem within FL-GCRO-DR
-void gev_buildAB_PRECISION(complex_PRECISION **A, complex_PRECISION **B, complex_PRECISION **G,
-                           vector_PRECISION *W, vector_PRECISION *Z, int mk, gmres_PRECISION_struct *p,
-                           level_struct *l, struct Thread *threading){
+void gev_buildAB_PRECISION( complex_PRECISION **A, complex_PRECISION **B, complex_PRECISION **G,
+                            vector_PRECISION *W, vector_PRECISION *Z, int mk, gmres_PRECISION_struct *p,
+                            level_struct *l, struct Thread *threading ){
 
   int i,j,k;
   complex_PRECISION **Bbuff = p->gcrodr_PRECISION.Bbuff;
@@ -406,6 +348,7 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
   return iter;
 }
 
+
 // order the eigenpairs returned by the generalized eigenvalue solver from LAPACK
 void order_pairs_PRECISION( vector_PRECISION keys, complex_PRECISION *keys_cpy, int *output, int n ){
   int i,j;
@@ -434,38 +377,98 @@ void order_pairs_PRECISION( vector_PRECISION keys, complex_PRECISION *keys_cpy, 
   }
 }
 
-/*
-void build_CU_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading, int m ){
-  int i;
 
-  int start, end;
+void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PRECISION *Z,
+                         gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading, int m ){
+  int i, j, kl, start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
   int g_ln = p->restart_length + p->gcrodr_PRECISION.k;
 
   vector_PRECISION *Yk = p->gcrodr_PRECISION.Yk;
-  vector_PRECISION *Z  = p->Z;
+  vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
+  vector_PRECISION *Uk = p->gcrodr_PRECISION.U;
+  //vector_PRECISION *Z  = (p->preconditioner==NULL) ? p->V : p->Z;
   vector_PRECISION vr  = p->gcrodr_PRECISION.eigslvr.vr;
 
   int *idxs = p->gcrodr_PRECISION.eigslvr.ordr_idxs;
-
   int k = p->gcrodr_PRECISION.k;
+
+  complex_PRECISION **QR = p->gcrodr_PRECISION.QR;
+  complex_PRECISION **Q = p->gcrodr_PRECISION.Q;
+  complex_PRECISION **R = p->gcrodr_PRECISION.R;
+  complex_PRECISION **Rinv = p->gcrodr_PRECISION.eigslvr.qr_Rinv;
 
   // for each new eigensolution, we have a new mapping for Pk
   vector_PRECISION *Pk = p->gcrodr_PRECISION.Pk;
-
   for ( i=0; i<k; i++ ) {
     Pk[i] = vr + idxs[i] * g_ln;
   }
 
-  // set all vectors in Yk to zero, to accumulate
+  // compute Yk
   for ( i=0; i<k; i++ ) {
+    // set all vectors in Yk to zero, to accumulate
     vector_PRECISION_define( Yk[i], 0, start, end, l );
-
     // and then, multi saxpy to obtain Yk
     vector_PRECISION_multi_saxpy( Yk[i], Z, Pk[i], 1, m, start, end, l );
   }
+
+  // build the matrix for QR
+  // FIXME : improve the following matrix-matrix multiplication by using more threads than <master>
+  START_MASTER(threading)
+  for ( j=0; j<k; j++ ) {
+    // set all column j of QR to zero
+    memset( QR[j], 0.0, sizeof(complex_PRECISION)*(m+1) );
+    // and then do accumulations over that column
+    for ( i=0; i<m; i++ ) {
+      for ( kl=0; kl<(m+1); kl++ ) {
+        QR[j][kl] += G[i][kl] * Pk[j][i];
+      }
+    }
+  }
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)
+
+  // QR decomposition of G*Pk
+  // FIXME : improve the following matrix-matrix multiplication by using more threads than <master>
+  START_MASTER(threading)
+
+  // QR
+  p->gcrodr_PRECISION.eigslvr.qr_m = m+1;
+  p->gcrodr_PRECISION.eigslvr.qr_n = k;
+  qr_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
+
+  p->gcrodr_PRECISION.eigslvr.qr_k = k;
+
+  // compute R^{-1}
+  for ( j=0; j<k; j++ ) {
+    for ( i=0; i<k; i++ ) {
+      R[j][i] = QR[j][i];
+    }
+  }
+  inv_tri_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
+
+  // compute Q
+  q_from_qr_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
+
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)
+
+  // compute Ck
+  for ( i=0; i<k; i++ ) {
+    // set all vectors in Yk to zero, to accumulate
+    vector_PRECISION_define( Ck[i], 0, start, end, l );
+    // and then, multi saxpy to obtain Yk
+    vector_PRECISION_multi_saxpy( Ck[i], W, Q[i], 1, m+1, start, end, l );
+  }
+
+  // compute Uk
+  for ( i=0; i<k; i++ ) {
+    // set all vectors in Yk to zero, to accumulate
+    vector_PRECISION_define( Uk[i], 0, start, end, l );
+    // and then, multi saxpy to obtain Yk
+    vector_PRECISION_multi_saxpy( Uk[i], Yk, Rinv[i], 1, k, start, end, l );
+  }
 }
-*/
 
 #endif

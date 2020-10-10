@@ -23,6 +23,34 @@
 
 #if defined(GCRODR) || defined(POLYPREC)
 
+
+// inversion of a triangular matrix
+void inv_tri_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
+{
+
+  //#define trtri_double LAPACKE_ztrtri
+  trtri_PRECISION( LAPACK_COL_MAJOR, 'U', 'N', eigen_struct->qr_k, eigen_struct->qr_R[0],
+                   eigen_struct->qr_k);
+}
+
+void qr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
+{
+
+  //#define geqr2_double LAPACKE_zgeqr2
+  geqr2_PRECISION( LAPACK_COL_MAJOR, eigen_struct->qr_m, eigen_struct->qr_n, eigen_struct->qr_QR[0],
+                   eigen_struct->qr_lda, eigen_struct->qr_tau );
+
+}
+
+void q_from_qr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
+{
+
+  //#define ungqr_double LAPACKE_zungqr
+  ungqr_PRECISION( LAPACK_COL_MAJOR, eigen_struct->qr_m, eigen_struct->qr_n, eigen_struct->qr_k,
+                   eigen_struct->qr_QR[0], eigen_struct->qr_lda, eigen_struct->qr_tau );
+
+}
+
 void gen_eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
 {
 

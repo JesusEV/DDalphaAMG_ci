@@ -22,7 +22,15 @@
 #ifndef LAPACKWRAP_PRECISION_HEADER
   #define LAPACKWRAP_PRECISION_HEADER
 
+  // eigensolvers
   void gen_eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
   void eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
+
+  // QR functions
+  void qr_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
+  void q_from_qr_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
+
+  // explicit inversion of triangular matrix
+  void inv_tri_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
 
 #endif

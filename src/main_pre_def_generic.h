@@ -86,6 +86,10 @@
     int *ordr_idxs;
     complex_PRECISION *ordr_keyscpy;
 
+    complex_PRECISION *qr_tau;
+    complex_PRECISION **qr_QR, **qr_Q, **qr_R, **qr_Rinv;
+    int qr_m, qr_n, qr_lda, qr_k;
+
   } eigslvr_PRECISION_struct;
 #endif
 
@@ -101,6 +105,7 @@
     int k, CU_usable;
     PRECISION b_norm;
     complex_PRECISION **gev_A, **gev_B, **Bbuff;
+    complex_PRECISION **QR, **Q, **R, **Rinv;
     
     int syst_size;
     
