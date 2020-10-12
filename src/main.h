@@ -97,7 +97,10 @@
   #define trtri_float LAPACKE_ctrtri
 #endif
 
-
+#ifdef POLYPREC
+  #define gesv_double LAPACKE_zgesv
+  #define gesv_float LAPACKE_cgesv
+#endif
 
 
 #ifdef SSE
@@ -388,6 +391,10 @@
     int gcrodr_k;
 #endif
 
+#ifdef POLYPREC
+    int polyprec_d;
+#endif
+
     // profiling, analysis, output
     int coarse_iter_count, iter_count, iterator, print, conf_flag, setup_flag, in_setup;
     double coarse_time, prec_time, *output_table[8], cur_storage, max_storage, total_time,
@@ -417,6 +424,11 @@
     
     complex_double **gamma;
     var_table vt;
+
+#ifdef POLYPREC
+    int on_solve;
+#endif
+
   } global_struct;
 
   extern global_struct g;
@@ -585,4 +597,9 @@
   #include <lapacke.h>
   #include "lapackwrap_double.h"
   #include "lapackwrap_float.h"
+#endif
+
+#ifdef POLYPREC
+  #include "polyprec_double.h"
+  #include "polyprec_float.h"
 #endif

@@ -70,6 +70,23 @@
 #endif
   } operator_PRECISION_struct;
 
+
+#ifdef POLYPREC
+  typedef struct
+  {
+
+      int N, nrhs, lda, ldb, info;
+
+      int *ipiv;
+      vector_PRECISION x, b;
+      complex_PRECISION *Hcc;  
+
+      void (*dirctslvr_PRECISION)();
+
+  } dirctslvr_PRECISION_struct;
+#endif
+
+
 #if defined(GCRODR) || defined(POLYPREC)
   // this is both eigensolver and generalized eigensolver
   typedef struct {
@@ -112,11 +129,28 @@
   } gcrodr_PRECISION_struct;
 #endif
 #ifdef POLYPREC
-  typedef struct {
-    // blah -- only simple variables and pointers
-    int i;
-    eigslvr_PRECISION_struct eigslvr;
+  
+  typedef struct
+  {
+      int update_lejas;
+      int d_poly;
+      int syst_size;
+      
+      complex_PRECISION **Hc;
+      complex_PRECISION *Hcc;
+      complex_PRECISION **L;
+      complex_PRECISION *col_prods;
+      vector_PRECISION h_ritz;
+      vector_PRECISION lejas;
+      vector_PRECISION random_rhs;
+
+      vector_PRECISION accum_prod, product, temp;
+
+      eigslvr_PRECISION_struct eigslvr;
+      dirctslvr_PRECISION_struct dirctslvr;
+
   } polyprec_PRECISION_struct;
+
 #endif
   
   typedef struct {

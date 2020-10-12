@@ -324,7 +324,10 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
       }
       re_setup_PRECISION( l->next_level, threading );
     }
-  }  
+  }
+#ifdef POLYPREC
+  else { l->p_PRECISION.polyprec_PRECISION.update_lejas = 1; }
+#endif
 }
 
 

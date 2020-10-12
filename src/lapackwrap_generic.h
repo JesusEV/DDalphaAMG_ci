@@ -25,6 +25,7 @@
   // eigensolvers
   void gen_eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
   void eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
+  void dirctslvr_PRECISION(dirctslvr_PRECISION_struct* dirctslvr);
 
   // QR functions
   void qr_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
