@@ -71,7 +71,7 @@
   } operator_PRECISION_struct;
 
 
-#ifdef POLYPREC
+#if defined(POLYPREC) || defined(GCRODR)
   typedef struct
   {
 

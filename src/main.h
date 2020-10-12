@@ -95,9 +95,6 @@
   #define ungqr_float LAPACKE_cungqr
   #define trtri_double LAPACKE_ztrtri
   #define trtri_float LAPACKE_ctrtri
-#endif
-
-#ifdef POLYPREC
   #define gesv_double LAPACKE_zgesv
   #define gesv_float LAPACKE_cgesv
 #endif
@@ -425,9 +422,8 @@
     complex_double **gamma;
     var_table vt;
 
-#ifdef POLYPREC
+    // mostly useful, as of now, for PP and GCRODR
     int on_solve;
-#endif
 
   } global_struct;
 

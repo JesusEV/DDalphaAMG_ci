@@ -85,7 +85,6 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->gcrodr_PRECISION.Rinv = NULL;
 #endif
 
-
 #ifdef POLYPREC
   p->polyprec_PRECISION.Hcc = NULL; 
   p->polyprec_PRECISION.L = NULL;
@@ -103,10 +102,6 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->polyprec_PRECISION.dirctslvr.x = NULL;
   p->polyprec_PRECISION.dirctslvr.b = NULL;
 #endif
-
-    
-
-
 }
 
 
@@ -280,7 +275,6 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   }
   p->gcrodr_PRECISION.k = g.gcrodr_k;
 
-
   p->gcrodr_PRECISION.CU_usable = 0;
 
   // allocating C and U, which will contain the info associated to the recycling subspace
@@ -365,84 +359,63 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 #endif
 
 #ifdef POLYPREC
-    
-    p->polyprec_PRECISION.d_poly = g.polyprec_d;
-    int d_poly = p->polyprec_PRECISION.d_poly;
+  p->polyprec_PRECISION.d_poly = g.polyprec_d;
+  int d_poly = p->polyprec_PRECISION.d_poly;
 
-    MALLOC( p->polyprec_PRECISION.col_prods, complex_PRECISION, d_poly);
-    MALLOC( p->polyprec_PRECISION.h_ritz, complex_PRECISION, d_poly);
-    MALLOC( p->polyprec_PRECISION.lejas, complex_PRECISION, d_poly);
-    MALLOC( p->polyprec_PRECISION.random_rhs, complex_PRECISION, vl );
-    MALLOC( p->polyprec_PRECISION.accum_prod, complex_PRECISION, vl );
-    MALLOC( p->polyprec_PRECISION.product, complex_PRECISION, vl );
-    MALLOC( p->polyprec_PRECISION.temp, complex_PRECISION, vl );
+  MALLOC( p->polyprec_PRECISION.col_prods, complex_PRECISION, d_poly);
+  MALLOC( p->polyprec_PRECISION.h_ritz, complex_PRECISION, d_poly);
+  MALLOC( p->polyprec_PRECISION.lejas, complex_PRECISION, d_poly);
+  MALLOC( p->polyprec_PRECISION.random_rhs, complex_PRECISION, vl );
+  MALLOC( p->polyprec_PRECISION.accum_prod, complex_PRECISION, vl );
+  MALLOC( p->polyprec_PRECISION.product, complex_PRECISION, vl );
+  MALLOC( p->polyprec_PRECISION.temp, complex_PRECISION, vl );
 
-    MALLOC( p->polyprec_PRECISION.Hcc, complex_PRECISION, d_poly*d_poly );
-    MALLOC( p->polyprec_PRECISION.L, complex_PRECISION*, d_poly+ 1);
+  MALLOC( p->polyprec_PRECISION.Hcc, complex_PRECISION, d_poly*d_poly );
+  MALLOC( p->polyprec_PRECISION.L, complex_PRECISION*, d_poly+ 1);
 
-    p->polyprec_PRECISION.L[0] = NULL;
+  p->polyprec_PRECISION.L[0] = NULL;
 
-    MALLOC( p->polyprec_PRECISION.L[0], complex_PRECISION, (d_poly+1)*d_poly );
+  MALLOC( p->polyprec_PRECISION.L[0], complex_PRECISION, (d_poly+1)*d_poly );
 
-    for (int i=1; i<d_poly+1; i++ )
-    {
-        p->polyprec_PRECISION.L[i] = p->polyprec_PRECISION.L[0] + i*d_poly;
-    }
+  for (int i=1; i<d_poly+1; i++ )
+  {
+    p->polyprec_PRECISION.L[i] = p->polyprec_PRECISION.L[0] + i*d_poly;
+  }
 
+  // ---------------------
+  MALLOC( p->polyprec_PRECISION.dirctslvr.ipiv, int, d_poly);
+  MALLOC( p->polyprec_PRECISION.dirctslvr.x, complex_PRECISION, d_poly);
+  MALLOC( p->polyprec_PRECISION.dirctslvr.b, complex_PRECISION, d_poly);
 
-    // ---------------------
-    MALLOC( p->polyprec_PRECISION.dirctslvr.ipiv, int, d_poly);
-    MALLOC( p->polyprec_PRECISION.dirctslvr.x, complex_PRECISION, d_poly);
-    MALLOC( p->polyprec_PRECISION.dirctslvr.b, complex_PRECISION, d_poly);
+  p->polyprec_PRECISION.dirctslvr.N = d_poly;
+  p->polyprec_PRECISION.dirctslvr.lda = d_poly; // m here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  p->polyprec_PRECISION.dirctslvr.ldb = d_poly;
+  p->polyprec_PRECISION.dirctslvr.nrhs = 1;
+  p->polyprec_PRECISION.dirctslvr.Hcc = p->polyprec_PRECISION.Hcc;
+  p->polyprec_PRECISION.dirctslvr.dirctslvr_PRECISION = dirctslvr_PRECISION;
 
+  // ---------------------
+  MALLOC( p->polyprec_PRECISION.eigslvr.vl, complex_PRECISION, d_poly*d_poly );
+  MALLOC( p->polyprec_PRECISION.eigslvr.vr, complex_PRECISION, d_poly*d_poly );
 
-    p->polyprec_PRECISION.dirctslvr.N = d_poly;
-    p->polyprec_PRECISION.dirctslvr.lda = d_poly; // m here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    p->polyprec_PRECISION.dirctslvr.ldb = d_poly;
-    p->polyprec_PRECISION.dirctslvr.nrhs = 1;
-    p->polyprec_PRECISION.dirctslvr.Hcc = p->polyprec_PRECISION.Hcc;
-    p->polyprec_PRECISION.dirctslvr.dirctslvr_PRECISION = dirctslvr_PRECISION;
+  p->polyprec_PRECISION.eigslvr.jobvl = 'N';
+  p->polyprec_PRECISION.eigslvr.jobvr = 'N';
 
-    // ---------------------
-    MALLOC( p->polyprec_PRECISION.eigslvr.vl, complex_PRECISION, d_poly*d_poly );
-    MALLOC( p->polyprec_PRECISION.eigslvr.vr, complex_PRECISION, d_poly*d_poly );
+  p->polyprec_PRECISION.eigslvr.N = d_poly;
+  p->polyprec_PRECISION.eigslvr.lda = p->restart_length + 1; // m+1 here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  p->polyprec_PRECISION.eigslvr.ldvl = d_poly;
+  p->polyprec_PRECISION.eigslvr.ldvr = d_poly;
+  p->polyprec_PRECISION.eigslvr.w = p->polyprec_PRECISION.h_ritz;
+  p->polyprec_PRECISION.Hc = p->polyprec_PRECISION.eigslvr.Hc;
+  p->polyprec_PRECISION.eigslvr.eigslvr_PRECISION = eigslvr_PRECISION;    
+  // ---------------------
 
-    p->polyprec_PRECISION.eigslvr.jobvl = 'N';
-    p->polyprec_PRECISION.eigslvr.jobvr = 'N';
+  p->polyprec_PRECISION.update_lejas = 1;
+  p->polyprec_PRECISION.syst_size = vl;
 
-    p->polyprec_PRECISION.eigslvr.N = d_poly;
-    p->polyprec_PRECISION.eigslvr.lda = p->restart_length + 1; // m+1 here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    p->polyprec_PRECISION.eigslvr.ldvl = d_poly;
-    p->polyprec_PRECISION.eigslvr.ldvr = d_poly;
-    p->polyprec_PRECISION.eigslvr.w = p->polyprec_PRECISION.h_ritz;
-    p->polyprec_PRECISION.Hc = p->polyprec_PRECISION.eigslvr.Hc;
-    p->polyprec_PRECISION.eigslvr.eigslvr_PRECISION = eigslvr_PRECISION;    
-    // ---------------------
-
-
-
-
-    p->polyprec_PRECISION.update_lejas = 1;
-    p->polyprec_PRECISION.syst_size = vl;
-
-    p->polyprec_PRECISION.d_poly = 10;
-    p->polyprec_PRECISION.eigslvr.A = p->polyprec_PRECISION.Hc[0];
-    // p->polyprec_PRECISION.lejas[0] = 1.91111335-0.01470048*I;
-    // p->polyprec_PRECISION.lejas[1] = -0.95354236-0.72335927*I;
-    // p->polyprec_PRECISION.lejas[2] = -0.51801212+1.08295025*I;
-    // p->polyprec_PRECISION.lejas[3] = 0.69765942-0.91578304*I;
-    // p->polyprec_PRECISION.lejas[4] = 0.25941169+1.15026561*I;
-    // p->polyprec_PRECISION.lejas[5] = 1.22987256+0.43716704*I;
-    // p->polyprec_PRECISION.lejas[6] = -0.94817547+0.69637342*I;
-    // p->polyprec_PRECISION.lejas[7] = -0.37143096-0.98889203*I;
-    // p->polyprec_PRECISION.lejas[8] = 1.40710945-0.33634852*I;
-    // p->polyprec_PRECISION.lejas[9] = 1.74343751+0.04973606*I;
-
-
+  //p->polyprec_PRECISION.d_poly = 10;
+  p->polyprec_PRECISION.eigslvr.A = p->polyprec_PRECISION.Hc[0];
 #endif
-
-
-
 
 #if defined(GCRODR) || defined(POLYPREC)
   }
