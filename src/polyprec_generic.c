@@ -81,16 +81,13 @@ void harmonic_ritz_PRECISION( gmres_PRECISION_struct *p )
         for (j=0; j<d; j++)
             p->polyprec_PRECISION.Hcc[i*d + j ] = conj(p->polyprec_PRECISION.Hc[j][i]);
 
-    // print_matrix_PRECISION(p->polyprec_PRECISION.Hcc, d, d);
     p->polyprec_PRECISION.dirctslvr.dirctslvr_PRECISION(&p->polyprec_PRECISION.dirctslvr);
-    // print_matrix_PRECISION(p->polyprec_PRECISION.Hcc, d, d);
 
     for (i=0; i<d; i++)
         p->polyprec_PRECISION.Hc[d-1][i] += h_dd*h_dd*p->polyprec_PRECISION.dirctslvr.x[i];
     
     p->polyprec_PRECISION.eigslvr.eigslvr_PRECISION(&p->polyprec_PRECISION.eigslvr);
 }
-// print_matrix(p->polyprec_PRECISION.Hc[0], d, d+1);
 
 
 /*-----------------------------------------------*/

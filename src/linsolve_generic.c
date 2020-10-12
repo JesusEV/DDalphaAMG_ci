@@ -1208,13 +1208,22 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   // copy of Hesselnberg matrix (only level=0 currently)
 #if defined(GCRODR) && defined(POLYPREC)
   if (l->dup_H==1 && l->level==0)
+  {
     memcpy( p->gcrodr_PRECISION.eigslvr.Hc[j], H[j], sizeof(complex_PRECISION)*(j+2) );
+    memset( p->gcrodr_PRECISION.eigslvr.Hc[j]+j+2, 0.0, sizeof(complex_PRECISION)*(p->restart_length + 1 - (j+2)) );
+  }
 #elif defined(GCRODR)
   if (l->dup_H==1 && l->level==0)
+  {
     memcpy( p->gcrodr_PRECISION.eigslvr.Hc[j], H[j], sizeof(complex_PRECISION)*(j+2) );
+    memset( p->gcrodr_PRECISION.eigslvr.Hc[j]+j+2, 0.0, sizeof(complex_PRECISION)*(p->restart_length + 1 - (j+2)) );
+  }
 #elif defined(POLYPREC)
   if (l->dup_H==1 && l->level==0)
+  {
     memcpy( p->polyprec_PRECISION.eigslvr.Hc[j], H[j], sizeof(complex_PRECISION)*(j+2) );
+    memset( p->polyprec_PRECISION.eigslvr.Hc[j]+j+2, 0.0, sizeof(complex_PRECISION)*(p->restart_length + 1 - (j+2)) );
+  }
 #endif
 
   return 1;
