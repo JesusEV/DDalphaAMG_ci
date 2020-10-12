@@ -25,13 +25,15 @@
 
 
 // declarations of aux functions
-int fgmresx_PRECISION( gmres_PRECISION_struct*, level_struct*, struct Thread* );
+int  fgmresx_PRECISION( gmres_PRECISION_struct*, level_struct*, struct Thread* );
 void gev_buildAB_PRECISION(complex_PRECISION**, complex_PRECISION**, complex_PRECISION**, vector_PRECISION*, vector_PRECISION*,
                            int, gmres_PRECISION_struct*, level_struct*, struct Thread*);
 void order_pairs_PRECISION( vector_PRECISION, complex_PRECISION*, int*, int );
 void build_CU_PRECISION( complex_PRECISION**, vector_PRECISION*, vector_PRECISION*,
                          gmres_PRECISION_struct*, level_struct*, struct Thread*, int );
-
+int  arnoldix_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRECISION w,
+                              complex_PRECISION **H, complex_PRECISION* buffer, int j, void (*prec)(),
+                              gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
 
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -152,30 +154,21 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       return fgmresx_iter;
     }
 
-    // build the matrices A and B used for generalized-eigensolving
     if ( p->preconditioner==NULL ) {
-      gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.eigslvr.Hc,
-                             p->V, p->V, fgmresx_iter, p, l, threading );
     } else {
-      gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.eigslvr.Hc,
-                             p->V, p->Z, fgmresx_iter, p, l, threading );
     }
 
-    // FIXME : improve the following eigensolve by using more threads than <master>
-    START_MASTER(threading)
-    // calling LAPACK's generalized eigenvalue solver through LAPACKE
-    p->gcrodr_PRECISION.eigslvr.N = fgmresx_iter;
-    gen_eigslvr_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
-    // p->gcrodr_PRECISION.eigslvr.ordr_idxs contains the indices to access w and vr in ascending magnitude
-    order_pairs_PRECISION( p->gcrodr_PRECISION.eigslvr.w, p->gcrodr_PRECISION.eigslvr.ordr_keyscpy,
-                           p->gcrodr_PRECISION.eigslvr.ordr_idxs, fgmresx_iter );
-    END_MASTER(threading)
-    SYNC_MASTER_TO_ALL(threading)
-
-    // build C and U from the previous eigensolution
     if ( p->preconditioner==NULL ) {
+      // build the matrices A and B used for generalized-eigensolving
+      gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.eigslvr.Hc,
+                             p->V, p->V, fgmresx_iter, p, l, threading );
+      // build C and U
       build_CU_PRECISION( p->gcrodr_PRECISION.eigslvr.Hc, p->V, p->V, p, l, threading, fgmresx_iter );
     } else {
+      // build the matrices A and B used for generalized-eigensolving
+      gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.eigslvr.Hc,
+                             p->V, p->Z, fgmresx_iter, p, l, threading );
+      // build C and U
       build_CU_PRECISION( p->gcrodr_PRECISION.eigslvr.Hc, p->V, p->Z, p, l, threading, fgmresx_iter );
     }
 
@@ -264,6 +257,8 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 *	-- p->r already contains the computed residual
 *********************************************************************************/  
 
+  // TODO : what happens if a <breakdown> happens, and we haven't reached k iters ??
+
   // start and end indices for vector functions depending on thread
   int start;
   int end;
@@ -281,7 +276,7 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
   vector_PRECISION_real_scale( p->V[0], p->r, 1/p->gamma[0], start, end, l ); // v_0 = r / gamma_0
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
   if ( l->level == 0 && l->depth > 0 ) {
-    arnoldi_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, 0, p->preconditioner, p, l, threading );
+    arnoldix_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, 0, p->preconditioner, p, l, threading );
   }
 #endif   
     
@@ -291,18 +286,18 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
     // one step of Arnoldi
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
     if ( l->level == 0 && l->depth > 0 ) {
-      if ( !arnoldi_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j+1, p->preconditioner, p, l, threading ) ) {
+      if ( !arnoldix_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j+1, p->preconditioner, p, l, threading ) ) {
         printf0("| -------------- iteration %d, restart due to H(%d,%d) < 0 |\n", iter, j+2, j+1 );
         break;
       }
     } else {
-      if ( !arnoldi_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j, p->preconditioner, p, l, threading ) ) {
+      if ( !arnoldix_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j, p->preconditioner, p, l, threading ) ) {
         printf0("| -------------- iteration %d, restart due to H(%d,%d) < 0 |\n", iter, j+1, j );
         break;
       }
     }
 #else
-    if ( !arnoldi_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j, p->preconditioner, p, l, threading ) ) {
+    if ( !arnoldix_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j, p->preconditioner, p, l, threading ) ) {
       printf0("| -------------- iteration %d, restart due to H(%d,%d) < 0 |\n", iter, j+1, j );
       break;
     }
@@ -380,6 +375,22 @@ void order_pairs_PRECISION( vector_PRECISION keys, complex_PRECISION *keys_cpy, 
 
 void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PRECISION *Z,
                          gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading, int m ){
+
+  // --------- eigensolving first
+
+  // FIXME : improve the following eigensolve by using more threads than <master>
+  START_MASTER(threading)
+  // calling LAPACK's generalized eigenvalue solver through LAPACKE
+  p->gcrodr_PRECISION.eigslvr.N = m;
+  gen_eigslvr_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
+  // p->gcrodr_PRECISION.eigslvr.ordr_idxs contains the indices to access w and vr in ascending magnitude
+  order_pairs_PRECISION( p->gcrodr_PRECISION.eigslvr.w, p->gcrodr_PRECISION.eigslvr.ordr_keyscpy,
+                         p->gcrodr_PRECISION.eigslvr.ordr_idxs, m );
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)
+
+  // ---------------- then, computing C and U
+
   int i, j, kl, start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
@@ -469,6 +480,19 @@ void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PREC
     // and then, multi saxpy to obtain Yk
     vector_PRECISION_multi_saxpy( Uk[i], Yk, Rinv[i], 1, k, start, end, l );
   }
+}
+
+
+int arnoldix_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRECISION w,
+                             complex_PRECISION **H, complex_PRECISION* buffer, int j, void (*prec)(),
+                             gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
+
+  // TODO : extend this to include orthonormalization against p->gcrodr_PRECISION.C
+
+  int return_val;
+  return_val = arnoldi_step_PRECISION( V, Z, w, H, buffer, j, prec, p, l, threading );
+  return return_val;
+
 }
 
 #endif
