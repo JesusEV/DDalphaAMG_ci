@@ -173,33 +173,42 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
   buff1 = p->restart_length;
   buff3 = p->tol;
 
+  START_MASTER(threading)
   p->b = random_rhs;
   p->num_restart = 1;
   p->restart_length = p->polyprec_PRECISION.d_poly;
   p->preconditioner = NULL;
   p->tol = 1E-8;
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)	
 
   // TODO: add while loop to 
+  START_MASTER(threading)
   l->dup_H = 1;
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)	
   vector_PRECISION_define_random(random_rhs,start, end, l);
   fgmres_PRECISION(p, l, threading);
+  START_MASTER(threading)
   l->dup_H = 0;
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)	
 
+  START_MASTER(threading)
   p->b = buff0;
   p->num_restart = buff2;
   p->restart_length = buff1;
   p->preconditioner = apply_polyprec_PRECISION;
   p->tol = buff3;
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)	
 
   START_MASTER(threading)
-
   harmonic_ritz_PRECISION(p);
   leja_ordering_PRECISION(p);
-
   END_MASTER(threading)
   SYNC_MASTER_TO_ALL(threading)	
 }
-
 
 
 void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
@@ -214,7 +223,9 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
   if (l->p_PRECISION.polyprec_PRECISION.update_lejas == 1)
   {
     update_lejas_PRECISION(&(l->p_PRECISION), l, threading);
+    START_MASTER(threading)
     l->p_PRECISION.polyprec_PRECISION.update_lejas = 0;
+    END_MASTER(threading)
   }
 
   int d_poly = l->p_PRECISION.polyprec_PRECISION.d_poly;
@@ -230,7 +241,11 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
   for (i = 1; i < d_poly; i++)
   {
     vector_PRECISION_define(temp, 0.0, start, end, l); // Is it necessary?
+    SYNC_MASTER_TO_ALL(threading);
+    SYNC_CORES(threading);
     apply_operator_PRECISION(temp, product, &l->p_PRECISION, l, threading);
+    SYNC_MASTER_TO_ALL(threading);
+    SYNC_CORES(threading);
     vector_PRECISION_saxpy(product, product, temp, -1./lejas[i-1], start, end, l);
     vector_PRECISION_saxpy(accum_prod, accum_prod, product, 1./lejas[i], start, end, l);
   }
