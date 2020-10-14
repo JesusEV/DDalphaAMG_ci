@@ -228,9 +228,6 @@ void re_construct_lejas_PRECISION( level_struct *l, struct Thread *threading ) {
 void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
                                int res, level_struct *l, struct Thread *threading )
 {
-
-  //printf0("APPLY POLY!\n");
-
   int i, start, end;
   SYNC_MASTER_TO_ALL(threading);
   SYNC_CORES(threading);
