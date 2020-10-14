@@ -1024,6 +1024,9 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 * - void (*prec)(): Function pointer to preconditioner (can be NULL if no 
 *   preconditioning is used).
 *********************************************************************************/
+
+// TODO :: add restriction to have always both SINGLE_ALLREDUCE_ARNOLDI and PIPELINED_ARNOLDI together
+
 #ifdef SINGLE_ALLREDUCE_ARNOLDI
 #ifdef PIPELINED_ARNOLDI // assuming _RIGHT preconditioning
   if ( l->level == 0 && l->depth > 0 ) {
