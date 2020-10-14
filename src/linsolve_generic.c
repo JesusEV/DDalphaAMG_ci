@@ -619,6 +619,7 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
 #endif   
     
     for( il=0; il<p->restart_length && finish==0; il++) {
+
       j = il; iter++;
       if ( g.method == 5 ) {
         START_LOCKED_MASTER(threading)
@@ -645,7 +646,7 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
         break;
       }
 #endif
-      
+
       if ( cabs( p->H[j][j+1] ) > p->tol/10 ) {
         qr_update_PRECISION( p->H, p->s, p->c, p->gamma, j, l, threading );
         gamma_jp1 = cabs( p->gamma[j+1] );

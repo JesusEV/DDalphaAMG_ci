@@ -81,7 +81,7 @@ void coarse_grid_correction_PRECISION_setup( level_struct *l, struct Thread *thr
       coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
     }
   }
-  
+
   if ( l->next_level->level > 0 ) {
     next_level_setup( NULL, l->next_level, threading );
     START_LOCKED_MASTER(threading)
@@ -326,7 +326,10 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     }
   }
 #ifdef POLYPREC
-  else { l->p_PRECISION.polyprec_PRECISION.update_lejas = 1; }
+  else {
+    // this runs on level 0 only
+    l->p_PRECISION.polyprec_PRECISION.update_lejas = 1;
+  }
 #endif
 }
 

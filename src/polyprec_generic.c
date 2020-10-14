@@ -58,9 +58,9 @@ void print_matrix_PRECISION(complex_PRECISION* A, int mv, int mh )
 void print_vector_PRECISION( char* desc, vector_PRECISION w, int n)
 {
   int j;
-  printf( "\n %s\n", desc );
-  for( j = 0; j < n; j++ ) printf( " (%6.6f,%6.6f)", creal(w[j]), cimag(w[j]) );
-  printf( "\n" );
+  printf0( "\n %s\n", desc );
+  for( j = 0; j < n; j++ ) printf0( " (%6.6f,%6.6f)", creal(w[j]), cimag(w[j]) );
+  printf0( "\n" );
 }
 
 
@@ -187,7 +187,7 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
   l->dup_H = 1;
   END_MASTER(threading)
   SYNC_MASTER_TO_ALL(threading)	
-  vector_PRECISION_define_random(random_rhs,start, end, l);
+  vector_PRECISION_define_random(random_rhs, start, end, l);
   fgmres_PRECISION(p, l, threading);
   START_MASTER(threading)
   l->dup_H = 0;
@@ -211,22 +211,30 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
 }
 
 
-void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
-                       int res, level_struct *l, struct Thread *threading )
-{
+void re_construct_lejas_PRECISION( level_struct *l, struct Thread *threading ) {
 
-  int i, start, end;
-  SYNC_MASTER_TO_ALL(threading);
-  SYNC_CORES(threading);
-  compute_core_start_end(l->p_PRECISION.v_start, l->p_PRECISION.v_end, &start, &end, l, threading);
-	
   if (l->p_PRECISION.polyprec_PRECISION.update_lejas == 1)
   {
     update_lejas_PRECISION(&(l->p_PRECISION), l, threading);
     START_MASTER(threading)
     l->p_PRECISION.polyprec_PRECISION.update_lejas = 0;
     END_MASTER(threading)
+    SYNC_MASTER_TO_ALL(threading);
+    SYNC_CORES(threading);
   }
+}
+
+
+void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
+                               int res, level_struct *l, struct Thread *threading )
+{
+
+  //printf0("APPLY POLY!\n");
+
+  int i, start, end;
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading);
+  compute_core_start_end(l->p_PRECISION.v_start, l->p_PRECISION.v_end, &start, &end, l, threading);
 
   int d_poly = l->p_PRECISION.polyprec_PRECISION.d_poly;
   vector_PRECISION accum_prod = l->p_PRECISION.polyprec_PRECISION.accum_prod;

@@ -1337,6 +1337,11 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   coarse_n_hopping_term_PRECISION( p->b, p->x, op, _EVEN_SITES, l, threading );
   PROF_PRECISION_STOP( _NC, 0, threading );
 
+#ifdef POLYPREC
+  // re-construct Lejas before calling fgmres (if necessary!)
+  if ( l->level==0 ) re_construct_lejas_PRECISION( l, threading );
+#endif
+
 #ifdef GCRODR
   fgmres_iters = flgcrodr_PRECISION( p, l, threading );
 #else  
