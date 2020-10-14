@@ -236,6 +236,8 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
   SYNC_CORES(threading);
   compute_core_start_end(l->p_PRECISION.v_start, l->p_PRECISION.v_end, &start, &end, l, threading);
 
+  //re_construct_lejas_PRECISION( l, threading );
+
   int d_poly = l->p_PRECISION.polyprec_PRECISION.d_poly;
   vector_PRECISION accum_prod = l->p_PRECISION.polyprec_PRECISION.accum_prod;
   vector_PRECISION product = l->p_PRECISION.polyprec_PRECISION.product;
