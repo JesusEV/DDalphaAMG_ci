@@ -194,6 +194,8 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
   END_MASTER(threading)
   SYNC_MASTER_TO_ALL(threading)	
 
+  MPI_Barrier(l->gs_PRECISION.level_comm);
+
   START_MASTER(threading)
   p->b = buff0;
   p->num_restart = buff2;
@@ -228,6 +230,8 @@ void re_construct_lejas_PRECISION( level_struct *l, struct Thread *threading ) {
 void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
                                int res, level_struct *l, struct Thread *threading )
 {
+  // TODO : remove the following calls to MPI_Barrier(...) ?
+
   int i, start, end;
   SYNC_MASTER_TO_ALL(threading);
   SYNC_CORES(threading);
@@ -244,17 +248,31 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
   vector_PRECISION_copy( product, eta, start, end, l );
   vector_PRECISION_define(accum_prod, 0.0, start, end, l);
 
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading);
+  MPI_Barrier(l->gs_PRECISION.level_comm);
+
   vector_PRECISION_saxpy(accum_prod, accum_prod, product, 1./lejas[0], start, end, l);
   for (i = 1; i < d_poly; i++)
   {
     vector_PRECISION_define(temp, 0.0, start, end, l); // Is it necessary?
+
     SYNC_MASTER_TO_ALL(threading);
     SYNC_CORES(threading);
+    MPI_Barrier(l->gs_PRECISION.level_comm);
+
     apply_operator_PRECISION(temp, product, &l->p_PRECISION, l, threading);
+
     SYNC_MASTER_TO_ALL(threading);
     SYNC_CORES(threading);
+    MPI_Barrier(l->gs_PRECISION.level_comm);
+
     vector_PRECISION_saxpy(product, product, temp, -1./lejas[i-1], start, end, l);
     vector_PRECISION_saxpy(accum_prod, accum_prod, product, 1./lejas[i], start, end, l);
+
+    SYNC_MASTER_TO_ALL(threading);
+    SYNC_CORES(threading);
+    MPI_Barrier(l->gs_PRECISION.level_comm);
   }
   vector_PRECISION_copy( phi, accum_prod, start, end, l );
 }

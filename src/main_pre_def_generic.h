@@ -108,7 +108,7 @@
   typedef struct {
     int i, k, CU_usable, syst_size, finish, orth_against_Ck;
 
-    PRECISION b_norm;
+    PRECISION b_norm, norm_r0;
 
     vector_PRECISION *Pk, *C, *Cc, *U, *Yk, *hatZ, *hatW;
     // Gc is used to copy G

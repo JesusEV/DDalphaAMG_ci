@@ -292,7 +292,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
   // start and end indices for vector functions depending on thread
   // NOTE : in this context, <m> changes! It is not (necessarily) p->restart_length
-  int start, end, res, fgmresx_iter=0, m, i, j, ol;
+  int start, end, res, fgmresx_iter=0, m, i, j, ol, k=p->gcrodr_PRECISION.k;
 
   PRECISION beta=0, norm_r0=1;
 
@@ -317,6 +317,11 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
   beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
   norm_r0 = beta;
+
+  START_MASTER(threading);
+  p->gcrodr_PRECISION.norm_r0 = norm_r0;
+  END_MASTER(threading);
+  SYNC_MASTER_TO_ALL(threading);
 
   START_MASTER(threading)
   // setting the following line for the upcoming call to fgmresx_PRECISION(...)
@@ -387,6 +392,11 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       vector_PRECISION_multi_saxpy( p->r, p->V, bf, 1, m+1, start, end, l );
     }
 
+    // if m<k, there's not enough information to build the recycling subspace
+    if ( m<k ) {
+      return m;
+    }
+
     if ( p->preconditioner==NULL ) {
       // build the matrices A and B used for generalized-eigensolving
       gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.eigslvr.Hc,
@@ -408,14 +418,12 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
   } else{ error0("Invalid value for p->gcrodr_PRECISION.CU_usable \n"); }
 
-  int k = p->gcrodr_PRECISION.k;
   for ( ol=0; ol < p->num_restart; ol++ )  {
-
     beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
 
-    if ( beta/norm_r0 < p->tol ) {
-      break;
-    }
+    //if ( beta/norm_r0 < p->tol ) {
+    //  break;
+    //}
 
     START_MASTER(threading)
     // setting the following line for the upcoming call to fgmresx_PRECISION(...)
@@ -611,12 +619,12 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
   // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
   
-  norm_r0 = p->gcrodr_PRECISION.b_norm;
+  norm_r0 = p->gcrodr_PRECISION.norm_r0;
 
   vector_PRECISION_real_scale( p->V[0], p->r, 1/p->gamma[0], start, end, l ); // v_0 = r / gamma_0
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
   if ( l->level == 0 && l->depth > 0 ) {
-    arnoldix_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, 0, p->preconditioner, p, l, threading );
+    arnoldi_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, 0, p->preconditioner, p, l, threading );
   }
 #endif   
 
@@ -626,18 +634,18 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
     // one step of Arnoldi
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
     if ( l->level == 0 && l->depth > 0 ) {
-      if ( !arnoldix_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j+1, p->preconditioner, p, l, threading ) ) {
+      if ( !arnoldi_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j+1, p->preconditioner, p, l, threading ) ) {
         printf0("| -------------- iteration %d, restart due to H(%d,%d) < 0 |\n", iter, j+2, j+1 );
         break;
       }
     } else {
-      if ( !arnoldix_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j, p->preconditioner, p, l, threading ) ) {
+      if ( !arnoldi_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j, p->preconditioner, p, l, threading ) ) {
         printf0("| -------------- iteration %d, restart due to H(%d,%d) < 0 |\n", iter, j+1, j );
         break;
       }
     }
 #else
-    if ( !arnoldix_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j, p->preconditioner, p, l, threading ) ) {
+    if ( !arnoldi_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, j, p->preconditioner, p, l, threading ) ) {
       printf0("| -------------- iteration %d, restart due to H(%d,%d) < 0 |\n", iter, j+1, j );
       break;
     }
