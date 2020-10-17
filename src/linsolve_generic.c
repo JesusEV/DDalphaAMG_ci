@@ -64,27 +64,6 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->polyprec_PRECISION.eigslvr.Hc = NULL;
 #endif
 
-#ifdef GCRODR
-  p->gcrodr_PRECISION.C = NULL;
-  p->gcrodr_PRECISION.U = NULL;
-  p->gcrodr_PRECISION.gev_A = NULL;
-  p->gcrodr_PRECISION.gev_B = NULL;
-  p->gcrodr_PRECISION.Bbuff = NULL;
-  p->gcrodr_PRECISION.eigslvr.w = NULL;
-  p->gcrodr_PRECISION.eigslvr.beta = NULL;
-  p->gcrodr_PRECISION.eigslvr.vl = NULL;
-  p->gcrodr_PRECISION.eigslvr.vr = NULL;
-  p->gcrodr_PRECISION.eigslvr.qr_tau = NULL;
-
-  p->gcrodr_PRECISION.Yk = NULL;
-  p->gcrodr_PRECISION.Pk = NULL;
-
-  p->gcrodr_PRECISION.QR = NULL;
-  p->gcrodr_PRECISION.Q = NULL;
-  p->gcrodr_PRECISION.R = NULL;
-  p->gcrodr_PRECISION.Rinv = NULL;
-#endif
-
 #ifdef POLYPREC
   p->polyprec_PRECISION.Hcc = NULL; 
   p->polyprec_PRECISION.L = NULL;
@@ -279,98 +258,9 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     p->polyprec_PRECISION.eigslvr.Hc[i] = p->polyprec_PRECISION.eigslvr.Hc[0] + i*(m+1);
 #endif
 
-#ifdef GCRODR
-  if ( g.gcrodr_k >= p->restart_length ) {
-    error0("The value of k in GCRO-DR needs to be smaller than the restart length m\n");
-  }
-  p->gcrodr_PRECISION.k = g.gcrodr_k;
-
-  p->gcrodr_PRECISION.CU_usable = 0;
-
-  // allocating C and U, which will contain the info associated to the recycling subspace
-  MALLOC( p->gcrodr_PRECISION.C, vector_PRECISION, p->gcrodr_PRECISION.k );
-  p->gcrodr_PRECISION.C[0] = NULL;
-  MALLOC( p->gcrodr_PRECISION.C[0], complex_PRECISION, vl * p->gcrodr_PRECISION.k );
-  for ( i=1; i<p->gcrodr_PRECISION.k; i++ ) {
-    p->gcrodr_PRECISION.C[i] = p->gcrodr_PRECISION.C[0] + i*vl;
-  }
-  MALLOC( p->gcrodr_PRECISION.U, vector_PRECISION, p->gcrodr_PRECISION.k );
-  p->gcrodr_PRECISION.U[0] = NULL;
-  MALLOC( p->gcrodr_PRECISION.U[0], complex_PRECISION, vl * p->gcrodr_PRECISION.k );
-  for ( i=1; i<p->gcrodr_PRECISION.k; i++ ) {
-    p->gcrodr_PRECISION.U[i] = p->gcrodr_PRECISION.U[0] + i*vl;
-  }
-
-  // g_ln is the length m+k of subspaces used in FL-GCRO-DR
-  int g_ln = m+p->gcrodr_PRECISION.k;
-  MALLOC( p->gcrodr_PRECISION.gev_A, complex_PRECISION*, g_ln );
-  MALLOC( p->gcrodr_PRECISION.gev_B, complex_PRECISION*, g_ln );
-  p->gcrodr_PRECISION.gev_A[0] = NULL;
-  p->gcrodr_PRECISION.gev_B[0] = NULL;
-  MALLOC( p->gcrodr_PRECISION.gev_A[0], complex_PRECISION, g_ln*g_ln );
-  MALLOC( p->gcrodr_PRECISION.gev_B[0], complex_PRECISION, g_ln*g_ln );
-  for ( i=1; i<g_ln; i++ ) {
-    p->gcrodr_PRECISION.gev_A[i] = p->gcrodr_PRECISION.gev_A[0] + i*g_ln;
-    p->gcrodr_PRECISION.gev_B[i] = p->gcrodr_PRECISION.gev_B[0] + i*g_ln;
-  }
-
-  MALLOC( p->gcrodr_PRECISION.eigslvr.w, complex_PRECISION, g_ln );
-  MALLOC( p->gcrodr_PRECISION.eigslvr.beta, complex_PRECISION, g_ln );
-
-  MALLOC( p->gcrodr_PRECISION.eigslvr.vr, complex_PRECISION, g_ln*g_ln );
-
-  // setting values for using the Generalized Eigenvalue Solver from LAPACK
-  p->gcrodr_PRECISION.eigslvr.jobvl = 'N';
-  p->gcrodr_PRECISION.eigslvr.jobvr = 'V';
-  p->gcrodr_PRECISION.eigslvr.A = p->gcrodr_PRECISION.gev_A[0];
-  p->gcrodr_PRECISION.eigslvr.lda = p->restart_length + p->gcrodr_PRECISION.k;
-  p->gcrodr_PRECISION.eigslvr.B = p->gcrodr_PRECISION.gev_B[0];
-  p->gcrodr_PRECISION.eigslvr.ldb = p->restart_length + p->gcrodr_PRECISION.k;
-  p->gcrodr_PRECISION.eigslvr.ldvl = p->restart_length + p->gcrodr_PRECISION.k;
-  p->gcrodr_PRECISION.eigslvr.ldvr = p->restart_length + p->gcrodr_PRECISION.k;
-  
-  // matrix Y containing Yk = Zm * Pk
-  MALLOC( p->gcrodr_PRECISION.Yk, complex_PRECISION*, p->gcrodr_PRECISION.k );
-  p->gcrodr_PRECISION.Yk[0] = NULL;
-  MALLOC( p->gcrodr_PRECISION.Yk[0], complex_PRECISION, vl * p->gcrodr_PRECISION.k );
-  for ( i=1; i<p->gcrodr_PRECISION.k; i++ ) {
-    p->gcrodr_PRECISION.Yk[i] = p->gcrodr_PRECISION.Yk[0] + i*vl;
-  }
-
-  MALLOC( p->gcrodr_PRECISION.Pk, complex_PRECISION*, p->gcrodr_PRECISION.k );
-
-  p->gcrodr_PRECISION.syst_size = vl;
-
-  MALLOC( p->gcrodr_PRECISION.QR, complex_PRECISION*, p->gcrodr_PRECISION.k );
-  p->gcrodr_PRECISION.QR[0] = NULL;
-  MALLOC( p->gcrodr_PRECISION.QR[0], complex_PRECISION, (g_ln+1) * p->gcrodr_PRECISION.k );
-  for ( i=1; i<p->gcrodr_PRECISION.k; i++ ) {
-    p->gcrodr_PRECISION.QR[i] = p->gcrodr_PRECISION.QR[0] + i*(g_ln+1);
-  }
-
-  p->gcrodr_PRECISION.eigslvr.qr_QR = p->gcrodr_PRECISION.QR;
-  p->gcrodr_PRECISION.eigslvr.qr_lda = g_ln+1;
-
-  p->gcrodr_PRECISION.Q = p->gcrodr_PRECISION.QR;
-  p->gcrodr_PRECISION.eigslvr.qr_Q = p->gcrodr_PRECISION.Q;
-
-  MALLOC( p->gcrodr_PRECISION.R, complex_PRECISION*, p->gcrodr_PRECISION.k );
-  p->gcrodr_PRECISION.R[0] = NULL;
-  MALLOC( p->gcrodr_PRECISION.R[0], complex_PRECISION, p->gcrodr_PRECISION.k * p->gcrodr_PRECISION.k );
-  for ( i=1; i<p->gcrodr_PRECISION.k; i++ ) {
-    p->gcrodr_PRECISION.R[i] = p->gcrodr_PRECISION.R[0] + i * p->gcrodr_PRECISION.k;
-  }
-
-  p->gcrodr_PRECISION.Rinv = p->gcrodr_PRECISION.R;
-  p->gcrodr_PRECISION.eigslvr.qr_R = p->gcrodr_PRECISION.R;
-  p->gcrodr_PRECISION.eigslvr.qr_Rinv = p->gcrodr_PRECISION.R;
-
-  MALLOC( p->gcrodr_PRECISION.eigslvr.qr_tau, complex_PRECISION, p->gcrodr_PRECISION.k );
-#endif
-
 #ifdef POLYPREC
   p->polyprec_PRECISION.d_poly = g.polyprec_d;
-  int d_poly = p->polyprec_PRECISION.d_poly;
+  int d_poly=p->polyprec_PRECISION.d_poly;
 
   MALLOC( p->polyprec_PRECISION.col_prods, complex_PRECISION, d_poly);
   MALLOC( p->polyprec_PRECISION.h_ritz, complex_PRECISION, d_poly);
@@ -387,12 +277,11 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 
   MALLOC( p->polyprec_PRECISION.L[0], complex_PRECISION, (d_poly+1)*d_poly );
 
-  for (int i=1; i<d_poly+1; i++ )
+  for (i=1; i<d_poly+1; i++)
   {
     p->polyprec_PRECISION.L[i] = p->polyprec_PRECISION.L[0] + i*d_poly;
   }
 
-  // ---------------------
   MALLOC( p->polyprec_PRECISION.dirctslvr.ipiv, int, d_poly);
   MALLOC( p->polyprec_PRECISION.dirctslvr.x, complex_PRECISION, d_poly);
   MALLOC( p->polyprec_PRECISION.dirctslvr.b, complex_PRECISION, d_poly);
@@ -404,7 +293,6 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   p->polyprec_PRECISION.dirctslvr.Hcc = p->polyprec_PRECISION.Hcc;
   p->polyprec_PRECISION.dirctslvr.dirctslvr_PRECISION = dirctslvr_PRECISION;
 
-  // ---------------------
   MALLOC( p->polyprec_PRECISION.eigslvr.vl, complex_PRECISION, d_poly*d_poly );
   MALLOC( p->polyprec_PRECISION.eigslvr.vr, complex_PRECISION, d_poly*d_poly );
 
@@ -418,12 +306,10 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   p->polyprec_PRECISION.eigslvr.w = p->polyprec_PRECISION.h_ritz;
   p->polyprec_PRECISION.Hc = p->polyprec_PRECISION.eigslvr.Hc;
   p->polyprec_PRECISION.eigslvr.eigslvr_PRECISION = eigslvr_PRECISION;    
-  // ---------------------
 
   p->polyprec_PRECISION.update_lejas = 1;
   p->polyprec_PRECISION.syst_size = vl;
 
-  //p->polyprec_PRECISION.d_poly = 10;
   p->polyprec_PRECISION.eigslvr.A = p->polyprec_PRECISION.Hc[0];
 #endif
 
@@ -478,43 +364,10 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   p->D = NULL;
   p->clover = NULL;
 
+  // --- COARSEST-LEVEL IMPROVEMENTS
+
 #if defined(GCRODR) || defined(POLYPREC)
   if (l->level==0) {
-#endif
-
-#ifdef GCRODR
-  // g_ln is the length m+k of subspaces used in FL-GCRO-DR
-  int g_ln = p->restart_length+p->gcrodr_PRECISION.k;
-
-  FREE( p->gcrodr_PRECISION.gev_A[0], complex_PRECISION, g_ln*g_ln );
-  FREE( p->gcrodr_PRECISION.gev_B[0], complex_PRECISION, g_ln*g_ln );
-
-  FREE( p->gcrodr_PRECISION.gev_A, complex_PRECISION*, g_ln );
-  FREE( p->gcrodr_PRECISION.gev_B, complex_PRECISION*, g_ln );
-
-  FREE( p->gcrodr_PRECISION.eigslvr.w, complex_PRECISION, g_ln );
-  FREE( p->gcrodr_PRECISION.eigslvr.beta, complex_PRECISION, g_ln );
-
-  FREE( p->gcrodr_PRECISION.eigslvr.vr, complex_PRECISION, g_ln*g_ln );
-
-  FREE( p->gcrodr_PRECISION.Yk[0], complex_PRECISION, p->gcrodr_PRECISION.syst_size * p->gcrodr_PRECISION.k );
-  // matrix Y containing Yk = Zm * Pk
-  FREE( p->gcrodr_PRECISION.Yk, complex_PRECISION*, p->gcrodr_PRECISION.k );
-
-  FREE( p->gcrodr_PRECISION.C[0], complex_PRECISION, p->gcrodr_PRECISION.syst_size * p->gcrodr_PRECISION.k );
-  FREE( p->gcrodr_PRECISION.C, vector_PRECISION, p->gcrodr_PRECISION.k );
-  FREE( p->gcrodr_PRECISION.U[0], complex_PRECISION, p->gcrodr_PRECISION.syst_size * p->gcrodr_PRECISION.k );
-  FREE( p->gcrodr_PRECISION.U, vector_PRECISION, p->gcrodr_PRECISION.k );
-
-  FREE( p->gcrodr_PRECISION.Pk, complex_PRECISION*, p->gcrodr_PRECISION.k );
-
-  FREE( p->gcrodr_PRECISION.QR[0], complex_PRECISION, (g_ln+1) * p->gcrodr_PRECISION.k );
-  FREE( p->gcrodr_PRECISION.QR, complex_PRECISION*, p->gcrodr_PRECISION.k );
-
-  FREE( p->gcrodr_PRECISION.R[0], complex_PRECISION, p->gcrodr_PRECISION.k * p->gcrodr_PRECISION.k );
-  FREE( p->gcrodr_PRECISION.R, complex_PRECISION*, p->gcrodr_PRECISION.k );
-
-  FREE( p->gcrodr_PRECISION.eigslvr.qr_tau, complex_PRECISION, p->gcrodr_PRECISION.k );
 #endif
 
   // copy of Hesselnberg matrix
@@ -532,30 +385,27 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   FREE(p->polyprec_PRECISION.eigslvr.Hc, complex_PRECISION*, m);
 #endif
 
-
 #ifdef POLYPREC
-    int d_poly = 10;
-    int vl = p->polyprec_PRECISION.syst_size;
-    FREE( p->polyprec_PRECISION.Hcc, complex_PRECISION, d_poly*d_poly );
-    FREE( p->polyprec_PRECISION.L[0], complex_PRECISION, (d_poly+1)*d_poly );
-    FREE( p->polyprec_PRECISION.L, complex_PRECISION*, d_poly+1 );
-    FREE( p->polyprec_PRECISION.h_ritz,complex_PRECISION, d_poly );
-    FREE( p->polyprec_PRECISION.lejas,complex_PRECISION, d_poly );
-    FREE( p->polyprec_PRECISION.accum_prod, complex_PRECISION, vl );
-    FREE( p->polyprec_PRECISION.product, complex_PRECISION, vl );    
-    FREE( p->polyprec_PRECISION.temp, complex_PRECISION, vl );    
-    FREE( p->polyprec_PRECISION.random_rhs, complex_PRECISION, vl );
-    FREE( p->polyprec_PRECISION.col_prods, complex_PRECISION, d_poly );
+  int d_poly = 10;
+  int vl = p->polyprec_PRECISION.syst_size;
+  FREE( p->polyprec_PRECISION.Hcc, complex_PRECISION, d_poly*d_poly );
+  FREE( p->polyprec_PRECISION.L[0], complex_PRECISION, (d_poly+1)*d_poly );
+  FREE( p->polyprec_PRECISION.L, complex_PRECISION*, d_poly+1 );
+  FREE( p->polyprec_PRECISION.h_ritz,complex_PRECISION, d_poly );
+  FREE( p->polyprec_PRECISION.lejas,complex_PRECISION, d_poly );
+  FREE( p->polyprec_PRECISION.accum_prod, complex_PRECISION, vl );
+  FREE( p->polyprec_PRECISION.product, complex_PRECISION, vl );    
+  FREE( p->polyprec_PRECISION.temp, complex_PRECISION, vl );    
+  FREE( p->polyprec_PRECISION.random_rhs, complex_PRECISION, vl );
+  FREE( p->polyprec_PRECISION.col_prods, complex_PRECISION, d_poly );
 
-    FREE( p->polyprec_PRECISION.eigslvr.vl,complex_PRECISION, d_poly*d_poly );
-    FREE( p->polyprec_PRECISION.eigslvr.vr,complex_PRECISION, d_poly*d_poly );  
+  FREE( p->polyprec_PRECISION.eigslvr.vl,complex_PRECISION, d_poly*d_poly );
+  FREE( p->polyprec_PRECISION.eigslvr.vr,complex_PRECISION, d_poly*d_poly );  
 
-    FREE( p->polyprec_PRECISION.dirctslvr.ipiv, int, d_poly );
-    FREE( p->polyprec_PRECISION.dirctslvr.x, complex_PRECISION, d_poly );
-    FREE( p->polyprec_PRECISION.dirctslvr.b, complex_PRECISION, d_poly );
+  FREE( p->polyprec_PRECISION.dirctslvr.ipiv, int, d_poly );
+  FREE( p->polyprec_PRECISION.dirctslvr.x, complex_PRECISION, d_poly );
+  FREE( p->polyprec_PRECISION.dirctslvr.b, complex_PRECISION, d_poly );
 #endif
-
-
 
 #if defined(GCRODR) || defined(POLYPREC)
   }
@@ -1197,6 +1047,40 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   } else {
     apply_operator_PRECISION( w, V[j], p, l, threading ); // w = D*V[j]
   }
+
+#ifdef GCRODR
+  // orthogonalize against Ck whenever necessary
+  if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
+    int k = p->gcrodr_PRECISION.k;
+    vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
+    complex_PRECISION **B = p->gcrodr_PRECISION.ort_B;
+    // buffer
+    complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
+
+    complex_PRECISION tmpx[k];
+    process_multi_inner_product_PRECISION( k, tmpx, Ck, w, p->v_start, p->v_end, l, threading );
+    START_MASTER(threading)
+    // buffer is of length m, and k<m
+    for ( i=0; i<k; i++ )
+      buffer[i] = tmpx[i];
+    if ( g.num_processes > 1 ) {
+      PROF_PRECISION_START( _ALLR );
+      MPI_Allreduce( buffer, bf, k, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
+      PROF_PRECISION_STOP( _ALLR, 1 );
+    } else {
+      for( i=0; i<k; i++ )
+        bf[i] = buffer[i];
+    }
+
+    // copy the B coefficients to the corresponding matrix
+    memcpy( B[j], bf, sizeof(complex_PRECISION)*k );
+    END_MASTER(threading)
+    SYNC_MASTER_TO_ALL(threading)
+
+    for( i=0; i<k; i++ )
+      vector_PRECISION_saxpy( w, w, Ck[i], -B[j][i], start, end, l );
+  }
+#endif
 
   // orthogonalization
   complex_PRECISION tmp[j+1];

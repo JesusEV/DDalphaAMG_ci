@@ -97,6 +97,8 @@
   #define trtri_float LAPACKE_ctrtri
   #define gesv_double LAPACKE_zgesv
   #define gesv_float LAPACKE_cgesv
+  #define gels_double LAPACKE_zgels
+  #define gels_float LAPACKE_cgels
 #endif
 
 

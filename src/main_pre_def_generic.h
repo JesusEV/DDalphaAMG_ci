@@ -70,87 +70,73 @@
 #endif
   } operator_PRECISION_struct;
 
-
 #if defined(POLYPREC) || defined(GCRODR)
   typedef struct
   {
+    int N, nrhs, lda, ldb, info;
 
-      int N, nrhs, lda, ldb, info;
+    int *ipiv;
+    vector_PRECISION x, b;
+    complex_PRECISION *Hcc;  
 
-      int *ipiv;
-      vector_PRECISION x, b;
-      complex_PRECISION *Hcc;  
-
-      void (*dirctslvr_PRECISION)();
+    void (*dirctslvr_PRECISION)();
 
   } dirctslvr_PRECISION_struct;
 #endif
 
-
 #if defined(GCRODR) || defined(POLYPREC)
   // this is both eigensolver and generalized eigensolver
   typedef struct {
-
     char jobvl, jobvr;
-    int N, lda, ldb, ldvl, ldvr, info;
 
+    int N, lda, ldb, ldvl, ldvr, info, qr_m, qr_n, qr_lda, qr_k;
+
+    int *ordr_idxs;
+
+    complex_PRECISION *ordr_keyscpy, *qr_tau;
     vector_PRECISION vl, vr, w, beta, A, B;
+
+    complex_PRECISION **qr_QR, **qr_Q, **qr_R, **qr_Rinv;
     complex_PRECISION **Hc;
 
     void (*eigslvr_PRECISION)();
     void (*gen_eigslvr_PRECISION)();
-    
-    int *ordr_idxs;
-    complex_PRECISION *ordr_keyscpy;
-
-    complex_PRECISION *qr_tau;
-    complex_PRECISION **qr_QR, **qr_Q, **qr_R, **qr_Rinv;
-    int qr_m, qr_n, qr_lda, qr_k;
-
   } eigslvr_PRECISION_struct;
 #endif
 
 #ifdef GCRODR
   typedef struct {
-    // blah -- only simple variables and pointers
-    int i;
-    eigslvr_PRECISION_struct eigslvr;
+    int i, k, CU_usable, syst_size, finish, orth_against_Ck;
 
-    vector_PRECISION *Pk;
-    
-    vector_PRECISION *C, *U, *Yk;
-    int k, CU_usable;
     PRECISION b_norm;
-    complex_PRECISION **gev_A, **gev_B, **Bbuff;
-    complex_PRECISION **QR, **Q, **R, **Rinv;
-    
-    int syst_size;
-    
+
+    vector_PRECISION *Pk, *C, *Cc, *U, *Yk, *hatZ, *hatW;
+    // Gc is used to copy G
+    complex_PRECISION **gev_A, **gev_B, **Bbuff, **QR, **Q, **R, **Rinv, **ort_B, **G, **Gc;
+
+    eigslvr_PRECISION_struct eigslvr;
   } gcrodr_PRECISION_struct;
 #endif
+
 #ifdef POLYPREC
-  
   typedef struct
   {
-      int update_lejas;
-      int d_poly;
-      int syst_size;
+    int update_lejas;
+    int d_poly;
+    int syst_size;
       
-      complex_PRECISION **Hc;
-      complex_PRECISION *Hcc;
-      complex_PRECISION **L;
-      complex_PRECISION *col_prods;
-      vector_PRECISION h_ritz;
-      vector_PRECISION lejas;
-      vector_PRECISION random_rhs;
+    complex_PRECISION **Hc;
+    complex_PRECISION *Hcc;
+    complex_PRECISION **L;
+    complex_PRECISION *col_prods;
+    vector_PRECISION h_ritz;
+    vector_PRECISION lejas;
+    vector_PRECISION random_rhs;
+    vector_PRECISION accum_prod, product, temp;
 
-      vector_PRECISION accum_prod, product, temp;
-
-      eigslvr_PRECISION_struct eigslvr;
-      dirctslvr_PRECISION_struct dirctslvr;
-
+    eigslvr_PRECISION_struct eigslvr;
+    dirctslvr_PRECISION_struct dirctslvr;
   } polyprec_PRECISION_struct;
-
 #endif
   
   typedef struct {
@@ -171,7 +157,6 @@
 #ifdef POLYPREC
     polyprec_PRECISION_struct polyprec_PRECISION;
 #endif
-    
   } gmres_PRECISION_struct;
 
   typedef struct {
