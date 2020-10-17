@@ -292,7 +292,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
   // start and end indices for vector functions depending on thread
   // NOTE : in this context, <m> changes! It is not (necessarily) p->restart_length
-  int start, end, res, fgmresx_iter=0, m, i, j, ol, k=p->gcrodr_PRECISION.k;
+  int start, end, fgmresx_iter=0, m, i, j, ol, k=p->gcrodr_PRECISION.k;
 
   PRECISION beta=0, norm_r0=1;
 
@@ -302,10 +302,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
   // compute initial residual
   if( p->initial_guess_zero ) {
-    res = _NO_RES;
     vector_PRECISION_copy( p->r, p->b, start, end, l );
   } else {
-    res = _RES;
     if ( p->kind == _LEFT && p->preconditioner ) {
       apply_operator_PRECISION( p->Z[0], p->x, p, l, threading );
       p->preconditioner( p->w, NULL, p->Z[0], _NO_RES, l, threading );
@@ -365,7 +363,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     // update the solution p->x (this, from the inside, applies back-substitution on p->y)
     compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
-                                p->y, p->gamma, p->H, m-1, (res==_NO_RES)?0:1, p, l, threading );
+                                p->y, p->gamma, p->H, m-1, 0, p, l, threading );
 
     // "cheaply" updating r ( this is needed for the next call of fgmresx_PRECISION(...) )
     {
@@ -466,30 +464,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     // and, the last ingredient for the least squares problem is : <bf> as the rhs, <G> as the matrix
     
     complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
-    complex_PRECISION *bf2 = p->gcrodr_PRECISION.gev_B[0];
-    complex_PRECISION tmp[k+m+1];
-
-    // FIXME : this does not require a dot product ! (it's simply setting an entry of a vector)
-    {
-      process_multi_inner_product_PRECISION( k+m+1, tmp, p->gcrodr_PRECISION.hatW, p->r, p->v_start, p->v_end, l, threading );
-
-      SYNC_MASTER_TO_ALL(threading)
-      SYNC_CORES(threading)
-
-      START_MASTER(threading)
-      for( i=0; i<(k+m+1); i++ )
-        bf2[i] = tmp[i];
-      if ( g.num_processes > 1 ) {
-        PROF_PRECISION_START( _ALLR );
-        MPI_Allreduce( bf2, bf, k+m+1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
-        PROF_PRECISION_STOP( _ALLR, 1 );
-      } else {
-        for( i=0; i<(k+m+1); i++ )
-          bf[i] = bf2[i];
-      }
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
-    }
+    memset(bf, 0, sizeof(complex_PRECISION)*(k+m+1));
+    bf[k] = beta;
 
     START_MASTER(threading)
     gels_PRECISION( LAPACK_COL_MAJOR, 'N', k+m+1, k+m, 1, p->gcrodr_PRECISION.G[0], k+p->restart_length+1, bf, k+p->restart_length+1);
@@ -510,15 +486,17 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     for( i=0; i<(k+m); i++ )
       vector_PRECISION_saxpy( p->x, p->x, p->gcrodr_PRECISION.hatZ[i], bf[i], start, end, l );
 
-    // FIXME : update p->r differently
+    // updating p->r
     apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
     vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
-    // build the matrices A and B used for generalized-eigensolving
-    gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.Gc,
-                           p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, k+m, p, l, threading );
-    // build C and U
-    build_CU_PRECISION( p->gcrodr_PRECISION.Gc, p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, p, l, threading, k+m );
+    if ( ol<2 ) {
+      // build the matrices A and B used for generalized-eigensolving
+      gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.Gc,
+                             p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, k+m, p, l, threading );
+      // build C and U
+      build_CU_PRECISION( p->gcrodr_PRECISION.Gc, p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, p, l, threading, k+m );
+    }
 
     // check if tolerance has been reached
     if ( p->gcrodr_PRECISION.finish==1 ) {
