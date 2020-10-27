@@ -589,7 +589,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
     vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
-    //if ( ol < 2 ) {
+    // TODO : enable this ?
+    //if ( ol < 0 ) {
       // build the matrices A and B used for generalized-eigensolving
       gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.Gc,
                              p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, k+m, p, l, threading );
