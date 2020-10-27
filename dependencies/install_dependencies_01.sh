@@ -1,8 +1,14 @@
 #!/bin/bash
 
+# This file deals with installing BLAS and LAPACK
+
 make_cores=32
+
 lapack_version=3.9.0
 lapack_dir=lapack-${lapack_version}
+
+scalapack_version=2.1.0
+scalapack_dir=scalapack-${lapack_version}
 
 wget https://github.com/Reference-LAPACK/lapack/archive/v${lapack_version}.tar.gz
 tar -xvzf v${lapack_version}.tar.gz

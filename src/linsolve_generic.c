@@ -1079,6 +1079,9 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 
     for( i=0; i<k; i++ )
       vector_PRECISION_saxpy( w, w, Ck[i], -B[j][i], start, end, l );
+
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
   }
 #endif
 

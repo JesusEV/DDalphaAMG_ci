@@ -60,14 +60,18 @@ DEVEL_VERSION_FLAGS += -DPOLYPREC
 LAPACK_DIR = dependencies/lapack-3.9.0
 LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
 LAPACKE_INCLUDE = $(LAPACKE_DIR)/include
-
 BLASLIB      = $(LAPACK_DIR)/librefblas.a
 LAPACKLIB    = $(LAPACK_DIR)/liblapack.a
 LAPACKELIB   = $(LAPACK_DIR)/liblapacke.a
-
 LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
 
-
+#SCALAPACK_DIR = /usr/local/sw/intel/composer_xe_2013.0.079/mkl
+#SCALAPACK_INCLUDE = /usr/local/sw/intel/composer_xe_2013.0.079/mkl/include
+#SCALAPACK_LIBRARIES  =
+#SCALAPACK_LIBRARIES += -L/home/ramirez/Documents/DDalphaAMG_ci/dependencies/scalapack/lib -lscalapack
+SCALAPACK_DIR = 
+SCALAPACK_INCLUDE = 
+SCALAPACK_LIBRARIES =
 #---------------------------------------------------
 
 
@@ -83,7 +87,7 @@ install: copy
 .SECONDARY:
 
 $(BINDIR)/DDalphaAMG : $(OBJ) 
-	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(LAPACK_LIBRARIES) -lm -lgfortran
+	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
 
 DDalphaAMG : $(BINDIR)/DDalphaAMG
 	ln -sf $(BINDIR)/$@ $@
@@ -92,7 +96,7 @@ DDalphaAMG_devel: $(BINDIR)/DDalphaAMG_devel
 	ln -sf $(BINDIR)/$@ $@
 
 $(BINDIR)/DDalphaAMG_devel : $(OBJDB)
-	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(LAPACK_LIBRARIES) -lm -lgfortran
+	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
 
 $(LIBDIR)/libDDalphaAMG.a: $(OBJ)
 	ar rc $@ $(OBJ)
@@ -105,7 +109,7 @@ $(LIBDIR)/libDDalphaAMG_devel.a: $(OBJDB)
 	ranlib $@
 
 $(TSTDIR)/%: $(LIB) $(TSTDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) -I$(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(LAPACK_LIBRARIES) -lm -lgfortran
+	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) -I$(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
 
 $(DOCDIR)/user_doc.pdf: $(DOCDIR)/user_doc.tex $(DOCDIR)/user_doc.bib
 	( cd $(DOCDIR); pdflatex user_doc; bibtex user_doc; pdflatex user_doc; pdflatex user_doc; )

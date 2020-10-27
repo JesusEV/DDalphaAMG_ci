@@ -89,18 +89,20 @@ int main( int argc, char **argv ) {
     method_update( l.setup_iter, &l, &threading );
 
 #ifdef POLYPREC
-    // setting flag to re-update lejas
-    level_struct *lx = &l;
-    while (1) {
-      if ( lx->level==0 ) {
-        if ( g.mixed_precision==0 ) {
-          lx->p_double.polyprec_double.update_lejas = 1;
+    {
+      // setting flag to re-update lejas
+      level_struct *lx = &l;
+      while (1) {
+        if ( lx->level==0 ) {
+          if ( g.mixed_precision==0 ) {
+            lx->p_double.polyprec_double.update_lejas = 1;
+          } else {
+            lx->p_float.polyprec_float.update_lejas = 1;
+          }
+          break;
         } else {
-          lx->p_float.polyprec_float.update_lejas = 1;
+          lx = lx->next_level;
         }
-        break;
-      } else {
-        lx = lx->next_level;
       }
     }
 #endif

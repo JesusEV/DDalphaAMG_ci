@@ -99,6 +99,13 @@
   #define gesv_float LAPACKE_cgesv
   #define gels_double LAPACKE_zgels
   #define gels_float LAPACKE_cgels
+  //#define pgeqr2_double pzgeqr2_
+  //#define pgeqr2_float pcgeqr2_
+  //#define pung2r_double pzung2r_
+  //#define pung2r_float pcung2r_
+
+  //#define MKL_float MKL_Complex8
+  //#define MKL_double MKL_Complex16
 #endif
 
 
@@ -593,6 +600,11 @@
 
 #if defined(GCRODR) || defined(POLYPREC)
   #include <lapacke.h>
+#ifdef GCRODR
+  //#include <mkl_scalapack.h>
+  //#include <mkl_blacs.h>
+  //#include <mkl_pblas.h>
+#endif
   #include "lapackwrap_double.h"
   #include "lapackwrap_float.h"
 #endif

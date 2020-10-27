@@ -34,4 +34,7 @@
   // explicit inversion of triangular matrix
   void inv_tri_PRECISION(eigslvr_PRECISION_struct* eigen_struct);
 
+  // parallel QR
+  void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **R, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
+
 #endif
