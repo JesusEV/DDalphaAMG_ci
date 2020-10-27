@@ -98,76 +98,16 @@ void dirctslvr_PRECISION(dirctslvr_PRECISION_struct* dirctslvr)
 void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **R, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading )
 {
 
-  int i,j;
-
-
-  /*
-
-  //int kk = p->gcrodr_PRECISION.k;
-
-  geqr2_PRECISION( LAPACK_COL_MAJOR, mx, nx, Ax[0], p->gcrodr_PRECISION.syst_size, p->gcrodr_PRECISION.eigslvr.qr_tau );
-
-  memset( R[0], 0.0, sizeof(complex_PRECISION)*nx*nx );
-  // compute R^{-1}
-  for ( j=0; j<nx; j++ ) {
-    for ( i=0; i<nx; i++ ) {
-      R[j][i] = Ax[j][i];
-    }
-  }
-  inv_tri_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
-
-  ungqr_PRECISION( LAPACK_COL_MAJOR, mx, nx, nx, Ax[0], p->gcrodr_PRECISION.syst_size, p->gcrodr_PRECISION.eigslvr.qr_tau );
-
-  */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  //return;
-
-  int k = p->gcrodr_PRECISION.k;
+  int i,j, k = p->gcrodr_PRECISION.k;
 
   int start, end;
   compute_core_start_end( p->v_start, p->v_end, &start, &end, l, threading );
 
   // perform QR via CGS
 
-  //PRECISION nrm_Ajx;
-  //nrm_Ajx = global_norm_PRECISION( p->gcrodr_PRECISION.C[0], p->v_start, p->v_end, l, threading );
-  //printf0("NORMx1 = %f\n", nrm_Ajx);
-
   memset( R[0], 0.0, sizeof(complex_PRECISION)*k*k );
-  //for ( i=0; i<(k*k); i++ ) {
-  //  R[0][i] = 0;
-  //}
 
-  //PRECISION nrm_Ajx;
-  //nrm_Ajx = global_norm_PRECISION( p->gcrodr_PRECISION.C[0], p->v_start, p->v_end, l, threading );
-  //printf0("NORMx2 = %f\n", nrm_Ajx);
-
-  //for ( j=0; j<k; j++ ) {
   for ( i=0; i<k; i++ ) {
-
-
-
-
-    ///*
-    //printf0("i = %d", i);
-
     {
       PRECISION nrm_Ai = global_norm_PRECISION( Ax[i], p->v_start, p->v_end, l, threading );
       START_MASTER(threading)
@@ -176,14 +116,6 @@ void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **
       SYNC_MASTER_TO_ALL(threading)
     }
     vector_PRECISION_real_scale( Ax[i], Ax[i], 1/creal(R[i][i]), start, end, l );
-
-    //for ( int i=0; i<(j-1); i++ ) {
-    //  R[j][i] = A[i]*A[j];
-    //}
-
-    //printf0("WITHIN QR, #1 !\n");
-
-
 
     for ( j=i+1; j<k; j++ ) {
 
@@ -208,72 +140,10 @@ void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **
 
       vector_PRECISION_saxpy( Ax[j], Ax[j], Ax[i], -R[j][i], start, end, l );
     }
-    //*/
 
-
-
-    //return;
-    /*
-    if ( j>0 ) {
-      //complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
-      complex_PRECISION *bf = p->gcrodr_PRECISION.R[j];
-      complex_PRECISION *buffer = p->gcrodr_PRECISION.Bbuff[0];
-      complex_PRECISION tmpx[j];
-      process_multi_inner_product_PRECISION( j, tmpx, Ax, Ax[j], p->v_start, p->v_end, l, threading );
-      START_MASTER(threading)
-      // buffer is of length m, and k<m
-      for ( i=0; i<j; i++ )
-        buffer[i] = tmpx[i];
-      if ( g.num_processes > 1 ) {
-        PROF_PRECISION_START( _ALLR );
-        MPI_Allreduce( buffer, bf, j, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
-        PROF_PRECISION_STOP( _ALLR, 1 );
-      } else {
-        for( i=0; i<k; i++ )
-          bf[i] = buffer[i];
-      }
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
-
-      //printf0("WITHIN QR, #2 !\n");
-
-      //for ( int i=0; i<(j-1); i++ ) {
-      //  A[j] = A[j] - R[j][i]*A[i];
-      //}
-
-      vector_PRECISION_multi_saxpy( Ax[j], Ax, R[j], -1, j, start, end, l );
-      SYNC_MASTER_TO_ALL(threading)
-      SYNC_CORES(threading)
-    }
-
-    //R[j][j] = norm(A[j]);
-
-    //printf0("WITHIN QR, #3.1 ! (j=%d)\n", j);
-
-    //complex_PRECISION nrm_Aj;
-    {
-      //if (g.on_solve==1) {nrm_Aj = global_norm_PRECISION( Ax[j], p->v_start, p->v_end, l, threading );}
-      //else {}
-      PRECISION nrm_Aj = global_norm_PRECISION( Ax[j], p->v_start, p->v_end, l, threading );
-      START_MASTER(threading)
-
-      //printf0("WITHIN QR, #3.2 !\n");
-      //if (g.on_solve==1) {exit(0);};
-
-      R[j][j] = nrm_Aj;
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
-    }
-
-    //printf0("WITHIN QR, #4 !\n");
-
-    //A[j] = A[j] / R[j][j];
-
-    vector_PRECISION_real_scale( Ax[j], Ax[j], 1.0/creal(R[j][j]), start, end, l );
-    */
   }
 
-  //return;
+
 
   // --------------------------------------------------------------------------------------------------------------
 

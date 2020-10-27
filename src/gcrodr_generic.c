@@ -290,6 +290,7 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
 }
 
 
+// ASSUMING : right preconditioner (or no preconditioner)
 int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ){
 
   // TODO : add <extra> profiling (this extra profiling is to be added to FGMRES)
@@ -305,24 +306,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
   // compute initial residual
-  /*
-  if( p->initial_guess_zero ) {
-    vector_PRECISION_copy( p->r, p->b, start, end, l );
-  } else {
-    if ( p->preconditioner != NULL ) {
-      if ( p->kind == _LEFT && p->preconditioner ) {
-        apply_operator_PRECISION( p->Z[0], p->x, p, l, threading );
-        p->preconditioner( p->w, NULL, p->Z[0], _NO_RES, l, threading );
-      } else {
-        p->preconditioner( p->Z[0], NULL, p->w, _NO_RES, l, threading );
-        apply_operator_PRECISION( p->w, p->Z[0], p, l, threading );
-      }
-    } else {
-      apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
-    }
-    vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
-  }
-  */
   apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
   vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
@@ -366,9 +349,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     for ( i=0; i<k; i++ ) {
       p->gcrodr_PRECISION.hatZ[i] = p->gcrodr_PRECISION.U[i];
     }
-    //for ( i=0; i<k; i++ ) {
-    //  p->gcrodr_PRECISION.hatW[i] = p->gcrodr_PRECISION.C[i];
-    //}
     END_MASTER(threading);
     SYNC_MASTER_TO_ALL(threading);
 
@@ -379,130 +359,11 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       apply_operator_PRECISION( p->gcrodr_PRECISION.C[i], p->gcrodr_PRECISION.Yk[i], p, l, threading );
     }
 
-    //PRECISION nrm_Aj;
-    //nrm_Aj = global_norm_PRECISION( p->gcrodr_PRECISION.C[0], p->v_start, p->v_end, l, threading );
-    //printf0("NORM = %f\n", nrm_Aj);
-
-    //vector_PRECISION *Qx = p->gcrodr_PRECISION.C;
-    //vector_PRECISION *R = p->gcrodr_PRECISION.R;
-
-    //printf0("WITHIN flgcrodr_PRECISION(...) -- BEFORE\n");
-
-    //{
-    //  PRECISION norm_rxx = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
-    //  printf0("rel stuff #1 = %f\n", norm_rxx/norm_r0);
-    //}
-
     //START_MASTER(threading);
     int i_length = p->v_end - p->v_start;
     pqr_PRECISION( i_length, k, p->gcrodr_PRECISION.C, p->gcrodr_PRECISION.R, p, l, threading );
     //END_MASTER(threading);
     SYNC_MASTER_TO_ALL(threading);
-
-    //vector_PRECISION *R = p->gcrodr_PRECISION.R;
-    
-    //printf0("WITHIN flgcrodr_PRECISION(...) -- AFTER\n");
-
-    /*
-    {
-      int lllx = 7;
-      int idxlx = 0;
-      complex_PRECISION *bf_ptrx = Q[idxlx];
-      printf0("Q  = ");
-      for (i=0;i<lllx;i++) printf0("%f+i%f   ", creal(bf_ptrx[i]), cimag(bf_ptrx[i]));
-      printf0("\n");
-
-      PRECISION normx = global_norm_PRECISION( Q[0], p->v_start, p->v_end, l, threading );
-      printf0("normx = %f\n", normx);
-    }
-    */
-
-    /*
-    vector_PRECISION *R = p->gcrodr_PRECISION.R;
-    vector_PRECISION *Q = p->gcrodr_PRECISION.C;
-    {
-      printf0("\nTESTS!\n\n");
-
-      MPI_Barrier(MPI_COMM_WORLD);
-
-      // --- TESTING IF QR CORRECT : test #1
-      complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
-      complex_PRECISION *buffer = p->gcrodr_PRECISION.Bbuff[0] + k;
-      //vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
-
-      for (int ww=0; ww<k; ww++) {
-        complex_PRECISION tmpx[k];
-        process_multi_inner_product_PRECISION( k, tmpx, Q, Q[ww], p->v_start, p->v_end, l, threading );
-
-        START_MASTER(threading)
-        // buffer is of length m, and k<m
-        for ( i=0; i<k; i++ )
-          buffer[i] = tmpx[i];
-        if ( g.num_processes > 1 ) {
-          PROF_PRECISION_START( _ALLR );
-          MPI_Allreduce( buffer, bf, k, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
-          PROF_PRECISION_STOP( _ALLR, 1 );
-        } else {
-          for( i=0; i<k; i++ )
-            bf[i] = buffer[i];
-        }
-        END_MASTER(threading)
-        SYNC_MASTER_TO_ALL(threading)
-
-        printf0("dot products (%d) =   ", ww);
-        for (i=0;i<k;i++) printf0("%f+i%f   ", creal(bf[i]), cimag(bf[i]));
-        printf0("\n");
-      }
-      // -------------------------
-
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
-
-      // --- TESTING IF QR CORRECT : test #2
-      complex_PRECISION **Cc = p->gcrodr_PRECISION.Cc;
-      // compute Uk
-      for ( j=0; j<k; j++ ) {
-        // set all vectors in Yk to zero, to accumulate
-        vector_PRECISION_define( Cc[j], 0, start, end, l );
-        // and then, multi saxpy to obtain Yk
-        // (the <i+1> in the 5th parameter is due to the triangular nature of Rinv)
-        vector_PRECISION_multi_saxpy( Cc[j], Q, R[j], 1, j+1, start, end, l );
-      }
-      SYNC_MASTER_TO_ALL(threading)
-      SYNC_CORES(threading)
-
-      int lllx = 7;
-      int idxlx = 3;
-
-      {
-        complex_PRECISION *bf_ptrx = Cc[idxlx];
-        printf("(%d) Q*R  = ", g.my_rank);
-        for (i=0;i<lllx;i++) printf("%f+i%f   ", creal(bf_ptrx[i]), cimag(bf_ptrx[i]));
-        printf("\n");
-      }
-
-      for ( i=0; i<k; i++ ) {
-        apply_operator_PRECISION( p->gcrodr_PRECISION.C[i], p->gcrodr_PRECISION.Yk[i], p, l, threading );
-      }
-      SYNC_MASTER_TO_ALL(threading)
-      SYNC_CORES(threading)
-
-      {
-        complex_PRECISION **C = p->gcrodr_PRECISION.C;
-        complex_PRECISION *bf_ptrx = C[idxlx];
-        printf("(%d) A*Yk = ", g.my_rank);
-        //for (i=0;i<lllx;i++) printf("%f+i%f   ", creal(bf_ptrx[i]*Cc[idxlx][0]/C[idxlx][0]), cimag(bf_ptrx[i]*Cc[idxlx][0]/C[idxlx][0]));
-        for (i=0;i<lllx;i++) printf("%f+i%f   ", creal(bf_ptrx[i]), cimag(bf_ptrx[i]));
-        printf("\n");
-      }
-      // -------------------------
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf0("finished constructing 2.1 !!\n");
-    exit(0);
-    */
 
     START_MASTER(threading);
     inv_tri_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
@@ -524,91 +385,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     }
     SYNC_MASTER_TO_ALL(threading)
     SYNC_CORES(threading)
-
-    /*
-    vector_PRECISION *Q = p->gcrodr_PRECISION.C;
-    {
-      printf0("\nTESTS!\n\n");
-
-      MPI_Barrier(MPI_COMM_WORLD);
-
-      // --- TESTING IF QR CORRECT : test #1
-      complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
-      complex_PRECISION *buffer = p->gcrodr_PRECISION.Bbuff[0] + k;
-      //vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
-
-      for (int ww=0; ww<k; ww++) {
-        complex_PRECISION tmpx[k];
-        process_multi_inner_product_PRECISION( k, tmpx, Q, Q[ww], p->v_start, p->v_end, l, threading );
-
-        START_MASTER(threading)
-        // buffer is of length m, and k<m
-        for ( i=0; i<k; i++ )
-          buffer[i] = tmpx[i];
-        if ( g.num_processes > 1 ) {
-          PROF_PRECISION_START( _ALLR );
-          MPI_Allreduce( buffer, bf, k, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
-          PROF_PRECISION_STOP( _ALLR, 1 );
-        } else {
-          for( i=0; i<k; i++ )
-            bf[i] = buffer[i];
-        }
-        END_MASTER(threading)
-        SYNC_MASTER_TO_ALL(threading)
-
-        printf0("dot products (%d) =   ", ww);
-        for (i=0;i<k;i++) printf0("%f+i%f   ", creal(bf[i]), cimag(bf[i]));
-        printf0("\n");
-      }
-      // -------------------------
-
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
-
-      // --- TESTING IF QR CORRECT : test #2
-      int lllx = 7;
-      int idxlx = 3;
-
-      {
-        complex_PRECISION *bf_ptrx = p->gcrodr_PRECISION.C[idxlx];
-        printf("(%d) Q*R  = ", g.my_rank);
-        for (i=0;i<lllx;i++) printf("%f+i%f   ", creal(bf_ptrx[i]), cimag(bf_ptrx[i]));
-        printf("\n");
-      }
-
-      for ( i=0; i<k; i++ ) {
-        apply_operator_PRECISION( p->gcrodr_PRECISION.Cc[i], p->gcrodr_PRECISION.U[i], p, l, threading );
-      }
-      SYNC_MASTER_TO_ALL(threading)
-      SYNC_CORES(threading)
-
-      {
-        complex_PRECISION *bf_ptrx = p->gcrodr_PRECISION.Cc[idxlx];
-        printf("(%d) A*Yk = ", g.my_rank);
-        //for (i=0;i<lllx;i++) printf("%f+i%f   ", creal(bf_ptrx[i]*Cc[idxlx][0]/C[idxlx][0]), cimag(bf_ptrx[i]*Cc[idxlx][0]/C[idxlx][0]));
-        for (i=0;i<lllx;i++) printf("%f+i%f   ", creal(bf_ptrx[i]), cimag(bf_ptrx[i]));
-        printf("\n");
-      }
-
-      START_MASTER(threading)
-      int lxsd = 0;
-      for ( i=0; i<p->v_end; i++ ) {
-          if ( (creal(p->gcrodr_PRECISION.C[lxsd][i]) != creal(p->gcrodr_PRECISION.Cc[lxsd][i])) ||
-               (cimag(p->gcrodr_PRECISION.C[lxsd][i]) != cimag(p->gcrodr_PRECISION.Cc[lxsd][i]))    ) {
-            printf0("DIFF !! (%f+i%f) -- (%f+i%f) \n", creal(p->gcrodr_PRECISION.Cc[lxsd][i]), cimag(p->gcrodr_PRECISION.Cc[lxsd][i]),
-                                                       creal(p->gcrodr_PRECISION.C[lxsd][i]),  cimag(p->gcrodr_PRECISION.C[lxsd][i]));
-          }
-      }
-      END_MASTER(threading)
-      
-      // -------------------------
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf0("finished constructing 2.1 !!\n");
-    exit(0);
-    */
 
     // x  +=  Uk * Ck^{H} * r
     // r  -=  Ck * Ck^{H} * r
@@ -637,33 +413,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     for( i=0; i<k; i++ )
       vector_PRECISION_saxpy( p->x, p->x, Uk[i], bf[i], start, end, l );
 
-    //for( i=0; i<k; i++ )
-    //  vector_PRECISION_saxpy( p->r, p->r, Ck[i], -bf[i], start, end, l );
-
-    // updating p->r
-
-    /*
-    if ( p->preconditioner != NULL ) {
-      if ( p->kind == _LEFT && p->preconditioner ) {
-        apply_operator_PRECISION( p->Z[0], p->x, p, l, threading );
-        p->preconditioner( p->w, NULL, p->Z[0], _NO_RES, l, threading );
-      } else {
-        p->preconditioner( p->Z[0], NULL, p->w, _NO_RES, l, threading );
-        apply_operator_PRECISION( p->w, p->Z[0], p, l, threading );
-      }
-    } else {
-      apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
-    }
-    vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
-    */
     apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
     vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
-
-    //MPI_Barrier(MPI_COMM_WORLD);
-    //{
-    //  PRECISION norm_rxx = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
-    //  printf0("rel stuff #2 = %f\n", norm_rxx/norm_r0);
-    //}
 
     {
       int g_ln = k + p->restart_length;
@@ -682,10 +433,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       SYNC_MASTER_TO_ALL(threading)
       vector_PRECISION_scale( Uk[i], Uk[i], diag_term, start, end, l );
     }
-
-    //printf0("finished constructing 2.2 !!\n");
-    //exit(0);
-
   } else if ( p->gcrodr_PRECISION.CU_usable==0 ) {
     // call one cycle of FGMRES
 
@@ -730,8 +477,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       // and then, multi saxpy to obtain p->r
       vector_PRECISION_multi_saxpy( p->r, p->V, bf, 1, m+1, start, end, l );
     }
-    //apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
-    //vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
     beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
     printf0("rel stuff #xx = %f\n", beta/norm_r0);
@@ -776,8 +521,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     //  break;
     //}
 
-    //printf0("rel stuff #3 = %f\n", beta/norm_r0);
-
     START_MASTER(threading)
     // setting the following line for the upcoming call to fgmresx_PRECISION(...)
     p->gamma[0] = beta;
@@ -816,130 +559,11 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     END_MASTER(threading);
     SYNC_MASTER_TO_ALL(threading);
 
-    /*
-    for ( int i=0; i<(m+k+1); i++ ) {
-      for ( int j=0; j<(m+k); j++ ) {
-        printf0("%.3f+i%.3f\t", creal(p->gcrodr_PRECISION.G[j][i]), cimag(p->gcrodr_PRECISION.G[j][i]));
-      }
-      printf0("\n\n");
-    }
-    printf0("\n");
-    */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /*
-    {
-      int lthx = k+m+1;
-    
-      complex_PRECISION **hatW = p->gcrodr_PRECISION.hatW;
-      complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
-      complex_PRECISION *buffer = p->gcrodr_PRECISION.Bbuff[0] + lthx;
-      //vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
-
-      for (int ww=0; ww<lthx; ww++) {
-        complex_PRECISION tmpx[lthx];
-        process_multi_inner_product_PRECISION( lthx, tmpx, hatW, hatW[ww], p->v_start, p->v_end, l, threading );
-
-        START_MASTER(threading)
-        // buffer is of length m, and k<m
-        for ( i=0; i<lthx; i++ )
-          buffer[i] = tmpx[i];
-        if ( g.num_processes > 1 ) {
-          PROF_PRECISION_START( _ALLR );
-          MPI_Allreduce( buffer, bf, lthx, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
-          PROF_PRECISION_STOP( _ALLR, 1 );
-        } else {
-          for( i=0; i<lthx; i++ )
-            bf[i] = buffer[i];
-        }
-        END_MASTER(threading)
-        SYNC_MASTER_TO_ALL(threading)
-
-        //if ( ww==4 ) {
-        //  printf0("dot products #1 (%d) =   ", ww);
-        //  for (i=0;i<lthx;i++) printf0("%f+i%f   ", creal(bf[i]), cimag(bf[i]));
-        //  printf0("\n");
-        //}
-      }
-    }
-    */
-
-
-
-
-    /*
-    complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
-    {
-      int lthx = k+1+m;
-
-      complex_PRECISION **hatW = p->gcrodr_PRECISION.hatW;
-      //complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
-      complex_PRECISION *buffer = p->gcrodr_PRECISION.Bbuff[0] + (lthx+m);
-      //vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
-
-      START_MASTER(threading)
-      memset( bf, 0.0, sizeof(complex_PRECISION)*(lthx) );
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
-
-      complex_PRECISION tmpx[lthx];
-      process_multi_inner_product_PRECISION( lthx, tmpx, hatW, p->r, p->v_start, p->v_end, l, threading );
-
-      START_MASTER(threading)
-      // buffer is of length m, and k<m
-      for ( i=0; i<lthx; i++ )
-        buffer[i] = tmpx[i];
-      if ( g.num_processes > 1 ) {
-        PROF_PRECISION_START( _ALLR );
-        MPI_Allreduce( buffer, bf, lthx, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
-        PROF_PRECISION_STOP( _ALLR, 1 );
-      } else {
-        for( i=0; i<lthx; i++ )
-          bf[i] = buffer[i];
-      }
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
-
-      printf0("dot products #2 =   ");
-      for (i=0;i<lthx;i++) printf0("%f+i%f   ", creal(bf[i]), cimag(bf[i]));
-      printf0("\n");
-    }
-    */
-
     // and, the last ingredient for the least squares problem is : <bf> as the rhs, <G> as the matrix
     
     complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
     memset(bf, 0.0, sizeof(complex_PRECISION)*(k+m+1));
     bf[k] = beta;
-
-
-
-
-
-    // copy of bf
-    //complex_PRECISION *tmp_bf = p->gcrodr_PRECISION.Bbuff[0] + m+k+1;
-    //START_MASTER(threading)
-    //{
-    //  memcpy( tmp_bf, bf, sizeof(complex_PRECISION)*(m+k+1) );
-    //}
-    //END_MASTER(threading)
-    //SYNC_MASTER_TO_ALL(threading)
-
-
-
 
     START_MASTER(threading)
     gels_PRECISION( LAPACK_COL_MAJOR, 'N', k+m+1, k+m, 1, p->gcrodr_PRECISION.G[0], k+p->restart_length+1, bf, k+p->restart_length+1);
@@ -956,61 +580,22 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     END_MASTER(threading)
     SYNC_MASTER_TO_ALL(threading)
 
-    // compute the local/small residual
-    //START_MASTER(threading)
-    //for ( i=0; i<(k+m+1); i++ ) {
-    //  for ( j=0; j<(k+m); j++ ) {
-    //    tmp_bf[i] -= p->gcrodr_PRECISION.Gc[j][i]*bf[j];
-    //  }
-    //}
-    
-    //PRECISION normxxx = 0;
-    //for ( i=0; i<(k+m+1); i++ ) {
-    //  normxxx += conj(tmp_bf[i])*tmp_bf[i];
-    //}
-    //normxxx = sqrt(normxxx);
-    
-    //printf0("LOCAL/SMALL NORM = %f\n", normxxx);
-    
-    //END_MASTER(threading)
-    //SYNC_MASTER_TO_ALL(threading)
-
     // update the solution
     for( i=0; i<(k+m); i++ )
       vector_PRECISION_saxpy( p->x, p->x, p->gcrodr_PRECISION.hatZ[i], bf[i], start, end, l );
 
     // updating p->r
 
-    /*
-    if ( p->preconditioner != NULL ) {
-      if ( p->kind == _LEFT && p->preconditioner ) {
-        apply_operator_PRECISION( p->Z[0], p->x, p, l, threading );
-        p->preconditioner( p->w, NULL, p->Z[0], _NO_RES, l, threading );
-      } else {
-        p->preconditioner( p->Z[0], NULL, p->w, _NO_RES, l, threading );
-        apply_operator_PRECISION( p->w, p->Z[0], p, l, threading );
-      }
-    } else {
-      apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
-    }
-    vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
-    */
-    //apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
-    //vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
-
     apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
     vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
-    //if ( ol<-1 ) {
+    //if ( ol < 2 ) {
       // build the matrices A and B used for generalized-eigensolving
       gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.Gc,
                              p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, k+m, p, l, threading );
       // build C and U
       build_CU_PRECISION( p->gcrodr_PRECISION.Gc, p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, p, l, threading, k+m );
     //}
-
-    //beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
-    //printf0("rel stuff #4 = %f\n", beta/norm_r0);
 
     // check if tolerance has been reached
     if ( p->gcrodr_PRECISION.finish==1 ) {
