@@ -157,6 +157,10 @@
 #ifdef POLYPREC
     polyprec_PRECISION_struct polyprec_PRECISION;
 #endif
+#if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
+    int syst_size;
+    vector_PRECISION *Va, *Za;
+#endif
   } gmres_PRECISION_struct;
 
   typedef struct {
