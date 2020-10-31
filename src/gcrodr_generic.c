@@ -72,6 +72,11 @@ void flgcrodr_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->gcrodr_PRECISION.Gc = NULL;
   p->gcrodr_PRECISION.hatZ = NULL;
   p->gcrodr_PRECISION.hatW = NULL;
+
+#if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
+  p->gcrodr_PRECISION.PC = NULL;
+  p->gcrodr_PRECISION.DPC = NULL;
+#endif
 }
 
 
@@ -232,6 +237,22 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
   
     p->gcrodr_PRECISION.orth_against_Ck = 0;
     p->gcrodr_PRECISION.finish = 0;
+
+#if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
+    MALLOC( p->gcrodr_PRECISION.PC, vector_PRECISION, p->gcrodr_PRECISION.k );
+    p->gcrodr_PRECISION.PC[0] = NULL;
+    MALLOC( p->gcrodr_PRECISION.PC[0], complex_PRECISION, vl * p->gcrodr_PRECISION.k );
+
+    MALLOC( p->gcrodr_PRECISION.DPC, vector_PRECISION, p->gcrodr_PRECISION.k );
+    p->gcrodr_PRECISION.DPC[0] = NULL;
+    MALLOC( p->gcrodr_PRECISION.DPC[0], complex_PRECISION, vl * p->gcrodr_PRECISION.k );
+
+    for ( i=1; i<p->gcrodr_PRECISION.k; i++ )
+    {
+      p->gcrodr_PRECISION.PC[i] = p->gcrodr_PRECISION.PC[0] + i*vl;
+      p->gcrodr_PRECISION.DPC[i] = p->gcrodr_PRECISION.DPC[0] + i*vl;
+    }    
+#endif
   }
 }
 
@@ -286,6 +307,14 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
     // ints - ordering
     FREE( p->gcrodr_PRECISION.eigslvr.ordr_idxs, int, g_ln );
     FREE( p->gcrodr_PRECISION.eigslvr.ordr_keyscpy, complex_PRECISION, g_ln );
+
+#if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
+    FREE( p->gcrodr_PRECISION.PC[0], complex_PRECISION, p->gcrodr_PRECISION.syst_size * p->gcrodr_PRECISION.k );
+    FREE( p->gcrodr_PRECISION.PC, vector_PRECISION, p->gcrodr_PRECISION.k );
+
+    FREE( p->gcrodr_PRECISION.DPC[0], complex_PRECISION, p->gcrodr_PRECISION.syst_size * p->gcrodr_PRECISION.k );
+    FREE( p->gcrodr_PRECISION.DPC, vector_PRECISION, p->gcrodr_PRECISION.k );
+#endif    
   }
 }
 
