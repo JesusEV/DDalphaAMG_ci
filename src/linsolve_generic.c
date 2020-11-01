@@ -1129,14 +1129,14 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 // #endif
 
 //       H[j-1][j] = sqrt( creal( H[j-1][j] ) );
-//       END_MASTER(threading)
-//       SYNC_MASTER_TO_ALL(threading)
+
+       END_MASTER(threading)
+       SYNC_MASTER_TO_ALL(threading)
 
 
       for( i=0; i<=j-1; i++ )
         vector_PRECISION_saxpy( V[j], V[j], V[i], -H[j-1][i], start, end, l );
       
-      // normalization
       PRECISION tmp2 = global_norm_PRECISION( V[j], p->v_start, p->v_end, l, threading );
       START_MASTER(threading)
       H[j-1][j] = tmp2;
@@ -1149,11 +1149,8 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 #ifdef GCRODR
       if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 )
       {      
-        SYNC_MASTER_TO_ALL(threading)
         for( i=0; i<k; i++ )
           vector_PRECISION_saxpy( Z[j], Z[j], PCk[i], -B[j-1][i], start, end, l );
-        SYNC_MASTER_TO_ALL(threading)
-        SYNC_CORES(threading)      
       }
 #endif
       for( i=0; i<=j-1; i++ )
@@ -1168,11 +1165,8 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 #ifdef GCRODR
       if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 )
       {      
-        SYNC_MASTER_TO_ALL(threading)
         for( i=0; i<k; i++ )
           vector_PRECISION_saxpy( Va[j], Va[j], DPCk[i], -B[j-1][i], start, end, l );
-        SYNC_MASTER_TO_ALL(threading)
-        SYNC_CORES(threading)      
       }
 #endif
       for( i=0; i<=j-1; i++ )
