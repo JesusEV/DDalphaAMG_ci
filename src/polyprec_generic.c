@@ -284,5 +284,8 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
   vector_PRECISION_copy( phi, accum_prod, start, end, l );
 }
 
+//   vector_PRECISION_copy( phi, eta, start, end, l );
+// }
+
 
 #endif

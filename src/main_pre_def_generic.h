@@ -115,6 +115,10 @@
     complex_PRECISION **gev_A, **gev_B, **Bbuff, **QR, **Q, **R, **Rinv, **ort_B, **G, **Gc;
 
     eigslvr_PRECISION_struct eigslvr;
+
+#if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
+    vector_PRECISION *PC, *DPC;
+#endif
   } gcrodr_PRECISION_struct;
 #endif
 
