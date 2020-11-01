@@ -1337,6 +1337,11 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   coarse_n_hopping_term_PRECISION( p->b, p->x, op, _EVEN_SITES, l, threading );
   PROF_PRECISION_STOP( _NC, 0, threading );
 
+  int start, end;
+  compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
+  vector_PRECISION_copy( p->r, p->b, start, end, l ); // compute r = b - w
+  PRECISION norm_r0 = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading );
+
 #ifdef POLYPREC
   // re-construct Lejas before calling fgmres (if necessary!)
   if ( l->level==0 ) re_construct_lejas_PRECISION( l, threading );
@@ -1347,7 +1352,17 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 #else  
   fgmres_iters = fgmres_PRECISION( p, l, threading );
 #endif
+
+  apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+  vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+  PRECISION beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading );
+  START_MASTER(threading)
+  printf0("rel residual right after bicho = %f\n", beta/norm_r0);
+  END_MASTER(threading)
+
+  START_MASTER(threading)
   printf0("%d\n", fgmres_iters);
+  END_MASTER(threading)
   
   // even to odd
   PROF_PRECISION_START( _NC, threading );

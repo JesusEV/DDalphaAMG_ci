@@ -232,6 +232,8 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
   
     p->gcrodr_PRECISION.orth_against_Ck = 0;
     p->gcrodr_PRECISION.finish = 0;
+
+    p->gcrodr_PRECISION.update_CU = 1;
   }
 }
 
@@ -306,8 +308,12 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
   // compute initial residual
-  apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
-  vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+  if ( p->initial_guess_zero == 0 ) {
+    apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+    vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+  } else {
+    vector_PRECISION_copy( p->r, p->b, start, end, l ); // compute r = b - w
+  }
 
   beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
   norm_r0 = beta;
@@ -327,7 +333,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     p->gcrodr_PRECISION.b_norm = global_norm_PRECISION( p->b, p->v_start, p->v_end, l, threading );
   } else {
     START_MASTER(threading)
-    p->gcrodr_PRECISION.b_norm = creal(beta);
+    p->gcrodr_PRECISION.b_norm = beta;
     END_MASTER(threading);
     SYNC_MASTER_TO_ALL(threading);
   }
@@ -338,53 +344,62 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   SYNC_MASTER_TO_ALL(threading);
 
   if ( p->gcrodr_PRECISION.CU_usable==1 ) {
+    vector_PRECISION *Uk;
 
-    // TODO : finish up the following points
+    if ( p->initial_guess_zero == 1 )
+      vector_PRECISION_define( p->x, 0, start, end, l );
 
-    // Yk = copy(Uk)
-    START_MASTER(threading);
-    complex_PRECISION **tmp_ptr = p->gcrodr_PRECISION.U;
-    p->gcrodr_PRECISION.U = p->gcrodr_PRECISION.Yk;
-    p->gcrodr_PRECISION.Yk = tmp_ptr;
-    for ( i=0; i<k; i++ ) {
-      p->gcrodr_PRECISION.hatZ[i] = p->gcrodr_PRECISION.U[i];
-    }
-    END_MASTER(threading);
-    SYNC_MASTER_TO_ALL(threading);
+    if ( p->gcrodr_PRECISION.update_CU == 1 ) {
 
-    // ------ QR = A*Yk
+      // Yk = copy(Uk)
+      START_MASTER(threading);
+      complex_PRECISION **tmp_ptr = p->gcrodr_PRECISION.U;
+      p->gcrodr_PRECISION.U = p->gcrodr_PRECISION.Yk;
+      p->gcrodr_PRECISION.Yk = tmp_ptr;
+      for ( i=0; i<k; i++ ) {
+        p->gcrodr_PRECISION.hatZ[i] = p->gcrodr_PRECISION.U[i];
+      }
+      END_MASTER(threading);
+      SYNC_MASTER_TO_ALL(threading);
+
+      // ------ QR = A*Yk
     
-    // QR = A*Yk
-    for ( i=0; i<k; i++ ) {
-      apply_operator_PRECISION( p->gcrodr_PRECISION.C[i], p->gcrodr_PRECISION.Yk[i], p, l, threading );
+      // QR = A*Yk
+      for ( i=0; i<k; i++ ) {
+        apply_operator_PRECISION( p->gcrodr_PRECISION.C[i], p->gcrodr_PRECISION.Yk[i], p, l, threading );
+      }
+
+      int i_length = p->v_end - p->v_start;
+      pqr_PRECISION( i_length, k, p->gcrodr_PRECISION.C, p->gcrodr_PRECISION.R, p, l, threading );
+      SYNC_MASTER_TO_ALL(threading);
+
+      START_MASTER(threading);
+      inv_tri_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
+      END_MASTER(threading);
+      SYNC_MASTER_TO_ALL(threading);
+      complex_PRECISION **Rinv = p->gcrodr_PRECISION.Rinv;
+
+      // by this point : Ck = Q
+
+      // Uk = Yk * R^{-1}
+      Uk = p->gcrodr_PRECISION.U;
+      vector_PRECISION *Yk = p->gcrodr_PRECISION.Yk;
+      for ( i=0; i<k; i++ ) {
+        // set all vectors in Yk to zero, to accumulate
+        vector_PRECISION_define( Uk[i], 0, start, end, l );
+        // and then, multi saxpy to obtain Yk
+        // (the <i+1> in the 5th parameter is due to the triangular nature of Rinv)
+        vector_PRECISION_multi_saxpy( Uk[i], Yk, Rinv[i], 1, i+1, start, end, l );
+      }
+      SYNC_MASTER_TO_ALL(threading)
+      SYNC_CORES(threading)
+
+      p->gcrodr_PRECISION.update_CU = 0;
+
+      START_MASTER(threading)
+      printf0("updated Ck and Uk !\n");
+      END_MASTER(threading)
     }
-
-    //START_MASTER(threading);
-    int i_length = p->v_end - p->v_start;
-    pqr_PRECISION( i_length, k, p->gcrodr_PRECISION.C, p->gcrodr_PRECISION.R, p, l, threading );
-    //END_MASTER(threading);
-    SYNC_MASTER_TO_ALL(threading);
-
-    START_MASTER(threading);
-    inv_tri_PRECISION( &(p->gcrodr_PRECISION.eigslvr) );
-    END_MASTER(threading);
-    SYNC_MASTER_TO_ALL(threading);
-    complex_PRECISION **Rinv = p->gcrodr_PRECISION.Rinv;
-
-    // by this point : Ck = Q
-
-    // Uk = Yk * R^{-1}
-    vector_PRECISION *Uk = p->gcrodr_PRECISION.U;
-    vector_PRECISION *Yk = p->gcrodr_PRECISION.Yk;
-    for ( i=0; i<k; i++ ) {
-      // set all vectors in Yk to zero, to accumulate
-      vector_PRECISION_define( Uk[i], 0, start, end, l );
-      // and then, multi saxpy to obtain Yk
-      // (the <i+1> in the 5th parameter is due to the triangular nature of Rinv)
-      vector_PRECISION_multi_saxpy( Uk[i], Yk, Rinv[i], 1, i+1, start, end, l );
-    }
-    SYNC_MASTER_TO_ALL(threading)
-    SYNC_CORES(threading)
 
     // x  +=  Uk * Ck^{H} * r
     // r  -=  Ck * Ck^{H} * r
@@ -392,6 +407,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
     complex_PRECISION *buffer = p->gcrodr_PRECISION.Bbuff[0] + k;
     vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
+
+    Uk = p->gcrodr_PRECISION.U;
 
     complex_PRECISION tmpx[k];
     process_multi_inner_product_PRECISION( k, tmpx, Ck, p->r, p->v_start, p->v_end, l, threading );
@@ -436,6 +453,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   } else if ( p->gcrodr_PRECISION.CU_usable==0 ) {
     // call one cycle of FGMRES
 
+    if ( p->initial_guess_zero == 1 )
+      vector_PRECISION_define( p->x, 0, start, end, l );
+
     START_MASTER(threading)
     l->dup_H = 1;
     END_MASTER(threading);
@@ -451,9 +471,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     // update the solution p->x (this, from the inside, applies back-substitution on p->y)
     compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
-                                p->y, p->gamma, p->H, m-1, 0, p, l, threading );
+                                p->y, p->gamma, p->H, m-1, 1, p, l, threading );
 
     // "cheaply" updating r ( this is needed for the next call of fgmresx_PRECISION(...) )
+    /*
     {
       // first, build small vector
       //m = fgmresx_iter;
@@ -477,9 +498,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       // and then, multi saxpy to obtain p->r
       vector_PRECISION_multi_saxpy( p->r, p->V, bf, 1, m+1, start, end, l );
     }
+    */
 
-    beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
-    printf0("rel stuff #xx = %f\n", beta/norm_r0);
+    apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+    vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
     // if m<k, there's not enough information to build the recycling subspace
     if ( m<k ) {
@@ -589,14 +611,13 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
     vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
-    // TODO : enable this ?
-    //if ( ol < 0 ) {
+    if ( ol < 1 ) {
       // build the matrices A and B used for generalized-eigensolving
       gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.Gc,
                              p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, k+m, p, l, threading );
       // build C and U
       build_CU_PRECISION( p->gcrodr_PRECISION.Gc, p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, p, l, threading, k+m );
-    //}
+    }
 
     // check if tolerance has been reached
     if ( p->gcrodr_PRECISION.finish==1 ) {
@@ -693,6 +714,11 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
   int start, end, j=-1, finish=0, iter=0, il;
 
   PRECISION norm_r0=1, gamma_jp1=1;
+
+  START_LOCKED_MASTER(threading)
+  if ( l->level==0 && g.num_levels > 1 && g.interpolation ) p->tol = g.coarse_tol;
+  END_LOCKED_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)
 
   // compute start and end indices for core
   // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads

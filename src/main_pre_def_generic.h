@@ -106,7 +106,7 @@
 
 #ifdef GCRODR
   typedef struct {
-    int i, k, CU_usable, syst_size, finish, orth_against_Ck;
+    int i, k, CU_usable, syst_size, finish, orth_against_Ck, update_CU;
 
     PRECISION b_norm, norm_r0;
 

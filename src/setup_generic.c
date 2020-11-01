@@ -329,6 +329,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
   else {
     // this runs on level 0 only
     l->p_PRECISION.polyprec_PRECISION.update_lejas = 1;
+    l->p_PRECISION.gcrodr_PRECISION.update_CU = 1;
   }
 #endif
 }

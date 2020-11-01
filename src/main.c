@@ -106,6 +106,25 @@ int main( int argc, char **argv ) {
       }
     }
 #endif
+
+#ifdef GCRODR
+    {
+      // setting flag to re-update recycling subspace
+      level_struct *lx = &l;
+      while (1) {
+        if ( lx->level==0 ) {
+          if ( g.mixed_precision==0 ) {
+            lx->p_double.gcrodr_double.CU_usable = 0;
+          } else {
+            lx->p_float.gcrodr_float.CU_usable = 0;
+          }
+          break;
+        } else {
+          lx = lx->next_level;
+        }
+      }
+    }
+#endif
     
     g.on_solve = 1;
     solve_driver( &l, &threading );
