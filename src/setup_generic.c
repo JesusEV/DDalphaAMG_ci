@@ -325,11 +325,15 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
       re_setup_PRECISION( l->next_level, threading );
     }
   }
-#ifdef POLYPREC
+#if defined(POLYPREC) || defined(GCRODR)
   else {
     // this runs on level 0 only
+#ifdef POLYPREC
     l->p_PRECISION.polyprec_PRECISION.update_lejas = 1;
+#endif
+#ifdef GCRODR
     l->p_PRECISION.gcrodr_PRECISION.update_CU = 1;
+#endif
   }
 #endif
 }
