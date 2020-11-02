@@ -88,44 +88,6 @@ int main( int argc, char **argv ) {
     // iterative phase
     method_update( l.setup_iter, &l, &threading );
 
-#ifdef POLYPREC
-    {
-      // setting flag to re-update lejas
-      level_struct *lx = &l;
-      while (1) {
-        if ( lx->level==0 ) {
-          if ( g.mixed_precision==0 ) {
-            lx->p_double.polyprec_double.update_lejas = 1;
-          } else {
-            lx->p_float.polyprec_float.update_lejas = 1;
-          }
-          break;
-        } else {
-          lx = lx->next_level;
-        }
-      }
-    }
-#endif
-
-#ifdef GCRODR
-    {
-      // setting flag to re-update recycling subspace
-      level_struct *lx = &l;
-      while (1) {
-        if ( lx->level==0 ) {
-          if ( g.mixed_precision==0 ) {
-            lx->p_double.gcrodr_double.CU_usable = 0;
-          } else {
-            lx->p_float.gcrodr_float.CU_usable = 0;
-          }
-          break;
-        } else {
-          lx = lx->next_level;
-        }
-      }
-    }
-#endif
-    
     g.on_solve = 1;
     solve_driver( &l, &threading );
   }
