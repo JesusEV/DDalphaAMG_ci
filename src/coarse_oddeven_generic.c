@@ -1343,14 +1343,24 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   PRECISION norm_r0 = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading );
 
 #ifdef POLYPREC
-  // re-construct Lejas before calling fgmres (if necessary!)
-  if ( l->level==0 ) re_construct_lejas_PRECISION( l, threading );
+  p->preconditioner = p->polyprec_PRECISION.preconditioner;
 #endif
+
+  if ( p->preconditioner==NULL ) { printf0("NULL !!\n"); }
 
 #ifdef GCRODR
   fgmres_iters = flgcrodr_PRECISION( p, l, threading );
 #else  
   fgmres_iters = fgmres_PRECISION( p, l, threading );
+#endif
+
+#ifdef POLYPREC
+  if ( l->level==0 && l->p_PRECISION.polyprec_PRECISION.update_lejas == 1 ) {
+    if ( fgmres_iters >= 1.5*p->polyprec_PRECISION.d_poly ) {
+      // re-construct Lejas
+      re_construct_lejas_PRECISION( l, threading );
+    }
+  }
 #endif
 
   apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
@@ -1363,7 +1373,7 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   START_MASTER(threading)
   printf0("%d\n", fgmres_iters);
   END_MASTER(threading)
-  
+
   // even to odd
   PROF_PRECISION_START( _NC, threading );
   coarse_n_hopping_term_PRECISION( p->b, p->x, op, _ODD_SITES, l, threading );

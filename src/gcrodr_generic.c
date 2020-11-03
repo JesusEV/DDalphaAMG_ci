@@ -324,11 +324,27 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
 // ASSUMING : right preconditioner (or no preconditioner)
 int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ){
 
+  // TODO : double-check if the following assignments of hatZ and hatW are general enough ...
+  int i, g_ln = p->restart_length + p->gcrodr_PRECISION.k;
+  for ( i=0; i<p->gcrodr_PRECISION.k; i++ ) {
+    p->gcrodr_PRECISION.hatZ[i] = p->gcrodr_PRECISION.U[i];
+    p->gcrodr_PRECISION.hatW[i] = p->gcrodr_PRECISION.C[i];
+  }
+  for ( i=p->gcrodr_PRECISION.k; i<g_ln; i++ ) {
+    if ( p->preconditioner==NULL ) {
+      p->gcrodr_PRECISION.hatZ[i] = p->V[i - p->gcrodr_PRECISION.k];
+    } else {
+      p->gcrodr_PRECISION.hatZ[i] = p->Z[i - p->gcrodr_PRECISION.k];
+    }
+    p->gcrodr_PRECISION.hatW[i] = p->V[i - p->gcrodr_PRECISION.k];
+  }
+  p->gcrodr_PRECISION.hatW[g_ln] = p->V[p->restart_length];
+
   // TODO : add <extra> profiling (this extra profiling is to be added to FGMRES)
 
   // start and end indices for vector functions depending on thread
   // NOTE : in this context, <m> changes! It is not (necessarily) p->restart_length
-  int start, end, fgmresx_iter=0, m, i, j, ol, k=p->gcrodr_PRECISION.k;
+  int start, end, fgmresx_iter=0, m, j, ol, k=p->gcrodr_PRECISION.k;
 
   PRECISION beta=0, norm_r0=1;
 

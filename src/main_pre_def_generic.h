@@ -136,7 +136,10 @@
     vector_PRECISION h_ritz;
     vector_PRECISION lejas;
     vector_PRECISION random_rhs;
-    vector_PRECISION accum_prod, product, temp;
+    vector_PRECISION accum_prod, product, temp, xtmp;
+
+    void (*preconditioner)();
+    void (*preconditioner_bare)();
 
     eigslvr_PRECISION_struct eigslvr;
     dirctslvr_PRECISION_struct dirctslvr;
