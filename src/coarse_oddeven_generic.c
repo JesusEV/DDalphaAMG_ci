@@ -1346,7 +1346,9 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   p->preconditioner = p->polyprec_PRECISION.preconditioner;
 #endif
 
+  START_MASTER(threading)
   if ( p->preconditioner==NULL ) { printf0("NULL !!\n"); }
+  END_MASTER(threading)
 
 #ifdef GCRODR
   fgmres_iters = flgcrodr_PRECISION( p, l, threading );
