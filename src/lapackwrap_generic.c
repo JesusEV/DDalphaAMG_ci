@@ -105,7 +105,9 @@ void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **
 
   // perform QR via CGS
 
+  START_MASTER(threading)
   memset( R[0], 0.0, sizeof(complex_PRECISION)*k*k );
+  END_MASTER(threading)
 
   for ( i=0; i<k; i++ ) {
     {
@@ -115,6 +117,7 @@ void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **
       END_MASTER(threading)
       SYNC_MASTER_TO_ALL(threading)
     }
+
     vector_PRECISION_real_scale( Ax[i], Ax[i], 1/creal(R[i][i]), start, end, l );
 
     for ( j=i+1; j<k; j++ ) {
@@ -140,7 +143,6 @@ void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **
 
       vector_PRECISION_saxpy( Ax[j], Ax[j], Ax[i], -R[j][i], start, end, l );
     }
-
   }
 
 

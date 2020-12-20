@@ -602,7 +602,9 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
           END_MASTER(threading)
         }
       } else {
-        printf0("depth: %d, iter: %d, p->H(%d,%d) = %+lf+%lfi\n", l->depth, iter, j+1, j, CSPLIT( p->H[j][j+1] ) );
+        START_MASTER(threading)
+        printf0("from fgmres : depth: %d, iter: %d, p->H(%d,%d) = %+lf+%lfi\n", l->depth, iter, j+1, j, CSPLIT( p->H[j][j+1] ) );
+        END_MASTER(threading)
         finish = 1;
         break;
       }
@@ -946,6 +948,14 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   if ( l->level == 0 && l->depth > 0 ) {
     if (prec == NULL)
     {
+#ifdef GCRODR
+      int k = p->gcrodr_PRECISION.k;
+      vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
+      complex_PRECISION **B = p->gcrodr_PRECISION.ort_B;
+      complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
+      vector_PRECISION *DPCk = p->gcrodr_PRECISION.DPC;
+#endif
+
       SYNC_MASTER_TO_ALL(threading)
       SYNC_CORES(threading)
       MPI_Request req;
@@ -954,11 +964,78 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       const complex_PRECISION sigma = 0;
       compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
-      if ( j == 0 )
-        vector_PRECISION_copy( Z[0], V[0], start, end, l );
-      else
-        vector_PRECISION_copy( V[j], Z[j], start, end, l );
+      if ( j == 0 ){
+        apply_operator_PRECISION( Z[0], V[0], p, l, threading );
 
+#ifdef GCRODR
+        if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
+          if (p->gcrodr_PRECISION.recompute_DPCk_plain == 1) {
+            for( i=0; i<p->gcrodr_PRECISION.k; i++ ) {
+              apply_operator_PRECISION( DPCk[i], Ck[i], p, l, threading );
+            }
+            p->gcrodr_PRECISION.recompute_DPCk_plain = 0;
+          }
+        }
+#endif
+
+        // TODO : re-enable !
+        //if ( sigma ) vector_PRECISION_saxpy( Z[j+1], Z[j+1], Z[j], -sigma, start, end, l );
+        return 1;
+      } else {
+        vector_PRECISION_copy( V[j], Z[j-1], start, end, l );
+      }
+
+#ifdef GCRODR
+      // orthogonalize against Ck whenever necessary
+      if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
+        SYNC_MASTER_TO_ALL(threading)
+        SYNC_CORES(threading)
+
+        // buffer
+        complex_PRECISION *bf1 = p->gcrodr_PRECISION.Bbuff[0];
+        complex_PRECISION *bf2 = p->gcrodr_PRECISION.Bbuff[0]+(k+j+1);
+
+        // space to orthogonalize against
+        vector_PRECISION *ort_sp[k+j+1];
+        for (i=0; i<k; i++) ort_sp[i] = Ck[i];
+        for (i=0; i<(j+1); i++) ort_sp[k+i] = V[i];
+
+        complex_PRECISION tmpx[k+j+1];
+        process_multi_inner_product_PRECISION( k+j+1, tmpx, ort_sp, V[j], p->v_start, p->v_end, l, threading );
+        START_MASTER(threading)
+        // buffer is of length m, and k<m
+        for ( i=0; i<(k+j+1); i++ )
+          bf2[i] = tmpx[i];
+        if ( g.num_processes > 1 ) {
+          PROF_PRECISION_START( _ALLR );
+          MPI_Iallreduce( bf2, bf1, k+j+1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &req );
+          PROF_PRECISION_STOP( _ALLR, 1 );
+        } else {
+          for( i=0; i<(k+j+1); i++ )
+            bf1[i] = bf2[i];
+        }
+
+        //memcpy( B[j-1], bf1, sizeof(complex_PRECISION)*k );
+        //memcpy( H[j-1], bf1+k, sizeof(complex_PRECISION)*(j+1) );
+        END_MASTER(threading)
+      } else {
+        complex_PRECISION tmp[j+1];
+        process_multi_inner_product_PRECISION( j+1, tmp, V, V[j], p->v_start, p->v_end, l, threading );
+        START_MASTER(threading)
+        PROF_PRECISION_START( _ALLR );
+        for( i=0; i<=j; i++ )
+          buffer[i] = tmp[i];
+        if ( g.num_processes > 1 ) {
+          MPI_Iallreduce( buffer, H[j-1], j+1, MPI_COMPLEX_PRECISION, MPI_SUM,
+                          (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &req );
+        } else {
+          for( i=0; i<=j; i++ )
+            H[j-1][i] = buffer[i];
+        }
+        PROF_PRECISION_STOP( _ALLR, 1 );
+        END_MASTER(threading)
+      }
+#else
       complex_PRECISION tmp[j+1];
       process_multi_inner_product_PRECISION( j+1, tmp, V, V[j], p->v_start, p->v_end, l, threading );
       START_MASTER(threading)
@@ -966,16 +1043,17 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       for( i=0; i<=j; i++ )
         buffer[i] = tmp[i];
       if ( g.num_processes > 1 ) {
-        MPI_Iallreduce( buffer, H[MAX(0,j-1)], j+1, MPI_COMPLEX_PRECISION, MPI_SUM,
+        MPI_Iallreduce( buffer, H[j-1], j+1, MPI_COMPLEX_PRECISION, MPI_SUM,
                         (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &req );
       } else {
         for( i=0; i<=j; i++ )
-          H[MAX(0,j-1)][i] = buffer[i];
+          H[j-1][i] = buffer[i];
       }
       PROF_PRECISION_STOP( _ALLR, 1 );
       END_MASTER(threading)
+#endif
 
-      apply_operator_PRECISION( Z[j+1], Z[j], p, l, threading );
+      apply_operator_PRECISION( Z[j], V[j], p, l, threading );
 
       START_MASTER(threading)
       PROF_PRECISION_START( _ALLR );
@@ -983,34 +1061,61 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         MPI_Wait( &req, &stat );
       }
       PROF_PRECISION_STOP( _ALLR, 0 );
-      if ( j > 0 ) {
-        for ( i=0; i<j; i++ )
-          H[j-1][j] -= conj( H[j-1][i] )*H[j-1][i];
-      }
-      H[MAX(0,j-1)][j] = sqrt( creal( H[MAX(0,j-1)][j] ) );
       END_MASTER(threading)
+
+#ifdef GCRODR
+      if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
+        SYNC_MASTER_TO_ALL(threading)
+        SYNC_CORES(threading)
+
+        complex_PRECISION *bf1 = p->gcrodr_PRECISION.Bbuff[0];
+        START_MASTER(threading)
+        // copy the B and H coefficients to the corresponding matrix
+        memcpy( B[j-1], bf1, sizeof(complex_PRECISION)*k );
+        memcpy( H[j-1], bf1+k, sizeof(complex_PRECISION)*(j+1) );
+        END_MASTER(threading)
+      }
+#endif
+
       SYNC_MASTER_TO_ALL(threading)
+      SYNC_CORES(threading)
+
+#ifdef GCRODR
+      if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
+        for( i=0; i<k; i++ )
+          vector_PRECISION_saxpy( V[j], V[j], Ck[i], -B[j-1][i], start, end, l );
+      }
+#endif
 
       for( i=0; i<j; i++ )
         vector_PRECISION_saxpy( V[j], V[j], V[i], -H[j-1][i], start, end, l );
-      vector_PRECISION_real_scale( V[j], V[j], 1/H[MAX(0,j-1)][j], start, end, l );
 
-      START_MASTER(threading)
-      if ( j > 0 ) {
-        H[j-1][j-1] += sigma;
-      }
-      END_MASTER(threading)
+      H[j-1][j] = global_norm_PRECISION( V[j], p->v_start, p->v_end, l, threading );
+
+      vector_PRECISION_real_scale( V[j], V[j], 1/H[j-1][j], start, end, l );
+
+      //START_MASTER(threading)
+      //if ( j > 0 ) {
+      //  H[j-1][j-1] += sigma;
+      //}
+      //END_MASTER(threading)
+
       SYNC_MASTER_TO_ALL(threading)
+      SYNC_CORES(threading)
 
       if ( j == 0 ) {
-        if ( sigma ) vector_PRECISION_saxpy( Z[j+1], Z[j+1], Z[j], -sigma, start, end, l );
+        //if ( sigma ) vector_PRECISION_saxpy( Z[j+1], Z[j+1], Z[j], -sigma, start, end, l );
       } else {
+#ifdef GCRODR
+        if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
+          for( i=0; i<k; i++ )
+            vector_PRECISION_saxpy( Z[j], Z[j], DPCk[i], -B[j-1][i], start, end, l );
+        }
+#endif
         for( i=0; i<j; i++ )
-          vector_PRECISION_saxpy( Z[j+1], Z[j+1], Z[i+1], -H[j-1][i], start, end, l );
+          vector_PRECISION_saxpy( Z[j], Z[j], Z[i], -H[j-1][i], start, end, l );
       }
-
-      vector_PRECISION_real_scale( Z[j+1], Z[j+1], 1/H[MAX(0,j-1)][j], start, end, l );
-
+      vector_PRECISION_real_scale( Z[j], Z[j], 1/H[j-1][j], start, end, l );
     }
     else
     {
@@ -1027,31 +1132,30 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       const complex_PRECISION sigma = 0;
       compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
-
 #ifdef GCRODR
-    int k = p->gcrodr_PRECISION.k;
-    vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
-    complex_PRECISION **B = p->gcrodr_PRECISION.ort_B;
-    complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
-    vector_PRECISION *PCk = p->gcrodr_PRECISION.PC;
-    vector_PRECISION *DPCk = p->gcrodr_PRECISION.DPC;
+      int k = p->gcrodr_PRECISION.k;
+      vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
+      complex_PRECISION **B = p->gcrodr_PRECISION.ort_B;
+      complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
+      vector_PRECISION *PCk = p->gcrodr_PRECISION.PC;
+      vector_PRECISION *DPCk = p->gcrodr_PRECISION.DPC;
 #endif
 
-      if ( j == 0 )
-      {
+      if ( j == 0 ) {
         if (prec == NULL) vector_PRECISION_copy( Z[0], V[0], start, end, l );
         else prec( Z[0], NULL, V[0], _NO_RES, l, threading );
         apply_operator_PRECISION( Va[0], Z[0], p, l, threading );
         if ( sigma ) vector_PRECISION_saxpy( Va[j], Va[j], Va[j], -sigma, start, end, l );
 
 #ifdef GCRODR
-        if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 )
-        {      
-          for( i=0; i<p->gcrodr_PRECISION.k; i++ )
-          {
-            if (prec == NULL) vector_PRECISION_copy( PCk[i], Ck[i], start, end, l );
-            else prec( PCk[i], NULL, Ck[i], _NO_RES, l, threading );
-            apply_operator_PRECISION( DPCk[i], PCk[i], p, l, threading );
+        if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
+          if (p->gcrodr_PRECISION.recompute_DPCk_poly == 1) {
+            for( i=0; i<p->gcrodr_PRECISION.k; i++ ) {
+              if (prec == NULL) vector_PRECISION_copy( PCk[i], Ck[i], start, end, l );
+              else prec( PCk[i], NULL, Ck[i], _NO_RES, l, threading );
+              apply_operator_PRECISION( DPCk[i], PCk[i], p, l, threading );
+            }
+            p->gcrodr_PRECISION.recompute_DPCk_poly = 0;
           }
         }
 #endif        
@@ -1060,46 +1164,72 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       else
         vector_PRECISION_copy( V[j], Va[j-1], start, end, l );
 
+      double lr_tbeg, lr_tend;
+      double prec_tbeg, prec_tend;
+      double matmul_tbeg, matmul_tend;
+      double wait_tbeg, wait_tend;
+      double axpy_tbeg, axpy_tend;
 
 #ifdef GCRODR
       // orthogonalize against Ck whenever necessary
       if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
 
-        complex_PRECISION tmpx[k];
-        process_multi_inner_product_PRECISION( k, tmpx, Ck, V[j], p->v_start, p->v_end, l, threading );
+        // buffer
+        complex_PRECISION *bf1 = p->gcrodr_PRECISION.Bbuff[0];
+        complex_PRECISION *bf2 = p->gcrodr_PRECISION.Bbuff[0]+(k+j+1);
+
+        // space to orthogonalize against
+        vector_PRECISION *ort_sp[k+j+1];
+        for (i=0; i<k; i++) ort_sp[i] = Ck[i];
+        for (i=0; i<(j+1); i++) ort_sp[k+i] = V[i];
+
+        complex_PRECISION tmpx[k+j+1];
+        process_multi_inner_product_PRECISION( k+j+1, tmpx, ort_sp, V[j], p->v_start, p->v_end, l, threading );
         START_MASTER(threading)
         // buffer is of length m, and k<m
-        for ( i=0; i<k; i++ )
-          buffer[i] = tmpx[i];
+        for ( i=0; i<(k+j+1); i++ )
+          bf2[i] = tmpx[i];
         if ( g.num_processes > 1 ) {
           PROF_PRECISION_START( _ALLR );
-          MPI_Allreduce( buffer, bf, k, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
+          MPI_Iallreduce( bf2, bf1, k+j+1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &req );
           PROF_PRECISION_STOP( _ALLR, 1 );
         } else {
-          for( i=0; i<k; i++ )
-            bf[i] = buffer[i];
+          for( i=0; i<(k+j+1); i++ )
+            bf1[i] = bf2[i];
         }
 
-        // copy the B coefficients to the corresponding matrix
-        memcpy( B[j-1], bf, sizeof(complex_PRECISION)*k );
+        //memcpy( B[j-1], bf1, sizeof(complex_PRECISION)*k );
+        //memcpy( H[j-1], bf1+k, sizeof(complex_PRECISION)*(j+1) );
         END_MASTER(threading)
-        SYNC_MASTER_TO_ALL(threading)
-
-        for( i=0; i<k; i++ )
-          vector_PRECISION_saxpy( V[j], V[j], Ck[i], -B[j-1][i], start, end, l );
 
         SYNC_MASTER_TO_ALL(threading)
         SYNC_CORES(threading)
-      }
-#endif
+      } else {
+        complex_PRECISION tmp[j+1];
+        process_multi_inner_product_PRECISION( j+1, tmp, V, V[j], p->v_start, p->v_end, l, threading );
 
+        START_MASTER(threading)
+        PROF_PRECISION_START( _ALLR );
+        for( i=0; i<=j; i++ )
+          buffer[i] = tmp[i];
+        if ( g.num_processes > 1 ) {
+          MPI_Iallreduce( buffer, H[j-1], j+1, MPI_COMPLEX_PRECISION, MPI_SUM,
+                          (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &req );
+        } else {
+            for( i=0; i<=j; i++ )
+                H[j-1][i] = buffer[i];
+        }
+        PROF_PRECISION_STOP( _ALLR, 1 );
+        END_MASTER(threading)
+      }
+#else
       complex_PRECISION tmp[j+1];
       process_multi_inner_product_PRECISION( j+1, tmp, V, V[j], p->v_start, p->v_end, l, threading );
+
       START_MASTER(threading)
       PROF_PRECISION_START( _ALLR );
       for( i=0; i<=j; i++ )
         buffer[i] = tmp[i];
-
       if ( g.num_processes > 1 ) {
         MPI_Iallreduce( buffer, H[j-1], j+1, MPI_COMPLEX_PRECISION, MPI_SUM,
                         (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &req );
@@ -1109,13 +1239,38 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       }
       PROF_PRECISION_STOP( _ALLR, 1 );
       END_MASTER(threading)
-
+#endif
 
       if (prec == NULL) vector_PRECISION_copy( Za[j-1], Va[j-1], start, end, l );
       else prec( Za[j-1], NULL, Va[j-1], _NO_RES, l, threading );
 
+      if (g.low_level_meas == 1) {
+        START_MASTER(threading)
+        prec_tend = MPI_Wtime();
+        printf0("preconditioner time = %lf\n", prec_tend-prec_tbeg);
+        END_MASTER(threading)
+      }
+
+      if (g.low_level_meas == 1) {
+        START_MASTER(threading)
+        matmul_tbeg = MPI_Wtime();
+        END_MASTER(threading)
+      }
+
       apply_operator_PRECISION( Va[j], Za[j-1], p, l, threading );
 
+      if (g.low_level_meas == 1) {
+        START_MASTER(threading)
+        matmul_tend = MPI_Wtime();
+        printf0("matmul time = %lf\n", matmul_tend-matmul_tbeg);
+        END_MASTER(threading)
+      }
+
+      if (g.low_level_meas == 1) {
+        START_MASTER(threading)
+        wait_tbeg = MPI_Wtime();
+        END_MASTER(threading)
+      }
 
       START_MASTER(threading)
       PROF_PRECISION_START( _ALLR );
@@ -1123,34 +1278,50 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         MPI_Wait( &req, &stat );
       }
       PROF_PRECISION_STOP( _ALLR, 0 );
+      END_MASTER(threading)
 
-       for ( i=0; i<=j-1; i++ )
-         H[j-1][j] -= conj( H[j-1][i] )*H[j-1][i];
+#ifdef GCRODR
+      if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
+        SYNC_MASTER_TO_ALL(threading)
+        SYNC_CORES(threading)
 
-// #ifdef GCRODR
-//       if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 )
-//       {      
-//         for( i=0; i<k; i++ )
-//           H[j-1][j] -= conj( B[j-1][i] )*B[j-1][i];
-//       }
-// #endif
+        complex_PRECISION *bf1 = p->gcrodr_PRECISION.Bbuff[0];
+        START_MASTER(threading)
+        // copy the B and H coefficients to the corresponding matrix
+        memcpy( B[j-1], bf1, sizeof(complex_PRECISION)*k );
+        memcpy( H[j-1], bf1+k, sizeof(complex_PRECISION)*(j+1) );
+        END_MASTER(threading)
+      }
+#endif
 
-       H[j-1][j] = sqrt( creal( H[j-1][j] ) );
+      SYNC_MASTER_TO_ALL(threading)
+      SYNC_CORES(threading)
 
-       END_MASTER(threading)
-       SYNC_MASTER_TO_ALL(threading)
+      if (g.low_level_meas == 1) {
+        START_MASTER(threading)
+        wait_tend = MPI_Wtime();
+        printf0("wait time = %lf\n", wait_tend-wait_tbeg);
+        END_MASTER(threading)
+      }
 
-
+#ifdef GCRODR
+      if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
+        for( i=0; i<k; i++ )
+          vector_PRECISION_saxpy( V[j], V[j], Ck[i], -B[j-1][i], start, end, l );
+      }
+#endif
       for( i=0; i<=j-1; i++ )
         vector_PRECISION_saxpy( V[j], V[j], V[i], -H[j-1][i], start, end, l );
       
-      //PRECISION tmp2 = global_norm_PRECISION( V[j], p->v_start, p->v_end, l, threading );
-      //START_MASTER(threading)
-      //H[j-1][j] = tmp2;
-      //END_MASTER(threading)
-      //SYNC_MASTER_TO_ALL(threading)
-      vector_PRECISION_real_scale( V[j], V[j], 1/H[j-1][j], start, end, l );
+      PRECISION tmp2 = global_norm_PRECISION( V[j], p->v_start, p->v_end, l, threading );
+      START_MASTER(threading)
+      H[j-1][j] = tmp2;
+      END_MASTER(threading)
 
+      SYNC_MASTER_TO_ALL(threading)
+      SYNC_CORES(threading)
+
+      vector_PRECISION_real_scale( V[j], V[j], 1/H[j-1][j], start, end, l );
 
       vector_PRECISION_copy( Z[j], Za[j-1], start, end, l );
 #ifdef GCRODR
@@ -1160,9 +1331,23 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
           vector_PRECISION_saxpy( Z[j], Z[j], PCk[i], -B[j-1][i], start, end, l );
       }
 #endif
+
+      if (g.low_level_meas == 1) {
+        START_MASTER(threading)
+        axpy_tbeg = MPI_Wtime();
+        END_MASTER(threading)
+      }
+
       for( i=0; i<=j-1; i++ )
         vector_PRECISION_saxpy( Z[j], Z[j], Z[i], -H[j-1][i], start, end, l );
       vector_PRECISION_real_scale( Z[j], Z[j], 1/H[j-1][j], start, end, l );
+
+      if (g.low_level_meas == 1) {
+        START_MASTER(threading)
+        axpy_tend = MPI_Wtime();
+        printf0("axpy time = %lf\n", axpy_tend-axpy_tbeg);
+        END_MASTER(threading)
+      }
 
       START_MASTER(threading)
         H[j-1][j-1] += sigma;
@@ -1180,6 +1365,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         vector_PRECISION_saxpy( Va[j], Va[j], Va[i], -H[j-1][i], start, end, l );
       //if ( cabs_PRECISION( H[j-1][j] ) > 1e-15 )
       vector_PRECISION_real_scale( Va[j], Va[j], 1/H[j-1][j], start, end, l );
+
     }
 
   } else {
@@ -1199,6 +1385,15 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   if ( prec != NULL ) {
     if ( p->kind == _LEFT ) {
       apply_operator_PRECISION( Z[0], V[j], p, l, threading );
+
+      //MPI_Barrier(MPI_COMM_WORLD);
+      //SYNC_MASTER_TO_ALL(threading);
+      //SYNC_CORES(threading)
+
+      //MPI_Barrier(MPI_COMM_WORLD);
+      //SYNC_MASTER_TO_ALL(threading);
+      //SYNC_CORES(threading)
+
       prec( w, NULL, Z[0], _NO_RES, l, threading );
     } else {
       if ( l->level == 0 ) {
@@ -1221,6 +1416,9 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 #ifdef GCRODR
   // orthogonalize against Ck whenever necessary
   if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
+
     int k = p->gcrodr_PRECISION.k;
     vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
     complex_PRECISION **B = p->gcrodr_PRECISION.ort_B;
@@ -1245,7 +1443,9 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     // copy the B coefficients to the corresponding matrix
     memcpy( B[j], bf, sizeof(complex_PRECISION)*k );
     END_MASTER(threading)
+
     SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
 
     for( i=0; i<k; i++ )
       vector_PRECISION_saxpy( w, w, Ck[i], -B[j][i], start, end, l );
@@ -1270,7 +1470,10 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       H[j][i] = buffer[i];
   }
   END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
+
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading)
+
   for( i=0; i<=j; i++ )
     vector_PRECISION_saxpy( w, w, V[i], -H[j][i], start, end, l );
 #ifdef REORTH
@@ -1299,7 +1502,9 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   START_MASTER(threading)
   H[j][j+1] = tmp2;
   END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
+
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading)
   
   // V_j+1 = w / H_j+1,j
   if ( cabs_PRECISION( H[j][j+1] ) > 1e-15 )
@@ -1343,6 +1548,9 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     memset( p->polyprec_PRECISION.eigslvr.Hc[jx]+jx+2, 0.0, sizeof(complex_PRECISION)*(p->restart_length + 1 - (jx+2)) );
   }
 #endif
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
 
   return 1;
 }
@@ -1389,7 +1597,9 @@ void qr_update_PRECISION( complex_PRECISION **H, complex_PRECISION *s,
   PROF_PRECISION_STOP( _SMALL1, 6*j+6 );
   
   END_MASTER(threading)
-  SYNC_MASTER_TO_ALL(threading)
+
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading)
 }
 
 

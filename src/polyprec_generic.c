@@ -99,7 +99,9 @@ void leja_ordering_PRECISION( gmres_PRECISION_struct *p )
   complex_PRECISION** L;
   complex_PRECISION* col_prods;
 
-  print_vector_PRECISION("Eigenvalues", p->polyprec_PRECISION.h_ritz, p->polyprec_PRECISION.eigslvr.N);
+  if (g.low_level_meas == 1) {
+    print_vector_PRECISION("Eigenvalues", p->polyprec_PRECISION.h_ritz, p->polyprec_PRECISION.eigslvr.N);
+  }
 
   d_poly = p->polyprec_PRECISION.d_poly;
   L = p->polyprec_PRECISION.L;
@@ -150,7 +152,9 @@ void leja_ordering_PRECISION( gmres_PRECISION_struct *p )
   }
 
   memcpy( p->polyprec_PRECISION.lejas, p->polyprec_PRECISION.L[d_poly], sizeof(complex_PRECISION)*(d_poly) );
-  print_vector_PRECISION("lejas", p->polyprec_PRECISION.lejas, d_poly);
+  if (g.low_level_meas == 1) {
+    print_vector_PRECISION("lejas", p->polyprec_PRECISION.lejas, d_poly);
+  }
 }
 
 
@@ -242,8 +246,9 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
                                int res, level_struct *l, struct Thread *threading )
 {
   int i, start, end;
-  //SYNC_MASTER_TO_ALL(threading);
-  //SYNC_CORES(threading);
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
   compute_core_start_end(l->p_PRECISION.v_start, l->p_PRECISION.v_end, &start, &end, l, threading);
 
   int d_poly = l->p_PRECISION.polyprec_PRECISION.d_poly;
@@ -252,42 +257,21 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
   vector_PRECISION temp = l->p_PRECISION.polyprec_PRECISION.temp;
   vector_PRECISION lejas = l->p_PRECISION.polyprec_PRECISION.lejas;
 
-  //SYNC_CORES(threading);
-
   vector_PRECISION_copy( product, eta, start, end, l );
   vector_PRECISION_define(accum_prod, 0.0, start, end, l);
-
-  //START_MASTER(threading)
-  //MPI_Barrier(l->gs_PRECISION.level_comm);
-  //END_MASTER(threading)
-  //SYNC_MASTER_TO_ALL(threading)	
 
   vector_PRECISION_saxpy(accum_prod, accum_prod, product, 1./lejas[0], start, end, l);
   for (i = 1; i < d_poly; i++)
   {
-    //vector_PRECISION_define(temp, 0.0, start, end, l); // Is it necessary?
-
-    //START_MASTER(threading)
-    //MPI_Barrier(l->gs_PRECISION.level_comm);
-    //END_MASTER(threading)
-    //SYNC_MASTER_TO_ALL(threading)	
-
     apply_operator_PRECISION(temp, product, &l->p_PRECISION, l, threading);
-
-    //START_MASTER(threading)
-    //MPI_Barrier(l->gs_PRECISION.level_comm);
-    //END_MASTER(threading)
-    //SYNC_MASTER_TO_ALL(threading)	
 
     vector_PRECISION_saxpy(product, product, temp, -1./lejas[i-1], start, end, l);
     vector_PRECISION_saxpy(accum_prod, accum_prod, product, 1./lejas[i], start, end, l);
-
-    //START_MASTER(threading)
-    //MPI_Barrier(l->gs_PRECISION.level_comm);
-    //END_MASTER(threading)
-    //SYNC_MASTER_TO_ALL(threading)	
   }
   vector_PRECISION_copy( phi, accum_prod, start, end, l );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
 }
 
 #endif

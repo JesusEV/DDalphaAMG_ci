@@ -361,6 +361,8 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
   config_PRECISION D_pt;
 #endif
 
+  double neg_tbeg, neg_tend, pos_tbeg, pos_tend;
+
   compute_core_start_end(0, nv*n, &start, &end, l, threading );
 
   SYNC_MASTER_TO_ALL(threading)
@@ -428,6 +430,12 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
     }
 #endif
 
+    if (g.low_level_meas == 1) {
+      START_MASTER(threading)
+      neg_tbeg = MPI_Wtime();
+      END_MASTER(threading)
+    }
+
     // start communication in positive direction
     START_LOCKED_MASTER(threading)
     ghost_sendrecv_PRECISION( op->prpT, T, +1, &(op->c), _FULL_SYSTEM, l );
@@ -440,6 +448,13 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
     ghost_wait_PRECISION( op->prnY, Y, -1, &(op->c), _FULL_SYSTEM, l );
     ghost_wait_PRECISION( op->prnX, X, -1, &(op->c), _FULL_SYSTEM, l );
     END_LOCKED_MASTER(threading)
+
+    if (g.low_level_meas == 1) {
+      START_MASTER(threading)
+      neg_tend = MPI_Wtime();
+      printf0("negative wait time = %lf\n", neg_tend-neg_tbeg);
+      END_MASTER(threading)
+    }
      
 #ifdef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
     su3_dpbp_PRECISION( eta, prn, op, neighbor, start, end );
@@ -477,6 +492,12 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
     }
 #endif
 
+    if (g.low_level_meas == 1) {
+      START_MASTER(threading)
+      pos_tbeg = MPI_Wtime();
+      END_MASTER(threading)
+    }
+
     // wait for communication in positive direction
     START_LOCKED_MASTER(threading)
     ghost_wait_PRECISION( op->prpT, T, +1, &(op->c), _FULL_SYSTEM, l );
@@ -484,6 +505,13 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
     ghost_wait_PRECISION( op->prpY, Y, +1, &(op->c), _FULL_SYSTEM, l );
     ghost_wait_PRECISION( op->prpX, X, +1, &(op->c), _FULL_SYSTEM, l );
     END_LOCKED_MASTER(threading)
+
+    if (g.low_level_meas == 1) {
+      START_MASTER(threading)
+      pos_tend = MPI_Wtime();
+      printf0("positive wait time = %lf\n", pos_tend-pos_tbeg);
+      END_MASTER(threading)
+    }
       
     // lift up plus dir
 #ifdef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
@@ -545,6 +573,12 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
     mvmh_PRECISION( op->prpX+j+3, D_pt, pbuf+3 ); D_pt += 9;
   }
 #endif
+
+  if (g.low_level_meas == 1) {
+    START_MASTER(threading)
+    neg_tbeg = MPI_Wtime();
+    END_MASTER(threading)
+  }
   
   // start communication in positive direction
   START_LOCKED_MASTER(threading)
@@ -558,6 +592,13 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
   ghost_wait_PRECISION( op->prnY, Y, -1, &(op->c), _FULL_SYSTEM, l );
   ghost_wait_PRECISION( op->prnX, X, -1, &(op->c), _FULL_SYSTEM, l );
   END_LOCKED_MASTER(threading)
+
+  if (g.low_level_meas == 1) {
+    START_MASTER(threading)
+    neg_tend = MPI_Wtime();
+    printf0("negative wait time = %lf\n", neg_tend-neg_tbeg);
+    END_MASTER(threading)
+  }
   
   // multiply with U and lift up minus dir
 #ifdef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION
@@ -586,6 +627,12 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
     pbp_su3_X_PRECISION( pbuf, eta_pt ); D_pt += 9;
   }
 #endif
+
+  if (g.low_level_meas == 1) {
+    START_MASTER(threading)
+    pos_tend = MPI_Wtime();
+    END_MASTER(threading)
+  }
   
   // wait for communication in positive direction
   START_LOCKED_MASTER(threading)
@@ -594,6 +641,13 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
   ghost_wait_PRECISION( op->prpY, Y, +1, &(op->c), _FULL_SYSTEM, l );
   ghost_wait_PRECISION( op->prpX, X, +1, &(op->c), _FULL_SYSTEM, l );
   END_LOCKED_MASTER(threading)
+
+  if (g.low_level_meas == 1) {
+    START_MASTER(threading)
+    pos_tend = MPI_Wtime();
+    printf0("pos wait time = %lf\n", pos_tend-pos_tbeg);
+    END_MASTER(threading)
+  }
   
   // lift up plus dir
 #ifdef OPTIMIZED_NEIGHBOR_COUPLING_PRECISION

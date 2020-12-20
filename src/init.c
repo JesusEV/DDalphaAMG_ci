@@ -1004,6 +1004,9 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   read_parameter( &save_pt, "coarse grid polyprec_d:", "%d", 1, in, _DEFAULT_SET );
 #endif
 
+  save_pt = &(g.low_level_meas); g.low_level_meas = 0;
+  read_parameter( &save_pt, "low level meas:", "%d", 1, in, _DEFAULT_SET );
+
   save_pt = &(g.setup_m0); g.setup_m0 = g.m0;
   read_parameter( &save_pt, "setup m0:", "%lf", 1, in, _DEFAULT_SET );
 #ifdef HAVE_TM

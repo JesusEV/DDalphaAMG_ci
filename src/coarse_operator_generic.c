@@ -675,6 +675,9 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   int end;
   compute_core_start_end_custom(0, l->num_inner_lattice_sites, &start, &end, l, threading, 1);
 
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
 #ifndef OPTIMIZED_COARSE_SELF_COUPLING_PRECISION
   coarse_self_couplings_PRECISION( eta, phi, op, start, end, l);
 #else
@@ -682,6 +685,18 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 #endif
 
   PROF_PRECISION_STOP( _SC, 1, threading );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+  double tbeg, tend;
+
+  if (g.low_level_meas == 1) {
+    START_MASTER(threading)
+    tbeg = MPI_Wtime();
+    END_MASTER(threading)
+  }
+
   PROF_PRECISION_START( _NC, threading );
 
 #ifndef OPTIMIZED_COARSE_NEIGHBOR_COUPLING_PRECISION
@@ -691,6 +706,16 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 #endif
 
   PROF_PRECISION_STOP( _NC, 1, threading );
+
+  if (g.low_level_meas == 1) {
+    START_MASTER(threading)
+    tend = MPI_Wtime();
+    printf0("hopping time = %lf\n", tend-tbeg);
+    END_MASTER(threading)
+  }
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
 }
 
 void g5D_apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op,

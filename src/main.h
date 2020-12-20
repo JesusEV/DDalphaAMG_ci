@@ -434,6 +434,8 @@
     // mostly useful, as of now, for PP and GCRODR
     int on_solve;
 
+    int low_level_meas;
+
   } global_struct;
 
   extern global_struct g;

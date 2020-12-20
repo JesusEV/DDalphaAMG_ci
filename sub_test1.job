@@ -1,0 +1,17 @@
+#!/bin/bash -x
+#SBATCH --account=hwu29
+#SBATCH --nodes=10
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=48
+#SBATCH --output=mpi-out.%j
+#SBATCH --error=mpi-err.%j
+#SBATCH --time=02:59:00
+#SBATCH --partition=mem192
+
+#du -hs *
+#du -hs ../../
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
+make clean
+make -j 32
+. run -i sample_very_large.ini

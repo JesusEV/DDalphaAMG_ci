@@ -2,4 +2,4 @@
 dependencies/*
 !dependencies/install_dependencies_01.sh
 !dependencies/install_dependencies_02.sh
-
+mpi-*
