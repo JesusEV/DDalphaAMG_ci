@@ -373,6 +373,12 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     p->Za[i] = p->Za[0] + i*vl;
   }
 #endif
+
+#ifdef BLOCK_JACOBI
+  if (l->level==0) {
+    p->block_jacobi_PRECISION.BJ_usable = 0;
+  }
+#endif
 }
 
 
@@ -952,7 +958,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       int k = p->gcrodr_PRECISION.k;
       vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
       complex_PRECISION **B = p->gcrodr_PRECISION.ort_B;
-      complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
+      //complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
       vector_PRECISION *DPCk = p->gcrodr_PRECISION.DPC;
 #endif
 
@@ -967,7 +973,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       MPI_Request req;
       MPI_Status stat;
       int start, end, i;
-      const complex_PRECISION sigma = 0;
+      //const complex_PRECISION sigma = 0;
       compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
       if ( j == 0 ){
@@ -1002,7 +1008,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         complex_PRECISION *bf2 = p->gcrodr_PRECISION.Bbuff[0]+(k+j+1);
 
         // space to orthogonalize against
-        vector_PRECISION *ort_sp[k+j+1];
+        vector_PRECISION ort_sp[k+j+1];
         for (i=0; i<k; i++) ort_sp[i] = Ck[i];
         for (i=0; i<(j+1); i++) ort_sp[k+i] = V[i];
 
@@ -1061,7 +1067,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 
       apply_operator_PRECISION( Z[j], V[j], p, l, threading );
 
-      double wait_tbeg, wait_tend;
+      double wait_tbeg=0.0, wait_tend=0.0;
 
       if (g.low_level_meas == 1) {
         START_MASTER(threading)
@@ -1165,7 +1171,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       int k = p->gcrodr_PRECISION.k;
       vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
       complex_PRECISION **B = p->gcrodr_PRECISION.ort_B;
-      complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
+      //complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
       vector_PRECISION *PCk = p->gcrodr_PRECISION.PC;
       vector_PRECISION *DPCk = p->gcrodr_PRECISION.DPC;
 #endif
@@ -1193,11 +1199,11 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       else
         vector_PRECISION_copy( V[j], Va[j-1], start, end, l );
 
-      double lr_tbeg, lr_tend;
-      double prec_tbeg, prec_tend;
-      double matmul_tbeg, matmul_tend;
-      double wait_tbeg, wait_tend;
-      double axpy_tbeg, axpy_tend;
+      //double lr_tbeg=0.0, lr_tend=0.0;
+      double prec_tbeg=0.0, prec_tend=0.0;
+      double matmul_tbeg=0.0, matmul_tend=0.0;
+      double wait_tbeg=0.0, wait_tend=0.0;
+      double axpy_tbeg=0.0, axpy_tend=0.0;
 
 #ifdef GCRODR
       // orthogonalize against Ck whenever necessary
@@ -1208,7 +1214,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         complex_PRECISION *bf2 = p->gcrodr_PRECISION.Bbuff[0]+(k+j+1);
 
         // space to orthogonalize against
-        vector_PRECISION *ort_sp[k+j+1];
+        vector_PRECISION ort_sp[k+j+1];
         for (i=0; i<k; i++) ort_sp[i] = Ck[i];
         for (i=0; i<(j+1); i++) ort_sp[k+i] = V[i];
 

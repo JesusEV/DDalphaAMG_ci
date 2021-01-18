@@ -636,7 +636,7 @@ void coarse_oddeven_free_PRECISION( level_struct *l ) {
 void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
                                     const int amount, level_struct *l, struct Thread *threading ) {
 
-  double pos_tbeg, pos_tend, neg_tbeg, neg_tend, tbeg, tend;
+  double pos_tbeg=0.0, pos_tend=0.0, neg_tbeg=0.0, neg_tend=0.0, tbeg=0.0, tend=0.0;
 
   START_NO_HYPERTHREADS(threading)
 
@@ -827,9 +827,8 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
                                       const int amount, level_struct *l, struct Thread *threading ) {
 
-  double neg_tbeg, neg_tend, pos_tbeg, pos_tend;
-
 #ifdef OPTIMIZED_COARSE_NEIGHBOR_COUPLING_PRECISION
+  //double neg_tbeg=0.0, neg_tend=0.0, pos_tbeg=0.0, pos_tend=0.0;
 #ifndef COMM_HIDING_COARSEOP
   int sign = -1;
   coarse_pn_hopping_term_PRECISION_vectorized( out, in, op, amount, l, sign, threading);
@@ -838,6 +837,7 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
 #endif
   return;
 #else
+  double neg_tbeg=0.0, neg_tend=0.0, pos_tbeg=0.0, pos_tend=0.0;
   START_NO_HYPERTHREADS(threading)
 
   int mu, i, index, num_site_var=l->num_lattice_site_var,
@@ -1142,9 +1142,9 @@ void coarse_hopping_term_PRECISION_vectorized( vector_PRECISION out, vector_PREC
 void coarse_pn_hopping_term_PRECISION_vectorized( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
                                     const int amount, level_struct *l, int sign, struct Thread *threading ) {
 
-  double pos_tbeg, pos_tend, neg_tbeg, neg_tend, tbeg, tend;
-
 #ifdef OPTIMIZED_COARSE_NEIGHBOR_COUPLING_PRECISION
+  double pos_tbeg=0.0, pos_tend=0.0, neg_tbeg=0.0, neg_tend=0.0, tbeg=0.0, tend=0.0;
+
   START_NO_HYPERTHREADS(threading)
 
   int mu, i, num_site_var=l->num_lattice_site_var,
@@ -1478,7 +1478,7 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 
   int start, end;
 
-  PRECISION norm_r0;
+  PRECISION norm_r0=1.0;
   if (g.low_level_meas == 1) {
     compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
     vector_PRECISION_copy( p->r, p->b, start, end, l ); // compute r = b - w
@@ -1495,11 +1495,35 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
     END_MASTER(threading)
   }
 
+#ifdef BLOCK_JACOBI
+  // if Block Jacobi is enabled, solve the problem : M^{-1}Ax = M^{-1}b
+
+  START_MASTER(threading)
+  printf0("\n---> applying Block Jacobi, to right hand side ...\n");
+  END_MASTER(threading)
+
+  block_jacobi_apply_PRECISION( p->b, p->b, p, l, threading );
+#endif
+
 #ifdef GCRODR
   fgmres_iters = flgcrodr_PRECISION( p, l, threading );
 #else  
   fgmres_iters = fgmres_PRECISION( p, l, threading );
 #endif
+
+#ifdef BLOCK_JACOBI
+  // restore the rhs
+
+  START_MASTER(threading)
+  printf0("\n---> after solve, restoring right hand side ...\n\n");
+  END_MASTER(threading)
+
+  block_jacobi_restore_from_buffer_PRECISION( p->b, p, l, threading );
+#endif
+
+  START_MASTER(threading)
+  printf0("fgmres iters = %d\n", fgmres_iters);
+  END_MASTER(threading)
 
 #ifdef POLYPREC
   if ( l->level==0 && l->p_PRECISION.polyprec_PRECISION.update_lejas == 1 ) {
@@ -1550,7 +1574,7 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
 
   vector_PRECISION *tmp = op->buffer;
 
-  double tend, tbeg;
+  double tend=0.0, tbeg=0.0;
   
   SYNC_CORES(threading)
 
@@ -1704,7 +1728,7 @@ void g5D_coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_P
 
   vector_PRECISION *tmp = op->buffer;
 
-  double tend, tbeg;
+  double tend=0.0, tbeg=0.0;
   
   SYNC_CORES(threading)
 

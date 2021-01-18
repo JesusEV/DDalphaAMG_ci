@@ -689,7 +689,7 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
-  double tbeg, tend;
+  double tbeg=0.0, tend=0.0;
 
   if (g.low_level_meas == 1) {
     START_MASTER(threading)

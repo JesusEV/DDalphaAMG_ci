@@ -145,7 +145,13 @@
     dirctslvr_PRECISION_struct dirctslvr;
   } polyprec_PRECISION_struct;
 #endif
-  
+
+#ifdef BLOCK_JACOBI
+  typedef struct {
+    int BJ_usable;
+  } block_jacobi_PRECISION_struct;
+#endif
+
   typedef struct {
     vector_PRECISION x, b, r, w, *V, *Z;
     complex_PRECISION **H, *y, *gamma, *c, *s;
@@ -163,6 +169,9 @@
 #endif
 #ifdef POLYPREC
     polyprec_PRECISION_struct polyprec_PRECISION;
+#endif
+#ifdef BLOCK_JACOBI
+    block_jacobi_PRECISION_struct block_jacobi_PRECISION;
 #endif
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
     int syst_size;

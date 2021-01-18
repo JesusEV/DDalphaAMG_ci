@@ -601,6 +601,11 @@
   #include "gcrodr_float.h"
 #endif
 
+#ifdef BLOCK_JACOBI
+  #include "block_jacobi_double.h"
+  #include "block_jacobi_float.h"
+#endif
+
 #if defined(GCRODR) || defined(POLYPREC)
   #include <lapacke.h>
 #ifdef GCRODR

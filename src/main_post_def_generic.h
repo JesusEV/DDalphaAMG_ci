@@ -25,11 +25,25 @@
   #include "coarse_oddeven_PRECISION.h"
   #include "dirac_PRECISION.h"
   #include "coarse_operator_PRECISION.h"
+  #include "block_jacobi_PRECISION.h"
 
   static inline void apply_operator_PRECISION( vector_PRECISION output, vector_PRECISION input, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
 
-    p->eval_operator( output, input, p->op, l, threading );
+#ifdef BLOCK_JACOBI
+    if (l->level==0) {
+      START_MASTER(threading)
+      printf0("\n---> applying Block Jacobi, before matmul\n");
+      END_MASTER(threading)
 
+      block_jacobi_apply_PRECISION( input, input, p, l, threading );
+
+      START_MASTER(threading)
+      printf0("---> applying matmul !\n");
+      END_MASTER(threading)
+    }
+#endif
+
+    p->eval_operator( output, input, p->op, l, threading );
   }
   
   static inline void apply_operator_dagger_PRECISION( vector_PRECISION output, vector_PRECISION input, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
