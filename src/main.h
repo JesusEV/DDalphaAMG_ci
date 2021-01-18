@@ -87,9 +87,26 @@
 #if defined(GCRODR) || defined(POLYPREC)
   #define geev_double LAPACKE_zgeev 
   #define geev_float LAPACKE_cgeev 
+  #define ggev_double LAPACKE_zggev
+  #define ggev_float LAPACKE_cggev
+  #define geqr2_double LAPACKE_zgeqr2
+  #define geqr2_float LAPACKE_cgeqr2
+  #define ungqr_double LAPACKE_zungqr
+  #define ungqr_float LAPACKE_cungqr
+  #define trtri_double LAPACKE_ztrtri
+  #define trtri_float LAPACKE_ctrtri
+  #define gesv_double LAPACKE_zgesv
+  #define gesv_float LAPACKE_cgesv
+  #define gels_double LAPACKE_zgels
+  #define gels_float LAPACKE_cgels
+  //#define pgeqr2_double pzgeqr2_
+  //#define pgeqr2_float pcgeqr2_
+  //#define pung2r_double pzung2r_
+  //#define pung2r_float pcung2r_
+
+  //#define MKL_float MKL_Complex8
+  //#define MKL_double MKL_Complex16
 #endif
-
-
 
 
 #ifdef SSE
@@ -344,7 +361,11 @@
     
     // next coarser level
     struct level_struct *next_level;
-    
+
+#if defined(GCRODR) || defined(POLYPREC)
+    // 'bool', if on H will be copied
+    int dup_H;
+#endif
   } level_struct;
 
 
@@ -372,6 +393,14 @@
         interpolation, randomize, *num_eig_vect, num_coarse_eig_vect, kcycle, mixed_precision,
         restart, max_restart, kcycle_restart, kcycle_max_restart, coarse_iter, coarse_restart;
     double tol, coarse_tol, kcycle_tol, csw, rho, *relax_fac;
+#ifdef GCRODR
+    int gcrodr_k;
+    int gcrodr_upd_itrs;
+#endif
+
+#ifdef POLYPREC
+    int polyprec_d;
+#endif
 
     // profiling, analysis, output
     int coarse_iter_count, iter_count, iterator, print, conf_flag, setup_flag, in_setup;
@@ -402,7 +431,12 @@
     
     complex_double **gamma;
     var_table vt;
-    
+
+    // mostly useful, as of now, for PP and GCRODR
+    int on_solve;
+
+    int low_level_meas;
+
   } global_struct;
 
   extern global_struct g;
@@ -562,8 +596,23 @@
 #endif
 #include "lime_io.h"
 
+#ifdef GCRODR
+  #include "gcrodr_double.h"
+  #include "gcrodr_float.h"
+#endif
+
 #if defined(GCRODR) || defined(POLYPREC)
   #include <lapacke.h>
+#ifdef GCRODR
+  //#include <mkl_scalapack.h>
+  //#include <mkl_blacs.h>
+  //#include <mkl_pblas.h>
+#endif
   #include "lapackwrap_double.h"
   #include "lapackwrap_float.h"
+#endif
+
+#ifdef POLYPREC
+  #include "polyprec_double.h"
+  #include "polyprec_float.h"
 #endif

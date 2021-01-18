@@ -22,6 +22,9 @@
 #ifndef POLYPREC_PRECISION_HEADER
   #define POLYPREC_PRECISION_HEADER
 
-  void apply_polyprec_PRECISION();
+  void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
+                                 int res, level_struct *l, struct Thread *threading );
+
+  void re_construct_lejas_PRECISION( level_struct *l, struct Thread *threading );
 
 #endif

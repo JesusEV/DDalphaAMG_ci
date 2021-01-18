@@ -31,7 +31,7 @@ complex_float  _COMPLEX_float_ZERO = (complex_float)0.0;
 
 
 void next_level_setup( vector_double *V, level_struct *l, struct Thread *threading ) {
-  
+
   if ( l->level > 0 ) {
     int mu;
 
@@ -82,13 +82,14 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
 
     // update threading struct with size info of level
     update_threading(threading, l);
-    
+
     if ( g.mixed_precision ) {
       START_LOCKED_MASTER(threading)
       if ( l->depth == 0 ) fine_level_float_alloc( l );
       level_float_init( l->next_level );
       next_level_float_setup( l );
       END_LOCKED_MASTER(threading)
+
       if ( l->depth == 0 ) {
         START_LOCKED_MASTER(threading)
         interpolation_float_alloc( l );
@@ -111,6 +112,7 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
       }
     }
   }
+  
   
   START_LOCKED_MASTER(threading)
   if ( l->depth == 0 ) printf0("\ninitial coarse grid correction is defined\n");
@@ -650,6 +652,10 @@ void l_init( level_struct *l ) {
   l->x = NULL;
   l->next_level = NULL;
   l->reqs = NULL;
+
+#if defined(GCRODR) || defined(POLYPREC)
+  l->dup_H = 0;
+#endif
 }
 
 
@@ -988,6 +994,21 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   read_parameter( &save_pt, "coarse grid tolerance:", "%le", 1, in, _DEFAULT_SET );
   save_pt = &(g.odd_even); g.odd_even = 1;
   read_parameter( &save_pt, "odd even preconditioning:", "%d", 1, in, _DEFAULT_SET );
+#ifdef GCRODR
+  save_pt = &(g.gcrodr_k); g.gcrodr_k = 15;
+  read_parameter( &save_pt, "coarse grid gcrodr_k:", "%d", 1, in, _DEFAULT_SET );
+  save_pt = &(g.gcrodr_upd_itrs); g.gcrodr_upd_itrs = 5;
+  read_parameter( &save_pt, "coarse grid gcrodr_upd_itrs:", "%d", 1, in, _DEFAULT_SET );
+#endif
+
+#ifdef POLYPREC
+  save_pt = &(g.polyprec_d); g.polyprec_d = 5;
+  read_parameter( &save_pt, "coarse grid polyprec_d:", "%d", 1, in, _DEFAULT_SET );
+  g.polyprec_d++;
+#endif
+
+  save_pt = &(g.low_level_meas); g.low_level_meas = 0;
+  read_parameter( &save_pt, "low level meas:", "%d", 1, in, _DEFAULT_SET );
 
   save_pt = &(g.setup_m0); g.setup_m0 = g.m0;
   read_parameter( &save_pt, "setup m0:", "%lf", 1, in, _DEFAULT_SET );
@@ -1021,11 +1042,12 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   save_pt = &(g.downprop); g.downprop=1;
   read_parameter( &save_pt, "addDownPropagator:", "%d", 1, in, _DEFAULT_SET );
 #endif
-  
+
+  int rnd_seed = 1234;
   if ( g.randomize ) {
-    srand( time( 0 ) + 1000*g.my_rank );
+    srand( time( 0 ) + rnd_seed*g.my_rank );
   } else 
-    srand( 1000*g.my_rank );
+    srand( rnd_seed*g.my_rank );
 }
 
 void read_testvector_io_data_if_necessary( FILE *in ) {

@@ -22,6 +22,13 @@
 #ifndef GCRODR_PRECISION_HEADER
   #define GCRODR_PRECISION_HEADER
 
-  int gcrodr_PRECISION();
+  void flgcrodr_PRECISION_struct_init( gmres_PRECISION_struct *p );
+
+  void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, const int type, const int prec_kind,
+                                        void (*precond)(), void (*eval_op)(), gmres_PRECISION_struct *p, level_struct *l );
+
+  void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l );
+
+  int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
 
 #endif

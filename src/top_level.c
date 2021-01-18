@@ -157,6 +157,50 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       printf0("\n\n+--------------------------- up ---------------------------+\n\n");
       END_MASTER(threading)
 
+#ifdef POLYPREC
+      {
+        // setting flag to re-update lejas
+        level_struct *lx = l;
+        while (1) {
+          if ( lx->level==0 ) {
+            if ( g.mixed_precision==0 ) {
+              lx->p_double.polyprec_double.update_lejas = 1;
+              lx->p_double.polyprec_double.preconditioner = NULL;
+            }
+            else {
+              lx->p_float.polyprec_float.update_lejas = 1;
+              lx->p_float.polyprec_float.preconditioner = NULL;
+            }
+            break;
+          }
+          else { lx = lx->next_level; }
+        }
+      }
+#endif
+
+#ifdef GCRODR
+      {
+        // setting flag to re-update recycling subspace
+        level_struct *lx = l;
+        while (1) {
+          if ( lx->level==0 ) {
+            if ( g.mixed_precision==0 ) {
+              //lx->p_double.gcrodr_double.CU_usable = 0;
+              lx->p_double.gcrodr_double.update_CU = 1;
+              lx->p_double.gcrodr_double.upd_ctr = 0;
+            }
+            else {
+              //lx->p_float.gcrodr_float.CU_usable = 0;
+              lx->p_float.gcrodr_float.update_CU = 1;
+              lx->p_float.gcrodr_float.upd_ctr = 0;
+            }
+            break;
+          }
+          else { lx = lx->next_level; }
+        }
+      }
+#endif
+
       solve( solution, source, l, threading );    
       
       if(g.bc==2)
@@ -172,6 +216,50 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       tm_term_update( g.mu, l, threading );
       finalize_operator_update( l, threading );
     } 
+#endif
+
+#ifdef POLYPREC
+  {
+    // setting flag to re-update lejas
+    level_struct *lx = l;
+    while (1) {
+      if ( lx->level==0 ) {
+        if ( g.mixed_precision==0 ) {
+          lx->p_double.polyprec_double.update_lejas = 1;
+          lx->p_double.polyprec_double.preconditioner = NULL;
+        }
+        else {
+          lx->p_float.polyprec_float.update_lejas = 1;
+          lx->p_float.polyprec_float.preconditioner = NULL;
+        }
+        break;
+      }
+      else { lx = lx->next_level; }
+    }
+  }
+#endif
+
+#ifdef GCRODR
+  {
+    // setting flag to re-update recycling subspace
+    level_struct *lx = l;
+    while (1) {
+      if ( lx->level==0 ) {
+        if ( g.mixed_precision==0 ) {
+          //lx->p_double.gcrodr_double.CU_usable = 0;
+          lx->p_double.gcrodr_double.update_CU = 1;
+          lx->p_double.gcrodr_double.upd_ctr = 0;
+        }
+        else {
+          //lx->p_float.gcrodr_float.CU_usable = 0;
+          lx->p_float.gcrodr_float.update_CU = 1;
+          lx->p_float.gcrodr_float.upd_ctr = 0;
+        }
+        break;
+      }
+      else { lx = lx->next_level; }
+    }
+  }
 #endif
 
   solve( solution, source, l, threading );

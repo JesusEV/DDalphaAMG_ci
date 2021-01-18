@@ -81,7 +81,7 @@ void coarse_grid_correction_PRECISION_setup( level_struct *l, struct Thread *thr
       coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
     }
   }
-  
+
   if ( l->next_level->level > 0 ) {
     next_level_setup( NULL, l->next_level, threading );
     START_LOCKED_MASTER(threading)
@@ -324,12 +324,25 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
       }
       re_setup_PRECISION( l->next_level, threading );
     }
-  }  
+  }
+#if defined(POLYPREC) || defined(GCRODR)
+  else {
+    // this runs on level 0 only
+#ifdef POLYPREC
+    l->p_PRECISION.polyprec_PRECISION.update_lejas = 1;
+    l->p_PRECISION.polyprec_PRECISION.preconditioner = NULL;
+#endif
+#ifdef GCRODR
+    l->p_PRECISION.gcrodr_PRECISION.update_CU = 1;
+    l->p_PRECISION.gcrodr_PRECISION.upd_ctr = 0;
+#endif
+  }
+#endif
 }
 
 
 void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, struct Thread *threading ) {
-  
+
   if ( !l->idle ) {
     vector_PRECISION buf1 = NULL;
     gmres_PRECISION_struct gmres;
