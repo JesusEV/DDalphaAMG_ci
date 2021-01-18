@@ -184,8 +184,16 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
         level_struct *lx = l;
         while (1) {
           if ( lx->level==0 ) {
-            if ( g.mixed_precision==0 ) { lx->p_double.gcrodr_double.CU_usable = 0; }
-            else { lx->p_float.gcrodr_float.CU_usable = 0; }
+            if ( g.mixed_precision==0 ) {
+              //lx->p_double.gcrodr_double.CU_usable = 0;
+              lx->p_double.gcrodr_double.update_CU = 1;
+              lx->p_double.gcrodr_double.upd_ctr = 0;
+            }
+            else {
+              //lx->p_float.gcrodr_float.CU_usable = 0;
+              lx->p_float.gcrodr_float.update_CU = 1;
+              lx->p_float.gcrodr_float.upd_ctr = 0;
+            }
             break;
           }
           else { lx = lx->next_level; }
@@ -237,8 +245,16 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
     level_struct *lx = l;
     while (1) {
       if ( lx->level==0 ) {
-        if ( g.mixed_precision==0 ) { lx->p_double.gcrodr_double.CU_usable = 0; }
-        else { lx->p_float.gcrodr_float.CU_usable = 0; }
+        if ( g.mixed_precision==0 ) {
+          //lx->p_double.gcrodr_double.CU_usable = 0;
+          lx->p_double.gcrodr_double.update_CU = 1;
+          lx->p_double.gcrodr_double.upd_ctr = 0;
+        }
+        else {
+          //lx->p_float.gcrodr_float.CU_usable = 0;
+          lx->p_float.gcrodr_float.update_CU = 1;
+          lx->p_float.gcrodr_float.upd_ctr = 0;
+        }
         break;
       }
       else { lx = lx->next_level; }

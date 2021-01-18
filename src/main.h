@@ -395,6 +395,7 @@
     double tol, coarse_tol, kcycle_tol, csw, rho, *relax_fac;
 #ifdef GCRODR
     int gcrodr_k;
+    int gcrodr_upd_itrs;
 #endif
 
 #ifdef POLYPREC

@@ -1,8 +1,8 @@
 #!/bin/bash -x
 #SBATCH --account=hwu29
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=8
-#SBATCH --cpus-per-task=2
+#SBATCH --nodes=8
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=48
 #SBATCH --output=mpi-out.%j
 #SBATCH --error=mpi-err.%j
 #SBATCH --time=00:59:00

@@ -1510,12 +1510,14 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   }
 #endif
 
-//  START_MASTER(threading)
-//  printf0("fgmres_iters = %d\n", fgmres_iters);
+//  //if (g.low_level_meas == 1) {
+//    START_MASTER(threading)
+//    printf0("fgmres_iters = %d\n", fgmres_iters);
 //#ifdef GCRODR
-//  printf0("is CU usable = %d\n", p->gcrodr_PRECISION.CU_usable);
+//    printf0("is CU usable = %d\n", p->gcrodr_PRECISION.CU_usable);
 //#endif
-//  END_MASTER(threading)
+//    END_MASTER(threading)
+//  //}
 
   if (g.low_level_meas == 1) {
     apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
