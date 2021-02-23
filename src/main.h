@@ -604,6 +604,8 @@
 #ifdef BLOCK_JACOBI
   #include "block_jacobi_double.h"
   #include "block_jacobi_float.h"
+  #include "local_polyprec_double.h"
+  #include "local_polyprec_float.h"
 #endif
 
 #if defined(GCRODR) || defined(POLYPREC)

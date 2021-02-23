@@ -27,48 +27,39 @@
   // declarations of aux functions
   // TODO
 
-
   // -------------------------------------------------------------
-
 
   // main functions here -- IMPORTANT : all Block Jacobi functions are, for now,
   //			                exclusively per-process operations
 
   void block_jacobi_apply_PRECISION( vector_PRECISION out, vector_PRECISION in, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ){
 
+    if ( out==in ) { return; }
+
     START_MASTER(threading)
 
-    if ( p->block_jacobi_PRECISION.BJ_usable==0 ) { return; }
-    else if ( p->block_jacobi_PRECISION.BJ_usable==1 ) {
+    //coarse_local_apply_schur_complement_PRECISION( out, in, p->op, l, threading );
 
-      //vector_PRECISION in_x=0;
+    //p->block_jacobi_PRECISION.local_p.restart_length = 5;
+    //local_fgmres_PRECISION( &(p->block_jacobi_PRECISION.local_p), l, threading );
 
-      if ( out==in ) {
-        // TODO :
-        // 		1. assign in_x to the BJ buffer
-        //		2. copy <in> into <in_x>
-      } //else { in_x = in; }
-
-      // TODO : apply Block Jacobi, with input <in_x> and output <output>
-
+    if ( p->block_jacobi_PRECISION.BJ_usable==1 ) {
+      // TODO : apply Block Jacobi
     }
 
     END_MASTER(threading)
 
   }
 
+  /*
   void block_jacobi_restore_from_buffer_PRECISION( vector_PRECISION out, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
-
     START_MASTER(threading)
-
     //vector_PRECISION out_x=0;
-
     // TODO :
     // 		1. assign out_x to the BJ buffer (the same buffer used by block_jacobi_apply_PRECISION(...))
     //		2. copy <out_x> into <out>
-
     END_MASTER(threading)
-
   }
+  */
 
 #endif

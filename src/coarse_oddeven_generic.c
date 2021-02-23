@@ -1477,10 +1477,10 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   PROF_PRECISION_STOP( _NC, 0, threading );
 
   int start, end;
+  compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
   PRECISION norm_r0=1.0;
   if (g.low_level_meas == 1) {
-    compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
     vector_PRECISION_copy( p->r, p->b, start, end, l ); // compute r = b - w
     norm_r0 = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading );
   }
@@ -1502,7 +1502,9 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   printf0("\n---> applying Block Jacobi, to right hand side ...\n");
   END_MASTER(threading)
 
-  block_jacobi_apply_PRECISION( p->b, p->b, p, l, threading );
+  // create a backup of b
+  vector_PRECISION_copy( p->block_jacobi_PRECISION.b_backup, p->b, start, end, l );
+  block_jacobi_apply_PRECISION( p->b, p->block_jacobi_PRECISION.b_backup, p, l, threading );
 #endif
 
 #ifdef GCRODR
@@ -1518,7 +1520,8 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   printf0("\n---> after solve, restoring right hand side ...\n\n");
   END_MASTER(threading)
 
-  block_jacobi_restore_from_buffer_PRECISION( p->b, p, l, threading );
+  //block_jacobi_restore_from_buffer_PRECISION( p->b, p, l, threading );
+  vector_PRECISION_copy( p->b, p->block_jacobi_PRECISION.b_backup, start, end, l );
 #endif
 
   START_MASTER(threading)

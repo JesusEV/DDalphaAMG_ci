@@ -116,6 +116,11 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->Va = NULL;
   p->Za = NULL;
 #endif
+
+#ifdef BLOCK_JACOBI
+  p->block_jacobi_PRECISION.b_backup = NULL;
+  local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
+#endif
 }
 
 
@@ -375,8 +380,17 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 #endif
 
 #ifdef BLOCK_JACOBI
+  p->block_jacobi_PRECISION.syst_size = vl;
+
   if (l->level==0) {
     p->block_jacobi_PRECISION.BJ_usable = 0;
+
+    MALLOC( p->block_jacobi_PRECISION.b_backup, complex_PRECISION, vl );
+
+    local_fgmres_PRECISION_struct_alloc( g.coarse_iter, g.coarse_restart, l->vector_size, g.coarse_tol, 
+                                         _COARSE_GMRES, _NOTHING, NULL,
+                                         coarse_local_apply_schur_complement_PRECISION,
+                                         &(p->block_jacobi_PRECISION.local_p), l );
   }
 #endif
 }
@@ -482,6 +496,13 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
     FREE( p->Za, complex_PRECISION, p->restart_length+2 );
 #endif
 
+#ifdef BLOCK_JACOBI
+  if (l->level==0) {
+    FREE( p->block_jacobi_PRECISION.b_backup, complex_PRECISION, p->block_jacobi_PRECISION.syst_size );
+
+    local_fgmres_PRECISION_struct_free( &(p->block_jacobi_PRECISION.local_p), l );
+  }
+#endif
 }
 
 

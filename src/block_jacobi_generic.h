@@ -31,7 +31,7 @@
 
   void block_jacobi_apply_PRECISION( vector_PRECISION out, vector_PRECISION in, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
 
-  void block_jacobi_restore_from_buffer_PRECISION( vector_PRECISION out, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
+  //void block_jacobi_restore_from_buffer_PRECISION( vector_PRECISION out, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
 
   void block_jacobi_update_PRECISION( vector_PRECISION in, vector_PRECISION out, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
 

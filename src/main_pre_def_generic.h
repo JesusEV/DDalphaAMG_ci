@@ -148,7 +148,21 @@
 
 #ifdef BLOCK_JACOBI
   typedef struct {
-    int BJ_usable;
+    vector_PRECISION x, b, r, w, *V, *Z;
+    complex_PRECISION **H, *y, *gamma, *c, *s;
+    config_PRECISION *D, *clover;
+    operator_PRECISION_struct *op;
+    PRECISION tol;
+    int num_restart, restart_length, timing, print, kind,
+      initial_guess_zero, layout, v_start, v_end;
+    long int total_storage;
+    void (*eval_operator)();
+  } local_gmres_PRECISION_struct;
+
+  typedef struct {
+    int BJ_usable, syst_size;
+    vector_PRECISION b_backup;
+    local_gmres_PRECISION_struct local_p;
   } block_jacobi_PRECISION_struct;
 #endif
 
