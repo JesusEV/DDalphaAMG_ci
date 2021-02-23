@@ -40,8 +40,11 @@
 
     //coarse_local_apply_schur_complement_PRECISION( out, in, p->op, l, threading );
 
-    //p->block_jacobi_PRECISION.local_p.restart_length = 5;
-    //local_fgmres_PRECISION( &(p->block_jacobi_PRECISION.local_p), l, threading );
+    int start = p->v_start;
+    int end = p->v_end;
+    vector_PRECISION_define_random( p->block_jacobi_PRECISION.local_p.b, start, end, l );
+    p->block_jacobi_PRECISION.local_p.restart_length = 5;
+    local_fgmres_PRECISION( &(p->block_jacobi_PRECISION.local_p), l, threading );
 
     if ( p->block_jacobi_PRECISION.BJ_usable==1 ) {
       // TODO : apply Block Jacobi

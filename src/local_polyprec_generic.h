@@ -57,4 +57,13 @@
   void local_process_multi_inner_product_PRECISION( int count, complex_PRECISION *results, vector_PRECISION *phi, vector_PRECISION psi,
                                                     int start, int end, level_struct *l, struct Thread *threading );
 
+  void local_qr_update_PRECISION( complex_PRECISION **H, complex_PRECISION *s,
+                                  complex_PRECISION *c, complex_PRECISION *gamma, int j,
+                                  level_struct *l, struct Thread *threading );
+
+  void coarse_local_diag_oo_inv_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, 
+                                           level_struct *l, struct Thread *threading );
+
+  void coarse_local_diag_ee_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading );
+
 #endif

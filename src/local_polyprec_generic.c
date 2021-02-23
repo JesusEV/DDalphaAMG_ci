@@ -191,6 +191,30 @@ void local_process_multi_inner_product_PRECISION( int count, complex_PRECISION *
 }
 
 
+void local_qr_update_PRECISION( complex_PRECISION **H, complex_PRECISION *s,
+                                complex_PRECISION *c, complex_PRECISION *gamma, int j,
+                                level_struct *l, struct Thread *threading ) {
+
+  int i;
+  complex_PRECISION beta;
+  
+  // update QR factorization
+  // apply previous Givens rotation
+  for ( i=0; i<j; i++ ) {
+    beta = (-s[i])*H[j][i] + (c[i])*H[j][i+1];
+    H[j][i] = conj_PRECISION(c[i])*H[j][i] + conj_PRECISION(s[i])*H[j][i+1];
+    H[j][i+1] = beta;
+  }
+  // compute current Givens rotation
+  beta = (complex_PRECISION) sqrt( NORM_SQUARE_PRECISION(H[j][j]) + NORM_SQUARE_PRECISION(H[j][j+1]) );
+  s[j] = H[j][j+1]/beta; c[j] = H[j][j]/beta;
+  // update right column
+  gamma[j+1] = (-s[j])*gamma[j]; gamma[j] = conj_PRECISION(c[j])*gamma[j];
+  // apply current Givens rotation
+  H[j][j] = beta; H[j][j+1] = 0;
+}
+
+
 int local_fgmres_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
 
   // start and end indices for vector functions, this is always process-specific
@@ -218,10 +242,13 @@ int local_fgmres_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, st
   gamma0 = 0;
   //compute_core_start_end(start, end, &thread_start, &thread_end, l, threading);
   VECTOR_FOR( int i=start, i<end, gamma0 += NORM_SQUARE_PRECISION(p->r[i]), i++, l );
+  gamma0 = (PRECISION)sqrt((double)gamma0);
 
   p->gamma[0] = gamma0;
   norm_r0 = creal(p->gamma[0]);
-  vector_PRECISION_real_scale( p->V[0], p->r, 1/p->gamma[0], start, end, l ); // v_0 = r / gamma_0
+  vector_PRECISION_real_scale( p->V[0], p->r, 1.0/p->gamma[0], start, end, l ); // v_0 = r / gamma_0
+
+  gamma_jp1 = cabs( p->gamma[0] );
 
   for( il=0; il<p->restart_length && finish==0; il++) {
 
@@ -232,8 +259,10 @@ int local_fgmres_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, st
       break;
     }
 
+    printf0("(proc=%d,j=%d) %f\n", g.my_rank, j, gamma_jp1/norm_r0);
+
     if ( cabs( p->H[j][j+1] ) > p->tol/10 ) {
-      qr_update_PRECISION( p->H, p->s, p->c, p->gamma, j, l, threading );
+      local_qr_update_PRECISION( p->H, p->s, p->c, p->gamma, j, l, threading );
       gamma_jp1 = cabs( p->gamma[j+1] );
 
       if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
@@ -269,7 +298,21 @@ int local_arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vect
 
   // no preconditioner
   //apply_operator_PRECISION( w, V[j], p, l, threading ); // w = D*V[j]
+
+  PRECISION tmpx;
+
+  tmpx = 0;
+  VECTOR_FOR( int i=start, i<end, tmpx += NORM_SQUARE_PRECISION(V[j][i]), i++, l );
+  tmpx = (PRECISION)sqrt((double)tmpx);
+  printf0("before, norm(tmpx) = %f\n", tmpx);
+
   p->eval_operator( w, V[j], p->op, l, threading );
+  //vector_PRECISION_copy( w, V[j], start, end, l );
+
+  tmpx = 0;
+  VECTOR_FOR( int i=start, i<end, tmpx += NORM_SQUARE_PRECISION(w[i]), i++, l );
+  tmpx = (PRECISION)sqrt((double)tmpx);
+  printf0("after, norm(tmpx) = %f\n", tmpx);
 
   // orthogonalization
   complex_PRECISION tmp[j+1];
@@ -286,7 +329,8 @@ int local_arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vect
   PRECISION tmp2 = 0;
   //compute_core_start_end(start, end, &thread_start, &thread_end, l, threading);
   //PRECISION tmp2 = global_norm_PRECISION( w, p->v_start, p->v_end, l, threading );
-  VECTOR_FOR( int i=start, i<end, tmp2 += NORM_SQUARE_PRECISION(p->r[i]), i++, l );
+  VECTOR_FOR( int i=start, i<end, tmp2 += NORM_SQUARE_PRECISION(w[i]), i++, l );
+  tmp2 = (PRECISION)sqrt((double)tmp2);
 
   H[j][j+1] = tmp2;
 
@@ -617,6 +661,69 @@ void coarse_local_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION
 }
 
 
+void coarse_local_diag_oo_inv_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, 
+                                         level_struct *l, struct Thread *threading ) {
+
+  int start, end;
+  //compute_core_start_end_custom( 0, op->num_odd_sites, &start, &end, l, threading, 1 );
+  start = 0;
+  end = op->num_odd_sites;
+
+  // odd sites
+  int num_site_var = l->num_lattice_site_var,
+    oo_inv_size = SQUARE(num_site_var);
+
+#ifndef OPTIMIZED_COARSE_SELF_COUPLING_PRECISION
+#ifdef HAVE_TM1p1
+  config_PRECISION sc = (g.n_flavours==2) ? op->clover_doublet_oo_inv:op->clover_oo_inv;
+#else
+  config_PRECISION sc = op->clover_oo_inv;
+#endif
+#else
+  int lda = SIMD_LENGTH_PRECISION*((num_site_var+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
+  oo_inv_size = 2*num_site_var*lda;
+#ifdef HAVE_TM1p1
+  OPERATOR_TYPE_PRECISION *sc = (g.n_flavours==2) ? op->clover_doublet_oo_inv_vectorized:op->clover_oo_inv_vectorized;
+#else
+  OPERATOR_TYPE_PRECISION *sc = op->clover_oo_inv_vectorized;
+#endif
+#endif
+
+  x += num_site_var*(op->num_even_sites+start);
+  y += num_site_var*(op->num_even_sites+start);  
+  sc += oo_inv_size*start;
+
+  for ( int i=start; i<end; i++ ) {
+#ifndef OPTIMIZED_COARSE_SELF_COUPLING_PRECISION
+    coarse_perform_fwd_bwd_subs_PRECISION( y, x, sc, l );
+#else
+    for(int j=0; j<num_site_var; j++)
+      y[j] = _COMPLEX_PRECISION_ZERO;
+    cgemv( num_site_var, sc, lda, (float *)x, (float *)y);
+#endif
+    x += num_site_var;
+    y += num_site_var;
+    sc += oo_inv_size;
+  }
+}
+
+
+void coarse_local_diag_ee_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading ) {
+  
+  int start, end;
+  //compute_core_start_end_custom( 0, op->num_even_sites, &start, &end, l, threading, 1 );
+  start = 0;
+  end = op->num_even_sites;
+
+  // even sites
+#ifndef OPTIMIZED_COARSE_SELF_COUPLING_PRECISION
+  coarse_self_couplings_PRECISION( y, x, op, start, end, l );
+#else
+  coarse_self_couplings_PRECISION_vectorized( y, x, op, start, end, l );
+#endif
+}
+
+
 void coarse_local_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECISION in,
                                                     operator_PRECISION_struct *op, level_struct *l,
                                                     struct Thread *threading ) {
@@ -626,11 +733,13 @@ void coarse_local_apply_schur_complement_PRECISION( vector_PRECISION out, vector
   int end = l->inner_vector_size;
 
   vector_PRECISION *tmp = op->buffer;
-  coarse_diag_ee_PRECISION( out, in, op, l, threading );
+
+  coarse_local_diag_ee_PRECISION( out, in, op, l, threading );
+
   vector_PRECISION_define( tmp[0], 0, start, end, l );
 
   coarse_local_hopping_term_PRECISION( tmp[0], in, op, _ODD_SITES, l, threading );
-  coarse_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l, threading );
+  coarse_local_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l, threading );
   coarse_local_n_hopping_term_PRECISION( out, tmp[1], op, _EVEN_SITES, l, threading );
 }
 
