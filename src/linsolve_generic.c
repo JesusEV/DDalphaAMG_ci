@@ -104,6 +104,7 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->polyprec_PRECISION.h_ritz = NULL;
   p->polyprec_PRECISION.lejas = NULL;
   p->polyprec_PRECISION.random_rhs = NULL;
+  p->polyprec_PRECISION.xtmp = NULL;
 
   p->polyprec_PRECISION.eigslvr.vl = NULL;
   p->polyprec_PRECISION.eigslvr.vr = NULL;
@@ -275,7 +276,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   // FIXME : is this function-pointer-assignment really necessary ?
 #if defined(GCRODR) || defined(POLYPREC)
   //p->polyprec_PRECISION.eigslvr.eigslvr_PRECISION = eigslvr_PRECISION;
-#endif 
+#endif
 
   // copy of Hesselnberg matrix
 #if defined(GCRODR) && defined(POLYPREC)
@@ -383,11 +384,15 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   p->block_jacobi_PRECISION.syst_size = vl;
 
   if (l->level==0) {
+    // these two always go together
     p->block_jacobi_PRECISION.BJ_usable = 0;
+    p->block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
 
     MALLOC( p->block_jacobi_PRECISION.b_backup, complex_PRECISION, vl );
 
-    local_fgmres_PRECISION_struct_alloc( g.coarse_iter, g.coarse_restart, l->vector_size, g.coarse_tol, 
+    p->block_jacobi_PRECISION.local_p.polyprec_PRECISION.d_poly = g.local_polyprec_d;
+
+    local_fgmres_PRECISION_struct_alloc( g.local_polyprec_d, 1, l->vector_size, g.coarse_tol, 
                                          _COARSE_GMRES, _NOTHING, NULL,
                                          coarse_local_apply_schur_complement_PRECISION,
                                          &(p->block_jacobi_PRECISION.local_p), l );

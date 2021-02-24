@@ -1485,6 +1485,15 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
     norm_r0 = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading );
   }
 
+#ifdef BLOCK_JACOBI
+  if ( l->level==0 && l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas == 1 ) {
+    // re-construct Lejas
+    START_MASTER(threading)
+    local_re_construct_lejas_PRECISION( l, threading );
+    END_MASTER(threading)
+  }
+#endif
+
 #ifdef POLYPREC
   p->preconditioner = p->polyprec_PRECISION.preconditioner;
 #endif
@@ -1497,31 +1506,33 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 
 #ifdef BLOCK_JACOBI
   // if Block Jacobi is enabled, solve the problem : M^{-1}Ax = M^{-1}b
+  if ( p->block_jacobi_PRECISION.BJ_usable == 1 ) {
+    START_MASTER(threading)
+    printf0("\n---> applying Block Jacobi, to right hand side ...\n");
+    END_MASTER(threading)
 
-  START_MASTER(threading)
-  printf0("\n---> applying Block Jacobi, to right hand side ...\n");
-  END_MASTER(threading)
-
-  // create a backup of b
-  vector_PRECISION_copy( p->block_jacobi_PRECISION.b_backup, p->b, start, end, l );
-  block_jacobi_apply_PRECISION( p->b, p->block_jacobi_PRECISION.b_backup, p, l, threading );
+    // create a backup of b
+    vector_PRECISION_copy( p->block_jacobi_PRECISION.b_backup, p->b, start, end, l );
+    block_jacobi_apply_PRECISION( p->b, p->block_jacobi_PRECISION.b_backup, p, l, threading );
+  }
 #endif
 
 #ifdef GCRODR
   fgmres_iters = flgcrodr_PRECISION( p, l, threading );
-#else  
+#else
   fgmres_iters = fgmres_PRECISION( p, l, threading );
 #endif
 
 #ifdef BLOCK_JACOBI
   // restore the rhs
+  if ( p->block_jacobi_PRECISION.BJ_usable == 1 ) {
+    START_MASTER(threading)
+    printf0("\n---> after solve, restoring right hand side ...\n\n");
+    END_MASTER(threading)
 
-  START_MASTER(threading)
-  printf0("\n---> after solve, restoring right hand side ...\n\n");
-  END_MASTER(threading)
-
-  //block_jacobi_restore_from_buffer_PRECISION( p->b, p, l, threading );
-  vector_PRECISION_copy( p->b, p->block_jacobi_PRECISION.b_backup, start, end, l );
+    //block_jacobi_restore_from_buffer_PRECISION( p->b, p, l, threading );
+    vector_PRECISION_copy( p->b, p->block_jacobi_PRECISION.b_backup, start, end, l );
+  }
 #endif
 
   START_MASTER(threading)

@@ -157,6 +157,8 @@
       initial_guess_zero, layout, v_start, v_end;
     long int total_storage;
     void (*eval_operator)();
+
+    polyprec_PRECISION_struct polyprec_PRECISION;
   } local_gmres_PRECISION_struct;
 
   typedef struct {

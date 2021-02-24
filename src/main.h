@@ -402,6 +402,10 @@
     int polyprec_d;
 #endif
 
+#ifdef BLOCK_JACOBI
+    int local_polyprec_d;
+#endif
+
     // profiling, analysis, output
     int coarse_iter_count, iter_count, iterator, print, conf_flag, setup_flag, in_setup;
     double coarse_time, prec_time, *output_table[8], cur_storage, max_storage, total_time,

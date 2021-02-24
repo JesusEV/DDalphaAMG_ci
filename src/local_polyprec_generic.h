@@ -66,4 +66,11 @@
 
   void coarse_local_diag_ee_PRECISION( vector_PRECISION y, vector_PRECISION x, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading );
 
+  void local_harmonic_ritz_PRECISION( local_gmres_PRECISION_struct *p );
+  void local_leja_ordering_PRECISION( local_gmres_PRECISION_struct *p );
+  void local_update_lejas_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
+  void local_re_construct_lejas_PRECISION( level_struct *l, struct Thread *threading );
+  void local_apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
+                                       int res, level_struct *l, struct Thread *threading );
+
 #endif

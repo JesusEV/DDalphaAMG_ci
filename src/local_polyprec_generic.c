@@ -38,6 +38,30 @@ void local_fgmres_PRECISION_struct_init( local_gmres_PRECISION_struct *p ) {
   p->s = NULL;
   //p->preconditioner = NULL;
   p->eval_operator = NULL;
+
+  // copy of Hesselnberg matrix
+#if defined(POLYPREC)
+  p->polyprec_PRECISION.eigslvr.Hc = NULL;
+#endif
+
+#ifdef POLYPREC
+  p->polyprec_PRECISION.Hcc = NULL; 
+  p->polyprec_PRECISION.L = NULL;
+  p->polyprec_PRECISION.col_prods = NULL;
+  p->polyprec_PRECISION.accum_prod = NULL;
+  p->polyprec_PRECISION.product = NULL;
+  p->polyprec_PRECISION.temp = NULL;
+  p->polyprec_PRECISION.h_ritz = NULL;
+  p->polyprec_PRECISION.lejas = NULL;
+  p->polyprec_PRECISION.random_rhs = NULL;
+  p->polyprec_PRECISION.xtmp = NULL;
+
+  p->polyprec_PRECISION.eigslvr.vl = NULL;
+  p->polyprec_PRECISION.eigslvr.vr = NULL;
+  p->polyprec_PRECISION.dirctslvr.ipiv = NULL;
+  p->polyprec_PRECISION.dirctslvr.x = NULL;
+  p->polyprec_PRECISION.dirctslvr.b = NULL;
+#endif
 }
 
 void local_fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, const int type, const int prec_kind,
@@ -112,7 +136,7 @@ void local_fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION t
   
   ASSERT( p->total_storage == total );
   }
-  
+
   if ( type == _GLOBAL_FGMRES ) {    
     p->timing = 1;
     p->print = g.vt.evaluation?0:1;
@@ -142,6 +166,82 @@ void local_fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION t
   } else {
     ASSERT( type < 3 );
   }
+
+#if defined(GCRODR) || defined(POLYPREC)
+  if (l->level==0) {
+#endif
+
+  // copy of Hesselnberg matrix
+#if defined(POLYPREC)
+  MALLOC(p->polyprec_PRECISION.eigslvr.Hc, complex_PRECISION*, m);
+  p->polyprec_PRECISION.eigslvr.Hc[0] = NULL; // allocate connected memory
+  MALLOC( p->polyprec_PRECISION.eigslvr.Hc[0], complex_PRECISION, m*(m+1) );
+  for ( i=1; i<m; i++ )
+    p->polyprec_PRECISION.eigslvr.Hc[i] = p->polyprec_PRECISION.eigslvr.Hc[0] + i*(m+1);
+#endif
+
+#ifdef POLYPREC
+  //p->polyprec_PRECISION.d_poly = g.polyprec_d;
+  int d_poly=p->polyprec_PRECISION.d_poly;
+
+  MALLOC( p->polyprec_PRECISION.col_prods, complex_PRECISION, d_poly);
+  MALLOC( p->polyprec_PRECISION.h_ritz, complex_PRECISION, d_poly);
+  MALLOC( p->polyprec_PRECISION.lejas, complex_PRECISION, d_poly);
+  MALLOC( p->polyprec_PRECISION.random_rhs, complex_PRECISION, vl );
+  MALLOC( p->polyprec_PRECISION.accum_prod, complex_PRECISION, vl );
+  MALLOC( p->polyprec_PRECISION.product, complex_PRECISION, vl );
+  MALLOC( p->polyprec_PRECISION.temp, complex_PRECISION, vl );
+
+  MALLOC( p->polyprec_PRECISION.xtmp, complex_PRECISION, vl );
+
+  MALLOC( p->polyprec_PRECISION.Hcc, complex_PRECISION, d_poly*d_poly );
+  MALLOC( p->polyprec_PRECISION.L, complex_PRECISION*, d_poly+ 1);
+
+  p->polyprec_PRECISION.L[0] = NULL;
+
+  MALLOC( p->polyprec_PRECISION.L[0], complex_PRECISION, (d_poly+1)*d_poly );
+
+  for (i=1; i<d_poly+1; i++)
+  {
+    p->polyprec_PRECISION.L[i] = p->polyprec_PRECISION.L[0] + i*d_poly;
+  }
+
+  MALLOC( p->polyprec_PRECISION.dirctslvr.ipiv, int, d_poly);
+  MALLOC( p->polyprec_PRECISION.dirctslvr.x, complex_PRECISION, d_poly);
+  MALLOC( p->polyprec_PRECISION.dirctslvr.b, complex_PRECISION, d_poly);
+
+  p->polyprec_PRECISION.dirctslvr.N = d_poly;
+  p->polyprec_PRECISION.dirctslvr.lda = d_poly; // m here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  p->polyprec_PRECISION.dirctslvr.ldb = d_poly;
+  p->polyprec_PRECISION.dirctslvr.nrhs = 1;
+  p->polyprec_PRECISION.dirctslvr.Hcc = p->polyprec_PRECISION.Hcc;
+  p->polyprec_PRECISION.dirctslvr.dirctslvr_PRECISION = dirctslvr_PRECISION;
+
+  MALLOC( p->polyprec_PRECISION.eigslvr.vl, complex_PRECISION, d_poly*d_poly );
+  MALLOC( p->polyprec_PRECISION.eigslvr.vr, complex_PRECISION, d_poly*d_poly );
+
+  p->polyprec_PRECISION.eigslvr.jobvl = 'N';
+  p->polyprec_PRECISION.eigslvr.jobvr = 'N';
+
+  p->polyprec_PRECISION.eigslvr.N = d_poly;
+  p->polyprec_PRECISION.eigslvr.lda = p->restart_length + 1;
+  p->polyprec_PRECISION.eigslvr.ldvl = d_poly;
+  p->polyprec_PRECISION.eigslvr.ldvr = d_poly;
+  p->polyprec_PRECISION.eigslvr.w = p->polyprec_PRECISION.h_ritz;
+  p->polyprec_PRECISION.Hc = p->polyprec_PRECISION.eigslvr.Hc;
+  p->polyprec_PRECISION.eigslvr.eigslvr_PRECISION = eigslvr_PRECISION;    
+
+  p->polyprec_PRECISION.update_lejas = 1;
+  //p->polyprec_PRECISION.preconditioner = NULL;
+  //p->polyprec_PRECISION.preconditioner_bare = p->preconditioner;
+  p->polyprec_PRECISION.syst_size = vl;
+
+  p->polyprec_PRECISION.eigslvr.A = p->polyprec_PRECISION.Hc[0];
+#endif
+
+#if defined(POLYPREC)
+  }
+#endif
 }
 
 
@@ -164,6 +264,44 @@ void local_fgmres_PRECISION_struct_free( local_gmres_PRECISION_struct *p, level_
   
   p->D = NULL;
   p->clover = NULL;
+
+#if defined(GCRODR) || defined(POLYPREC)
+  if (l->level==0) {
+#endif
+
+  // copy of Hesselnberg matrix
+#if defined(POLYPREC)
+  int m = p->restart_length;
+  FREE( p->polyprec_PRECISION.eigslvr.Hc[0], complex_PRECISION, m*(m+1) );
+  FREE(p->polyprec_PRECISION.eigslvr.Hc, complex_PRECISION*, m);
+#endif
+
+#ifdef POLYPREC
+  int d_poly = 10;
+  int vl = p->polyprec_PRECISION.syst_size;
+  FREE( p->polyprec_PRECISION.Hcc, complex_PRECISION, d_poly*d_poly );
+  FREE( p->polyprec_PRECISION.L[0], complex_PRECISION, (d_poly+1)*d_poly );
+  FREE( p->polyprec_PRECISION.L, complex_PRECISION*, d_poly+1 );
+  FREE( p->polyprec_PRECISION.h_ritz,complex_PRECISION, d_poly );
+  FREE( p->polyprec_PRECISION.lejas,complex_PRECISION, d_poly );
+  FREE( p->polyprec_PRECISION.accum_prod, complex_PRECISION, vl );
+  FREE( p->polyprec_PRECISION.product, complex_PRECISION, vl );    
+  FREE( p->polyprec_PRECISION.temp, complex_PRECISION, vl );    
+  FREE( p->polyprec_PRECISION.xtmp, complex_PRECISION, vl );
+  FREE( p->polyprec_PRECISION.random_rhs, complex_PRECISION, vl );
+  FREE( p->polyprec_PRECISION.col_prods, complex_PRECISION, d_poly );
+
+  FREE( p->polyprec_PRECISION.eigslvr.vl,complex_PRECISION, d_poly*d_poly );
+  FREE( p->polyprec_PRECISION.eigslvr.vr,complex_PRECISION, d_poly*d_poly );  
+
+  FREE( p->polyprec_PRECISION.dirctslvr.ipiv, int, d_poly );
+  FREE( p->polyprec_PRECISION.dirctslvr.x, complex_PRECISION, d_poly );
+  FREE( p->polyprec_PRECISION.dirctslvr.b, complex_PRECISION, d_poly );
+#endif
+
+#if defined(GCRODR) || defined(POLYPREC)
+  }
+#endif
 }
 
 
@@ -299,20 +437,20 @@ int local_arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vect
   // no preconditioner
   //apply_operator_PRECISION( w, V[j], p, l, threading ); // w = D*V[j]
 
-  PRECISION tmpx;
+  //PRECISION tmpx;
 
-  tmpx = 0;
-  VECTOR_FOR( int i=start, i<end, tmpx += NORM_SQUARE_PRECISION(V[j][i]), i++, l );
-  tmpx = (PRECISION)sqrt((double)tmpx);
-  printf0("before, norm(tmpx) = %f\n", tmpx);
+  //tmpx = 0;
+  //VECTOR_FOR( int i=start, i<end, tmpx += NORM_SQUARE_PRECISION(V[j][i]), i++, l );
+  //tmpx = (PRECISION)sqrt((double)tmpx);
+  //printf0("before, norm(tmpx) = %f\n", tmpx);
 
   p->eval_operator( w, V[j], p->op, l, threading );
   //vector_PRECISION_copy( w, V[j], start, end, l );
 
-  tmpx = 0;
-  VECTOR_FOR( int i=start, i<end, tmpx += NORM_SQUARE_PRECISION(w[i]), i++, l );
-  tmpx = (PRECISION)sqrt((double)tmpx);
-  printf0("after, norm(tmpx) = %f\n", tmpx);
+  //tmpx = 0;
+  //VECTOR_FOR( int i=start, i<end, tmpx += NORM_SQUARE_PRECISION(w[i]), i++, l );
+  //tmpx = (PRECISION)sqrt((double)tmpx);
+  //printf0("after, norm(tmpx) = %f\n", tmpx);
 
   // orthogonalization
   complex_PRECISION tmp[j+1];
@@ -337,6 +475,15 @@ int local_arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vect
   // V_j+1 = w / H_j+1,j
   if ( cabs_PRECISION( H[j][j+1] ) > 1e-15 )
     vector_PRECISION_real_scale( V[j+1], w, 1/H[j][j+1], start, end, l );
+
+  int jx = j;
+
+  // copy of Hesselnberg matrix (only level=0 currently)
+  if (l->dup_H==1 && l->level==0)
+  {
+    memcpy( p->polyprec_PRECISION.eigslvr.Hc[jx], H[jx], sizeof(complex_PRECISION)*(jx+2) );
+    memset( p->polyprec_PRECISION.eigslvr.Hc[jx]+jx+2, 0.0, sizeof(complex_PRECISION)*(p->restart_length + 1 - (jx+2)) );
+  }
 
   return 1;
 }
@@ -742,5 +889,185 @@ void coarse_local_apply_schur_complement_PRECISION( vector_PRECISION out, vector
   coarse_local_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l, threading );
   coarse_local_n_hopping_term_PRECISION( out, tmp[1], op, _EVEN_SITES, l, threading );
 }
+
+
+// ------------------------- LOCAL POLYPREC -------------------------
+
+
+void local_harmonic_ritz_PRECISION( local_gmres_PRECISION_struct *p )
+{
+  int i, j, d;
+  complex_PRECISION h_dd;
+
+  d = p->polyprec_PRECISION.d_poly;
+  h_dd = p->polyprec_PRECISION.Hc[d-1][d];
+  memset(p->polyprec_PRECISION.dirctslvr.b, 0.0, sizeof(complex_PRECISION)*(d-1));
+  p->polyprec_PRECISION.dirctslvr.b[d-1] = 1.;
+
+  for (i=0; i<d; i++)
+    for (j=0; j<d; j++)
+      p->polyprec_PRECISION.Hcc[i*d + j ] = conj(p->polyprec_PRECISION.Hc[j][i]);
+
+  p->polyprec_PRECISION.dirctslvr.dirctslvr_PRECISION(&p->polyprec_PRECISION.dirctslvr);
+
+  for (i=0; i<d; i++)
+    p->polyprec_PRECISION.Hc[d-1][i] += h_dd*h_dd*p->polyprec_PRECISION.dirctslvr.x[i];
+    
+  p->polyprec_PRECISION.eigslvr.eigslvr_PRECISION(&p->polyprec_PRECISION.eigslvr);
+}
+
+
+void local_leja_ordering_PRECISION( local_gmres_PRECISION_struct *p )
+{
+
+  int i, j, ii, d_poly;
+  int max_j, exchange_cols;
+  complex_PRECISION tmp, leja;
+
+  complex_PRECISION** L;
+  complex_PRECISION* col_prods;
+
+  d_poly = p->polyprec_PRECISION.d_poly;
+  L = p->polyprec_PRECISION.L;
+  col_prods = p->polyprec_PRECISION.col_prods;
+
+  // Create a matrix made of n+1 rows, each row is x (all rows equal).
+  for (i=0; i<d_poly+1; i++ )
+    memcpy( L[i], p->polyprec_PRECISION.h_ritz, sizeof(complex_PRECISION)*(d_poly) );
+
+  leja = 0;
+
+  for (i=0; i < d_poly-1; i++)
+  {
+
+    for (j=i; j<d_poly; j++ ) 
+      L[i][j] = cabs( L[i][j] - leja );
+
+    for (j = i; j < d_poly; j++)
+    {
+      col_prods[j] = 1.;
+      for (ii = 0; ii <= i; ii++)
+        col_prods[j] *= L[ii][j];
+    }
+
+    exchange_cols = 0;
+    max_j = i;
+    for (j=i+1; j<d_poly; j++ )
+    {
+      if ( creal(col_prods[j]) > creal(col_prods[max_j]) )
+      {
+        max_j = j; 
+        exchange_cols = 1;
+      }
+    }
+        
+    if (exchange_cols)
+    {
+      for (ii=0; ii<d_poly+1; ii++ )
+      {
+        tmp = L[ii][i];
+        L[ii][i] = L[ii][max_j];
+        L[ii][max_j] = tmp;
+      } 
+    }
+
+    leja = L[d_poly][i];
+
+  }
+
+  memcpy( p->polyprec_PRECISION.lejas, p->polyprec_PRECISION.L[d_poly], sizeof(complex_PRECISION)*(d_poly) );
+}
+
+
+
+void local_update_lejas_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading )
+{
+
+  int start, end;
+  //compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
+  start = p->v_start;
+  end = p->v_end;
+
+  vector_PRECISION random_rhs, buff0;
+  random_rhs = p->polyprec_PRECISION.random_rhs;
+  PRECISION buff3;
+  vector_PRECISION buff4;
+
+  int buff1, buff2;
+
+  buff0 = p->b;
+  buff2 = p->num_restart;
+  buff1 = p->restart_length;
+  buff3 = p->tol;
+  buff4 = p->x;
+
+  p->b = random_rhs;
+  p->num_restart = 1;
+  p->restart_length = p->polyprec_PRECISION.d_poly;
+  p->tol = 1E-20;
+  p->x = p->polyprec_PRECISION.xtmp;
+
+  l->dup_H = 1;
+
+  //vector_PRECISION_define_random(random_rhs, start, end, l);
+  //fgmres_itersx = fgmres_PRECISION(p, l, threading);
+  vector_PRECISION_define( random_rhs, 1.0, start, end, l );
+  //p->restart_length = p->polyprec_PRECISION.d_poly;
+  local_fgmres_PRECISION(p, l, threading);
+
+  l->dup_H = 0;
+
+  p->b = buff0;
+  p->num_restart = buff2;
+  p->restart_length = buff1;
+  p->tol = buff3;
+  p->x = buff4;
+
+  // TODO : re-enable this
+  //p->polyprec_PRECISION.update_lejas = 0;
+
+  local_harmonic_ritz_PRECISION(p);
+  local_leja_ordering_PRECISION(p);
+}
+
+
+void local_re_construct_lejas_PRECISION( level_struct *l, struct Thread *threading ) {
+
+  //local_update_lejas_PRECISION(&(l->p_PRECISION), l, threading);
+  local_update_lejas_PRECISION(&(l->p_PRECISION.block_jacobi_PRECISION.local_p), l, threading);
+}
+
+
+void local_apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
+                                     int res, level_struct *l, struct Thread *threading )
+{
+  int i, start, end;
+
+  //compute_core_start_end(l->p_PRECISION.v_start, l->p_PRECISION.v_end, &start, &end, l, threading);
+  start = l->p_PRECISION.v_start;
+  end = l->p_PRECISION.v_end;
+
+  local_gmres_PRECISION_struct *p = &( l->p_PRECISION.block_jacobi_PRECISION.local_p );
+  int d_poly = p->polyprec_PRECISION.d_poly;
+  vector_PRECISION accum_prod = p->polyprec_PRECISION.accum_prod;
+  vector_PRECISION product = p->polyprec_PRECISION.product;
+  vector_PRECISION temp = p->polyprec_PRECISION.temp;
+  vector_PRECISION lejas = p->polyprec_PRECISION.lejas;
+
+  vector_PRECISION_copy( product, eta, start, end, l );
+  vector_PRECISION_define(accum_prod, 0.0, start, end, l);
+
+  vector_PRECISION_saxpy(accum_prod, accum_prod, product, 1./lejas[0], start, end, l);
+  for (i = 1; i < d_poly; i++)
+  {
+    //apply_operator_PRECISION(temp, product, p, l, threading);
+    p->eval_operator(temp, product, p->op, l, threading);
+
+    vector_PRECISION_saxpy(product, product, temp, -1./lejas[i-1], start, end, l);
+    vector_PRECISION_saxpy(accum_prod, accum_prod, product, 1./lejas[i], start, end, l);
+  }
+  vector_PRECISION_copy( phi, accum_prod, start, end, l );
+}
+
 
 #endif

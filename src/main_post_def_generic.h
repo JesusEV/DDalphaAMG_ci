@@ -31,15 +31,18 @@
 
 #ifdef BLOCK_JACOBI
     if (l->level==0) {
-      START_MASTER(threading)
-      printf0("\n---> applying Block Jacobi, before matmul\n");
-      END_MASTER(threading)
+      if ( p->block_jacobi_PRECISION.BJ_usable == 1 ) {
 
-      block_jacobi_apply_PRECISION( input, input, p, l, threading );
+        START_MASTER(threading)
+        printf0("\n---> applying Block Jacobi, before matmul\n");
+        END_MASTER(threading)
 
-      START_MASTER(threading)
-      printf0("---> applying matmul !\n");
-      END_MASTER(threading)
+        block_jacobi_apply_PRECISION( input, input, p, l, threading );
+
+        START_MASTER(threading)
+        printf0("---> applying matmul !\n");
+        END_MASTER(threading)
+      }
     }
 #endif
 
