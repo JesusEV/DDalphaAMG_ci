@@ -204,12 +204,6 @@
     }
     END_MASTER(threading)
 
-    //MPI_Finalize();
-    //exit(0);
-
-    //SYNC_MASTER_TO_ALL(threading)
-    //SYNC_CORES(threading)
-
     START_MASTER(threading)
     MPI_Barrier( MPI_COMM_WORLD );
     END_MASTER(threading)

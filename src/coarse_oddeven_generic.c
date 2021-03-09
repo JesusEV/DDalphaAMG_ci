@@ -1515,16 +1515,9 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 #ifdef BLOCK_JACOBI
   // if Block Jacobi is enabled, solve the problem : M^{-1}Ax = M^{-1}b
   if ( p->block_jacobi_PRECISION.BJ_usable == 1 ) {
-    //START_MASTER(threading)
-    //printf0("\n---> applying Block Jacobi, to right hand side ...\n");
-    //END_MASTER(threading)
-
-    //printf0("BJ USABLE !!\n");
-
     // create a backup of b
     vector_PRECISION_copy( p->block_jacobi_PRECISION.b_backup, p->b, start, end, l );
     block_jacobi_apply_PRECISION( p->b, p->block_jacobi_PRECISION.b_backup, p, l, threading );
-    //block_jacobi_apply_PRECISION( p->block_jacobi_PRECISION.b_backup, p->b, p, l, threading );
   }
 #endif
 
@@ -1537,11 +1530,6 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 #ifdef BLOCK_JACOBI
   // restore the rhs
   if ( p->block_jacobi_PRECISION.BJ_usable == 1 ) {
-    //START_MASTER(threading)
-    //printf0("\n---> after solve, restoring right hand side ...\n\n");
-    //END_MASTER(threading)
-
-    //block_jacobi_restore_from_buffer_PRECISION( p->b, p, l, threading );
     vector_PRECISION_copy( p->b, p->block_jacobi_PRECISION.b_backup, start, end, l );
   }
 #endif
@@ -1559,19 +1547,8 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   }
 #endif
 
-//  //if (g.low_level_meas == 1) {
-//    START_MASTER(threading)
-//    printf0("fgmres_iters = %d\n", fgmres_iters);
-//#ifdef GCRODR
-//    printf0("is CU usable = %d\n", p->gcrodr_PRECISION.CU_usable);
-//#endif
-//    END_MASTER(threading)
-//  //}
-
   if (g.low_level_meas == 1) {
-    //apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
     p->eval_operator( p->w, p->x, p->op, l, threading ); // compute w = D*x
-    //apply_operator_PRECISION( p->w, p->x, p, l, threading );
     vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
     PRECISION beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading );
     START_MASTER(threading)

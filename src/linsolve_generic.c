@@ -625,8 +625,6 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
         qr_update_PRECISION( p->H, p->s, p->c, p->gamma, j, l, threading );
         gamma_jp1 = cabs( p->gamma[j+1] );
         
-        //printf0("g (proc=%d) 'fake' rel residual GMRES = %f\n", g.my_rank, gamma_jp1/norm_r0);
-        
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
         if ( iter%10 == 0 || p->preconditioner != NULL || l->depth > 0 ) {
           START_MASTER(threading)
@@ -646,14 +644,10 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
             compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
                                         p->y, p->gamma, p->H, j, (res==_NO_RES)?ol:1, p, l, threading );
 
-            //apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
             p->eval_operator( p->w, p->x, p->op, l, threading );
             vector_PRECISION_minus( p->r, p->block_jacobi_PRECISION.b_backup, p->w, start, end, l ); // compute r = b - w
             PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
             PRECISION betaxx = global_norm_PRECISION( p->r, start, end, l, threading );
-            //START_MASTER(threading)
-            //printf0("g (proc=%d) 'real' rel residual GMRES = %f\n", g.my_rank, betaxx/norm_r0xx);
-            //END_MASTER(threading)
             if ( betaxx/norm_r0xx < p->tol ) {
               finish = 1;
             } else {

@@ -31,9 +31,6 @@
 
 #ifdef BLOCK_JACOBI
     if ( l->level==0 && p->block_jacobi_PRECISION.BJ_usable==1 ) {
-      //p->eval_operator( output, l->p_PRECISION.block_jacobi_PRECISION.xtmp, p->op, l, threading );
-      //block_jacobi_apply_PRECISION( l->p_PRECISION.block_jacobi_PRECISION.xtmp, input, p, l, threading );
-
       p->eval_operator( l->p_PRECISION.block_jacobi_PRECISION.xtmp, input, p->op, l, threading );
       block_jacobi_apply_PRECISION( output, l->p_PRECISION.block_jacobi_PRECISION.xtmp, p, l, threading );
 
@@ -81,7 +78,6 @@
       //exit(0);
       */
       // --------------------------------------------------------------------------------
-      //p->eval_operator( output, input, p->op, l, threading );
     } else {
       p->eval_operator( output, input, p->op, l, threading );
     }
