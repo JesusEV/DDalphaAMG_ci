@@ -1484,6 +1484,9 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   coarse_n_hopping_term_PRECISION( p->b, p->x, op, _EVEN_SITES, l, threading );
   PROF_PRECISION_STOP( _NC, 0, threading );
 
+  //PRECISION nrmx = global_norm_PRECISION( p->b, p->v_start, p->v_end, l, threading );
+  //printf0("norm of rhs = %f\n", nrmx);
+
   int start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
@@ -1495,10 +1498,16 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 
 #ifdef BLOCK_JACOBI
   if ( l->level==0 && l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas == 1 ) {
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
+
     // re-construct Lejas
     START_MASTER(threading)
     local_re_construct_lejas_PRECISION( l, threading );
     END_MASTER(threading)
+
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
   }
 #endif
 
@@ -1527,12 +1536,18 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   fgmres_iters = fgmres_PRECISION( p, l, threading );
 #endif
 
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
 #ifdef BLOCK_JACOBI
   // restore the rhs
   if ( p->block_jacobi_PRECISION.BJ_usable == 1 ) {
     vector_PRECISION_copy( p->b, p->block_jacobi_PRECISION.b_backup, start, end, l );
   }
 #endif
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
 
   START_MASTER(threading)
   printf0("fgmres iters = %d\n", fgmres_iters);

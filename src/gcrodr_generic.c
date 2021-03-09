@@ -575,6 +575,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
       PRECISION betaxx = global_norm_PRECISION( p->gcrodr_PRECISION.r_aux, start, end, l, threading );
 
+      //printf("(proc=%d) 'real' rel residual = %f\n", g.my_rank, betaxx/norm_r0xx);
+
       if ( betaxx/norm_r0xx > p->tol ) {
         p->gcrodr_PRECISION.finish = 0;
       }
@@ -736,6 +738,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
       PRECISION betaxx = global_norm_PRECISION( p->gcrodr_PRECISION.r_aux, start, end, l, threading );
+
+      //printf0("(proc=%d) 'real' rel residual = %f\n", g.my_rank, betaxx/norm_r0xx);
 
       if ( betaxx/norm_r0xx > p->tol ) {
         p->gcrodr_PRECISION.finish = 0;
@@ -913,8 +917,8 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 #endif   
 
 #ifdef BLOCK_JACOBI
-  // three more iterations might be enough to cover the difference between 'real' and 'fake' residuals
-  for( il=0; (il<3) || (il<p->restart_length && finish==0); il++) {
+  // two more iterations might be enough to cover the difference between 'real' and 'fake' residuals
+  for( il=0; (il<2) || (il<p->restart_length && finish==0); il++) {
 #else
   for( il=0; il<p->restart_length && finish==0; il++) {
 #endif
@@ -948,6 +952,8 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
       SYNC_MASTER_TO_ALL(threading)
       SYNC_CORES(threading)
       gamma_jp1 = cabs( p->gamma[j+1] );
+
+      //printf0("g (proc=%d,j=%d) rel residual (gcro-dr) = %f\n", g.my_rank, j, gamma_jp1/norm_r0);
 
       if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
 

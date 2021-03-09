@@ -400,6 +400,8 @@ int local_fgmres_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, st
       local_qr_update_PRECISION( p->H, p->s, p->c, p->gamma, j, l, threading );
       gamma_jp1 = cabs( p->gamma[j+1] );
 
+      //printf0("l (proc=%d) rel residual = %f\n", g.my_rank, gamma_jp1/norm_r0);
+
       if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
         finish = 1;
         if ( gamma_jp1/norm_r0 > 1E+5 ) printf0("Divergence of fgmres_PRECISION, iter = %d, level=%d\n", iter, l->level );
@@ -987,7 +989,8 @@ void local_update_lejas_PRECISION( local_gmres_PRECISION_struct *p, level_struct
 
   l->dup_H = 1;
 
-  vector_PRECISION_define( random_rhs, 1.0, start, end, l );
+  //vector_PRECISION_define( random_rhs, 1.0, start, end, l );
+  vector_PRECISION_define_random( random_rhs, start, end, l );
   local_fgmres_PRECISION(p, l, threading);
 
   l->dup_H = 0;

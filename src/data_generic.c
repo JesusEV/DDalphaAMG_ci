@@ -40,7 +40,7 @@ void vector_PRECISION_define( vector_PRECISION phi, complex_PRECISION value, int
 
 
 void vector_PRECISION_define_random( vector_PRECISION phi, int start, int end, level_struct *l ) {
-  
+
   int thread = omp_get_thread_num();
   if(thread == 0 && start != end)
     PROF_PRECISION_START( _SET );

@@ -160,6 +160,9 @@
     */
     //----------------------------------------------------
 
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
+
     START_MASTER(threading)
     if ( p->block_jacobi_PRECISION.BJ_usable==1 ) {
       local_apply_polyprec_PRECISION( out, NULL, in, 0, l, threading );
@@ -203,6 +206,9 @@
       */
     }
     END_MASTER(threading)
+
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
 
     START_MASTER(threading)
     MPI_Barrier( MPI_COMM_WORLD );

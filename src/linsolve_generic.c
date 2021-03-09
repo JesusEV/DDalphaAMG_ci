@@ -633,6 +633,9 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
           END_MASTER(threading)
         }
 #endif
+
+        //if ( l->level==0 ) printf0("g rel residual (gmres) = %f\n", gamma_jp1/norm_r0);
+
         if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
 
 #ifdef BLOCK_JACOBI
