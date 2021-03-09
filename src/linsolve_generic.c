@@ -389,10 +389,11 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     p->block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
 
     MALLOC( p->block_jacobi_PRECISION.b_backup, complex_PRECISION, vl );
+    MALLOC( p->block_jacobi_PRECISION.xtmp, complex_PRECISION, vl );
 
     p->block_jacobi_PRECISION.local_p.polyprec_PRECISION.d_poly = g.local_polyprec_d;
 
-    local_fgmres_PRECISION_struct_alloc( g.local_polyprec_d, 1, l->vector_size, g.coarse_tol, 
+    local_fgmres_PRECISION_struct_alloc( g.local_polyprec_d, 1, vl, g.coarse_tol, 
                                          _COARSE_GMRES, _NOTHING, NULL,
                                          coarse_local_apply_schur_complement_PRECISION,
                                          &(p->block_jacobi_PRECISION.local_p), l );
@@ -504,6 +505,7 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
 #ifdef BLOCK_JACOBI
   if (l->level==0) {
     FREE( p->block_jacobi_PRECISION.b_backup, complex_PRECISION, p->block_jacobi_PRECISION.syst_size );
+    FREE( p->block_jacobi_PRECISION.xtmp, complex_PRECISION, p->block_jacobi_PRECISION.syst_size );
 
     local_fgmres_PRECISION_struct_free( &(p->block_jacobi_PRECISION.local_p), l );
   }
@@ -543,7 +545,11 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
   // compute start and end indices for core
   // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
-  
+
+  START_MASTER(threading)
+  if (l->level==0) printf0( "g ---> start=%d, end=%d, diff=%d, m0=%f, op=%p\n", p->v_start, p->v_end, p->v_end-p->v_start, p->op->m0, p->op );
+  END_MASTER(threading)
+
   for( ol=0; ol<p->num_restart && finish==0; ol++ )  {
   
     if( ol == 0 && p->initial_guess_zero ) {
@@ -619,6 +625,8 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
         qr_update_PRECISION( p->H, p->s, p->c, p->gamma, j, l, threading );
         gamma_jp1 = cabs( p->gamma[j+1] );
         
+        //printf0("g (proc=%d) 'fake' rel residual GMRES = %f\n", g.my_rank, gamma_jp1/norm_r0);
+        
 #if defined(TRACK_RES) && !defined(WILSON_BENCHMARK)
         if ( iter%10 == 0 || p->preconditioner != NULL || l->depth > 0 ) {
           START_MASTER(threading)
@@ -628,10 +636,45 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
         }
 #endif
         if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
+
+#ifdef BLOCK_JACOBI
+          if ( l->level==0 )
+          {
+            // backup of p->x, just in case tol hasn't been reached we need to restore ...
+            vector_PRECISION_copy( p->block_jacobi_PRECISION.xtmp, p->x, start, end, l );
+
+            compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
+                                        p->y, p->gamma, p->H, j, (res==_NO_RES)?ol:1, p, l, threading );
+
+            //apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+            p->eval_operator( p->w, p->x, p->op, l, threading );
+            vector_PRECISION_minus( p->r, p->block_jacobi_PRECISION.b_backup, p->w, start, end, l ); // compute r = b - w
+            PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
+            PRECISION betaxx = global_norm_PRECISION( p->r, start, end, l, threading );
+            //START_MASTER(threading)
+            //printf0("g (proc=%d) 'real' rel residual GMRES = %f\n", g.my_rank, betaxx/norm_r0xx);
+            //END_MASTER(threading)
+            if ( betaxx/norm_r0xx < p->tol ) {
+              finish = 1;
+            } else {
+              // restore p->x
+              vector_PRECISION_copy( p->x, p->block_jacobi_PRECISION.xtmp, start, end, l );
+            }
+            START_MASTER(threading)
+            if ( betaxx/norm_r0xx > 1E+5 ) printf0("Divergence of fgmres_PRECISION, iter = %d, level=%d\n", iter, l->level );
+            END_MASTER(threading)
+          } else {
+            finish = 1;
+            START_MASTER(threading)
+            if ( gamma_jp1/norm_r0 > 1E+5 ) printf0("Divergence of fgmres_PRECISION, iter = %d, level=%d\n", iter, l->level );
+            END_MASTER(threading)
+          }
+#else
           finish = 1;
           START_MASTER(threading)
           if ( gamma_jp1/norm_r0 > 1E+5 ) printf0("Divergence of fgmres_PRECISION, iter = %d, level=%d\n", iter, l->level );
           END_MASTER(threading)
+#endif
         }
       } else {
         START_MASTER(threading)
@@ -641,8 +684,21 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
         break;
       }
     } // end of a single restart
+#ifdef BLOCK_JACOBI
+    if ( l->level==0 ) {
+      if ( finish==0 ) {
+        compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
+                                    p->y, p->gamma, p->H, j, (res==_NO_RES)?ol:1, p, l, threading );
+      }
+    } else {
+      compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
+                                  p->y, p->gamma, p->H, j, (res==_NO_RES)?ol:1, p, l, threading );
+    }
+#else
     compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
                                 p->y, p->gamma, p->H, j, (res==_NO_RES)?ol:1, p, l, threading );
+#endif
+
   } // end of fgmres
 
   START_LOCKED_MASTER(threading)

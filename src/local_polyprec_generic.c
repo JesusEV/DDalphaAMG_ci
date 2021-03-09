@@ -21,7 +21,7 @@
 
 #include "main.h"
 
-#ifdef POLYPREC
+#ifdef BLOCK_JACOBI
 
 void local_fgmres_PRECISION_struct_init( local_gmres_PRECISION_struct *p ) {
 
@@ -247,6 +247,8 @@ void local_fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION t
 
 void local_fgmres_PRECISION_struct_free( local_gmres_PRECISION_struct *p, level_struct *l ) {
 
+  //return;
+
   int k=0;
 
   //int m = p->restart_length;
@@ -254,12 +256,12 @@ void local_fgmres_PRECISION_struct_free( local_gmres_PRECISION_struct *p, level_
   k = 0;
 
   if(p->restart_length > 0) {
-  FREE( p->H[0], complex_PRECISION, p->total_storage );
-  FREE( p->H, complex_PRECISION*, p->restart_length );
-  FREE( p->V, complex_PRECISION*, p->restart_length+1 );
+    FREE( p->H[0], complex_PRECISION, p->total_storage );
+    FREE( p->H, complex_PRECISION*, p->restart_length );
+    FREE( p->V, complex_PRECISION*, p->restart_length+1 );
   
-  if ( p->Z != NULL )
-    FREE( p->Z, complex_PRECISION*, k );
+    if ( p->Z != NULL )
+      FREE( p->Z, complex_PRECISION*, k );
   }
   
   p->D = NULL;
@@ -388,6 +390,9 @@ int local_fgmres_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, st
 
   gamma_jp1 = cabs( p->gamma[0] );
 
+  //printf0( "l ---> start=%d, end=%d, diff=%d, m0=%f, op=%p\n", start, end, end-start, p->op->m0, p->op );
+  //printf0( "mu=%f, mu_odd_shift=%f, mu_even_shift=%f, tm_term=%p, epsbar=%f, epsbar_ig5_odd_shift=%f, epsbar_ig5_even_shift=%f\n", p->op->mu, p->op->mu_odd_shift, p->op->mu_even_shift, p->op->tm_term, p->op->epsbar, p->op->epsbar_ig5_odd_shift, p->op->epsbar_ig5_even_shift );
+
   for( il=0; il<p->restart_length && finish==0; il++) {
 
     j = il; iter++;
@@ -397,7 +402,7 @@ int local_fgmres_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, st
       break;
     }
 
-    printf0("(proc=%d,j=%d) %f\n", g.my_rank, j, gamma_jp1/norm_r0);
+    //printf0("(proc=%d,j=%d) %f\n", g.my_rank, j, gamma_jp1/norm_r0);
 
     if ( cabs( p->H[j][j+1] ) > p->tol/10 ) {
       local_qr_update_PRECISION( p->H, p->s, p->c, p->gamma, j, l, threading );
@@ -573,7 +578,7 @@ void local_set_ghost_PRECISION( vector_PRECISION phi, const int mu, const int di
 void coarse_local_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
                                             const int amount, level_struct *l, struct Thread *threading ){
 
-  START_NO_HYPERTHREADS(threading)
+  //START_NO_HYPERTHREADS(threading)
 
   int mu, i, index, num_site_var=l->num_lattice_site_var,
       num_4link_var=4*4*l->num_parent_eig_vect*l->num_parent_eig_vect,
@@ -589,7 +594,7 @@ void coarse_local_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISI
   // assumptions (1) self coupling has already been performed
   //          OR (2) "out" is initialized with zeros
   //set_boundary_PRECISION( out, 0, l, threading );
-  memset( out, 0.0, (l->vector_size-l->inner_vector_size)*sizeof(complex_PRECISION) );
+  memset( out+l->inner_vector_size, 0.0, (l->vector_size-l->inner_vector_size)*sizeof(complex_PRECISION) );
 
   if ( amount == _EVEN_SITES ) {
     minus_dir_param = _ODD_SITES;
@@ -642,6 +647,7 @@ void coarse_local_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISI
     coarse_n_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
+  ///*
   // instead of ghost exchanges, set &(op->c) to zero
   if ( op->c.comm ) {
     for ( mu=0; mu<4; mu++ ) {
@@ -653,6 +659,10 @@ void coarse_local_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISI
       local_set_ghost_PRECISION( out, mu, +1, &(op->c), plus_dir_param, l );    
     }
   }
+  //*/
+
+  //memset( in+l->inner_vector_size, 0.0, (l->vector_size-l->inner_vector_size)*sizeof(complex_PRECISION) );
+  //memset( out+l->inner_vector_size, 0.0, (l->vector_size-l->inner_vector_size)*sizeof(complex_PRECISION) );
 
   if ( amount == _EVEN_SITES ) {
     start = 0; num_lattice_sites = op->num_even_sites;
@@ -685,14 +695,14 @@ void coarse_local_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISI
     coarse_n_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
-  END_NO_HYPERTHREADS(threading)
+  //END_NO_HYPERTHREADS(threading)
 }
 
 
 void coarse_local_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
                                           const int amount, level_struct *l, struct Thread *threading ) {
 
-  START_NO_HYPERTHREADS(threading)
+  //START_NO_HYPERTHREADS(threading)
 
   int mu, i, index, num_site_var=l->num_lattice_site_var,
       num_4link_var=4*4*l->num_parent_eig_vect*l->num_parent_eig_vect,
@@ -708,7 +718,7 @@ void coarse_local_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION
   // assumptions (1) self coupling has already been performed
   //          OR (2) "out" is initialized with zeros
   //set_boundary_PRECISION( out, 0, l, threading );
-  memset( out, 0.0, (l->vector_size-l->inner_vector_size)*sizeof(complex_PRECISION) );
+  memset( out+l->inner_vector_size, 0.0, (l->vector_size-l->inner_vector_size)*sizeof(complex_PRECISION) );
 
   if ( amount == _EVEN_SITES ) {
     minus_dir_param = _ODD_SITES;
@@ -728,6 +738,7 @@ void coarse_local_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION
   core_end = start+num_lattice_sites;
 
   // compute U_mu^dagger coupling
+
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;
     in_pt = in + num_site_var*op->neighbor_table[index];
@@ -736,6 +747,7 @@ void coarse_local_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION
     out_pt = out + num_site_var*op->neighbor_table[index+T];
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
+
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;
     in_pt = in + num_site_var*op->neighbor_table[index];
@@ -761,6 +773,7 @@ void coarse_local_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
+  ///*
   // instead of ghost exchanges, set &(op->c) to zero
   if ( op->c.comm ) {
     for ( mu=0; mu<4; mu++ ) {
@@ -772,6 +785,10 @@ void coarse_local_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION
       local_set_ghost_PRECISION( out, mu, +1, &(op->c), plus_dir_param, l );    
     }
   }
+  //*/
+
+  //memset( in+l->inner_vector_size, 0.0, (l->vector_size-l->inner_vector_size)*sizeof(complex_PRECISION) );
+  //memset( out+l->inner_vector_size, 0.0, (l->vector_size-l->inner_vector_size)*sizeof(complex_PRECISION) );
 
   if ( amount == _EVEN_SITES ) {
     start = 0; num_lattice_sites = op->num_even_sites;
@@ -804,7 +821,7 @@ void coarse_local_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION
     coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
-  END_NO_HYPERTHREADS(threading)
+  //END_NO_HYPERTHREADS(threading)
 }
 
 
@@ -1024,7 +1041,8 @@ void local_update_lejas_PRECISION( local_gmres_PRECISION_struct *p, level_struct
   p->x = buff4;
 
   // TODO : re-enable this
-  //p->polyprec_PRECISION.update_lejas = 0;
+  p->polyprec_PRECISION.update_lejas = 0;
+  l->p_PRECISION.block_jacobi_PRECISION.BJ_usable = 1;
 
   local_harmonic_ritz_PRECISION(p);
   local_leja_ordering_PRECISION(p);
@@ -1035,6 +1053,15 @@ void local_re_construct_lejas_PRECISION( level_struct *l, struct Thread *threadi
 
   //local_update_lejas_PRECISION(&(l->p_PRECISION), l, threading);
   local_update_lejas_PRECISION(&(l->p_PRECISION.block_jacobi_PRECISION.local_p), l, threading);
+
+  local_gmres_PRECISION_struct *p = &(l->p_PRECISION.block_jacobi_PRECISION.local_p);
+
+  int d_poly = p->polyprec_PRECISION.d_poly;
+  printf0("lejas (proc=%d) =  ", g.my_rank);
+  for ( int i=0; i<d_poly; i++ ) {
+    printf0( "%f+%fj  ", creal(p->polyprec_PRECISION.lejas[i]), cimag(p->polyprec_PRECISION.lejas[i]) );
+  }
+  printf0("\n");
 }
 
 
@@ -1043,11 +1070,14 @@ void local_apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi
 {
   int i, start, end;
 
+  //return;
+
   //compute_core_start_end(l->p_PRECISION.v_start, l->p_PRECISION.v_end, &start, &end, l, threading);
-  start = l->p_PRECISION.v_start;
-  end = l->p_PRECISION.v_end;
+  start = l->p_PRECISION.block_jacobi_PRECISION.local_p.v_start;
+  end = l->p_PRECISION.block_jacobi_PRECISION.local_p.v_end;
 
   local_gmres_PRECISION_struct *p = &( l->p_PRECISION.block_jacobi_PRECISION.local_p );
+
   int d_poly = p->polyprec_PRECISION.d_poly;
   vector_PRECISION accum_prod = p->polyprec_PRECISION.accum_prod;
   vector_PRECISION product = p->polyprec_PRECISION.product;
@@ -1062,6 +1092,7 @@ void local_apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi
   {
     //apply_operator_PRECISION(temp, product, p, l, threading);
     p->eval_operator(temp, product, p->op, l, threading);
+    //printf0("in!!\n");
 
     vector_PRECISION_saxpy(product, product, temp, -1./lejas[i-1], start, end, l);
     vector_PRECISION_saxpy(accum_prod, accum_prod, product, 1./lejas[i], start, end, l);

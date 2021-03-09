@@ -49,7 +49,13 @@ void fgmres_MP_struct_alloc( int m, int n, long int vl, double tol, const int pr
   p->dp.initial_guess_zero = 1;                  p->sp.initial_guess_zero = 1;
   p->dp.v_start = 0;                             p->sp.v_start = 0;
   p->dp.v_end = l->inner_vector_size;            p->sp.v_end = l->inner_vector_size;
-  
+#ifdef BLOCK_JACOBI
+  if ( l->level==0 ) {
+    //p->dp.block_jacobi_double.local_p.v_end = l->inner_vector_size;
+    p->sp.block_jacobi_float.local_p.v_end = l->inner_vector_size;
+  }
+#endif
+
   p->dp.op = &(g.op_double);                     p->sp.op = &(l->s_float.op);
   
   g.p.op = &(g.op_double);

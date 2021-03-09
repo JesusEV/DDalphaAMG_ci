@@ -178,7 +178,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       }
 #endif
 
-#ifdef POLYPREC
+#ifdef BLOCK_JACOBI
       {
         // setting flag to re-update lejas
         level_struct *lx = l;
@@ -260,7 +260,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
   }
 #endif
 
-#ifdef POLYPREC
+#ifdef BLOCK_JACOBI
   {
     // setting flag to re-update lejas
     level_struct *lx = l;

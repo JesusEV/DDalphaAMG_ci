@@ -70,6 +70,9 @@ void coarse_grid_correction_PRECISION_setup( level_struct *l, struct Thread *thr
       coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
       START_LOCKED_MASTER(threading)
       l->next_level->p_PRECISION.op = &(l->next_level->s_PRECISION.op);
+#ifdef BLOCK_JACOBI
+      if ( l->next_level->level==0 ) l->next_level->p_PRECISION.block_jacobi_PRECISION.local_p.op = &(l->next_level->s_PRECISION.op);
+#endif
       END_LOCKED_MASTER(threading)
     }
     if ( !l->next_level->idle && l->next_level->level == 0 && g.odd_even ) {
@@ -347,6 +350,8 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 
 void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, struct Thread *threading ) {
 
+  printf0( "-----------------------------------------------WITHIN !!!\n" );
+
   if ( !l->idle ) {
     vector_PRECISION buf1 = NULL;
     gmres_PRECISION_struct gmres;
@@ -359,8 +364,10 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, s
     fgmres_PRECISION_struct_alloc( g.coarse_iter, g.coarse_restart, l->next_level->vector_size, g.coarse_tol, 
                                    _COARSE_GMRES, _NOTHING, NULL, apply_coarse_operator_PRECISION, &gmres, l->next_level );
     
-    if ( g.odd_even && l->next_level->level == 0 )
+    if ( g.odd_even && l->next_level->level == 0 ){
       gmres.v_end = l->next_level->oe_op_PRECISION.num_even_sites*l->next_level->num_lattice_site_var;
+      printf0("FIXME ASAP !\n");
+    }
     END_LOCKED_MASTER(threading)
     
     for ( int k=0; k<setup_iter; k++ ) {
@@ -451,8 +458,12 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, s
 
 void set_kcycle_tol_PRECISION( PRECISION tol, level_struct *l ) {
   
-  if ( !l->idle )
+  if ( !l->idle ){
     l->p_PRECISION.tol = tol;
+#ifdef BLOCK_JACOBI
+    if ( l->level==0 ) l->p_PRECISION.block_jacobi_PRECISION.local_p.tol = tol;
+#endif
+  }
   
   if ( l->level > 1 )
     set_kcycle_tol_PRECISION( tol, l->next_level );

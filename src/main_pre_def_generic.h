@@ -111,6 +111,9 @@
     PRECISION b_norm, norm_r0;
 
     vector_PRECISION *Pk, *C, *Cc, *U, *Yk, *hatZ, *hatW;
+#ifdef BLOCK_JACOBI
+    vector_PRECISION r_aux;
+#endif
     // Gc is used to copy G
     complex_PRECISION **gev_A, **gev_B, **Bbuff, **QR, **Q, **R, **Rinv, **ort_B, **G, **Gc;
 
@@ -164,6 +167,7 @@
   typedef struct {
     int BJ_usable, syst_size;
     vector_PRECISION b_backup;
+    vector_PRECISION xtmp;
     local_gmres_PRECISION_struct local_p;
   } block_jacobi_PRECISION_struct;
 #endif
