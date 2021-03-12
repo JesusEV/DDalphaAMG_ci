@@ -1,8 +1,6 @@
 
 
-<pre>
-<b>NOTE</b> :
-<pre>
+**NOTE** :
 
 this repository is a copy of https://github.com/sbacchio/DDalphaAMG (soon to be embedded within it). We have improved the coarsest-level solves here by moving from plain GMRES to GCRO-DR + Polynomial Preconditioner + Pipelining + Block Jacobi (the BJ blocks are solved through a local polynomial preconditioner). The use of MPI, OpenMP and SSE vectorization is kept throughout these new implementations.
 
