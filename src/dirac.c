@@ -687,7 +687,7 @@ void m0_update( double m0, level_struct *l, struct Thread *threading ) {
   
   if ( g.mixed_precision ) {
       m0_update_float( m0, &(l->oe_op_float), l, threading );
-      m0_update_float( m0, &(l->s_float.op), l, threading );      
+      m0_update_float( m0, &(l->s_float.op), l, threading );
   } else {
       m0_update_double( m0, &(l->oe_op_double), l, threading );
       m0_update_double( m0, &(l->s_double.op), l, threading );

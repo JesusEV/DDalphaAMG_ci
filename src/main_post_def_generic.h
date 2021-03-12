@@ -25,11 +25,65 @@
   #include "coarse_oddeven_PRECISION.h"
   #include "dirac_PRECISION.h"
   #include "coarse_operator_PRECISION.h"
+  #include "block_jacobi_PRECISION.h"
 
   static inline void apply_operator_PRECISION( vector_PRECISION output, vector_PRECISION input, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
 
-    p->eval_operator( output, input, p->op, l, threading );
+#ifdef BLOCK_JACOBI
+    if ( l->level==0 && p->block_jacobi_PRECISION.BJ_usable==1 ) {
+      p->eval_operator( l->p_PRECISION.block_jacobi_PRECISION.xtmp, input, p->op, l, threading );
+      block_jacobi_apply_PRECISION( output, l->p_PRECISION.block_jacobi_PRECISION.xtmp, p, l, threading );
 
+      // --------------------------------------------------------------------------------
+      /*
+      if ( p->block_jacobi_PRECISION.BJ_usable==1 ) {
+        {
+          PRECISION tmpx1, tmpx2;
+          int start = p->v_start;
+          int end = p->v_end;
+          //local_gmres_PRECISION_struct *loc_p = &(p->block_jacobi_PRECISION.local_p);
+
+          int size = end-start;
+          int exp_fctr = 10;
+
+          vector_PRECISION solution = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
+          vector_PRECISION rhs = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
+          vector_PRECISION x = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
+
+          vector_PRECISION_define_random( solution, start, end, l );
+
+          p->eval_operator(rhs, solution, p->op, l, threading);
+
+          // x ~ w
+          //local_apply_polyprec_PRECISION( x, NULL, rhs, 0, l, threading );
+          block_jacobi_apply_PRECISION( x, rhs, p, l, threading );
+
+          vector_PRECISION diff_sol = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
+
+          vector_PRECISION_minus( diff_sol, x, solution, start, end, l );
+
+          tmpx1 = global_norm_PRECISION( diff_sol, p->v_start, p->v_end, l, threading );
+          tmpx2 = global_norm_PRECISION( solution, p->v_start, p->v_end, l, threading );
+
+          printf0("g (proc=%d) ---> approx rel error BJ = %f\n", g.my_rank, tmpx1/tmpx2);
+
+          free(solution);
+          free(rhs);
+          free(x);
+          free(diff_sol);
+        }
+      }
+
+      //MPI_Finalize();
+      //exit(0);
+      */
+      // --------------------------------------------------------------------------------
+    } else {
+      p->eval_operator( output, input, p->op, l, threading );
+    }
+#else
+    p->eval_operator( output, input, p->op, l, threading );
+#endif
   }
   
   static inline void apply_operator_dagger_PRECISION( vector_PRECISION output, vector_PRECISION input, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {

@@ -2,7 +2,7 @@
 
 # This file deals with installing BLAS and LAPACK
 
-make_cores=32
+make_cores=48
 
 lapack_version=3.9.0
 lapack_dir=lapack-${lapack_version}

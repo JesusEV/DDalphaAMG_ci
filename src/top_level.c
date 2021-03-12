@@ -178,6 +178,27 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       }
 #endif
 
+#ifdef BLOCK_JACOBI
+      {
+        // setting flag to re-update lejas
+        level_struct *lx = l;
+        while (1) {
+          if ( lx->level==0 ) {
+            if ( g.mixed_precision==0 ) {
+              lx->p_double.block_jacobi_double.local_p.polyprec_double.update_lejas = 1;
+              lx->p_double.block_jacobi_double.BJ_usable = 0;
+            }
+            else {
+              lx->p_float.block_jacobi_float.local_p.polyprec_float.update_lejas = 1;
+              lx->p_float.block_jacobi_float.BJ_usable = 0;
+            }
+            break;
+          }
+          else { lx = lx->next_level; }
+        }
+      }
+#endif
+
 #ifdef GCRODR
       {
         // setting flag to re-update recycling subspace
@@ -231,6 +252,27 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
         else {
           lx->p_float.polyprec_float.update_lejas = 1;
           lx->p_float.polyprec_float.preconditioner = NULL;
+        }
+        break;
+      }
+      else { lx = lx->next_level; }
+    }
+  }
+#endif
+
+#ifdef BLOCK_JACOBI
+  {
+    // setting flag to re-update lejas
+    level_struct *lx = l;
+    while (1) {
+      if ( lx->level==0 ) {
+        if ( g.mixed_precision==0 ) {
+          lx->p_double.block_jacobi_double.local_p.polyprec_double.update_lejas = 1;
+          lx->p_double.block_jacobi_double.BJ_usable = 0;
+        }
+        else {
+          lx->p_float.block_jacobi_float.local_p.polyprec_float.update_lejas = 1;
+          lx->p_float.block_jacobi_float.BJ_usable = 0;
         }
         break;
       }

@@ -75,25 +75,41 @@ void data_layout_n_flavours( int nf, level_struct *l, struct Thread *threading )
       if ( g.mixed_precision ) {
         l_tmp->s_float.block_vector_size = l_tmp->s_float.num_block_sites*l_tmp->num_lattice_site_var;
         l_tmp->p_float.v_end = l_tmp->inner_vector_size;
+#ifdef BLOCK_JACOBI
+        if ( l_tmp->level==0 ) l_tmp->p_float.block_jacobi_float.local_p.v_end = l_tmp->inner_vector_size;
+#endif
         l_tmp->sp_float.v_end = l_tmp->inner_vector_size;
         l_tmp->dummy_p_float.v_end = l_tmp->inner_vector_size;
         if ( (g.method >= 4 && g.odd_even) || (!l_tmp->idle && l_tmp->level == 0 && g.odd_even) ) {
-          if ( l_tmp->level == 0 )
+          if ( l_tmp->level == 0 ){
             l_tmp->p_float.v_end = l_tmp->oe_op_float.num_even_sites*l_tmp->num_lattice_site_var;
-          else
+#ifdef BLOCK_JACOBI
+            if ( l_tmp->level==0 ) l_tmp->p_float.block_jacobi_float.local_p.v_end = l_tmp->oe_op_float.num_even_sites*l_tmp->num_lattice_site_var;
+#endif
+          }
+          else {
             l_tmp->sp_float.v_end = l_tmp->oe_op_float.num_even_sites*l_tmp->num_lattice_site_var;
+          }
         }
         
       } else {
         l_tmp->s_double.block_vector_size = l_tmp->s_double.num_block_sites*l_tmp->num_lattice_site_var;
         l_tmp->p_double.v_end = l_tmp->inner_vector_size;
+#ifdef BLOCK_JACOBI
+        if ( l_tmp->level==0 ) l_tmp->p_double.block_jacobi_double.local_p.v_end = l_tmp->inner_vector_size;
+#endif
         l_tmp->sp_double.v_end = l_tmp->inner_vector_size;
         l_tmp->dummy_p_double.v_end = l_tmp->inner_vector_size;
         if ( (g.method >= 4 && g.odd_even) || (!l_tmp->idle && l_tmp->level == 0 && g.odd_even) ) {
-          if ( l_tmp->level == 0 )
+          if ( l_tmp->level == 0 ) {
             l_tmp->p_double.v_end = l_tmp->oe_op_double.num_even_sites*l_tmp->num_lattice_site_var;
-          else
+#ifdef BLOCK_JACOBI
+            if ( l_tmp->level==0 ) l_tmp->p_double.block_jacobi_double.local_p.v_end = l_tmp->oe_op_double.num_even_sites*l_tmp->num_lattice_site_var;
+#endif
+          }
+          else {
             l_tmp->sp_double.v_end = l_tmp->oe_op_double.num_even_sites*l_tmp->num_lattice_site_var;
+          }
         } 
       }
       

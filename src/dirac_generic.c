@@ -361,7 +361,7 @@ void d_plus_clover_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operat
   config_PRECISION D_pt;
 #endif
 
-  double neg_tbeg, neg_tend, pos_tbeg, pos_tend;
+  double neg_tbeg=0.0, neg_tend=0.0, pos_tbeg=0.0, pos_tend=0.0;
 
   compute_core_start_end(0, nv*n, &start, &end, l, threading );
 

@@ -111,6 +111,9 @@
     PRECISION b_norm, norm_r0;
 
     vector_PRECISION *Pk, *C, *Cc, *U, *Yk, *hatZ, *hatW;
+#ifdef BLOCK_JACOBI
+    vector_PRECISION r_aux;
+#endif
     // Gc is used to copy G
     complex_PRECISION **gev_A, **gev_B, **Bbuff, **QR, **Q, **R, **Rinv, **ort_B, **G, **Gc;
 
@@ -145,7 +148,30 @@
     dirctslvr_PRECISION_struct dirctslvr;
   } polyprec_PRECISION_struct;
 #endif
-  
+
+#ifdef BLOCK_JACOBI
+  typedef struct {
+    vector_PRECISION x, b, r, w, *V, *Z;
+    complex_PRECISION **H, *y, *gamma, *c, *s;
+    config_PRECISION *D, *clover;
+    operator_PRECISION_struct *op;
+    PRECISION tol;
+    int num_restart, restart_length, timing, print, kind,
+      initial_guess_zero, layout, v_start, v_end;
+    long int total_storage;
+    void (*eval_operator)();
+
+    polyprec_PRECISION_struct polyprec_PRECISION;
+  } local_gmres_PRECISION_struct;
+
+  typedef struct {
+    int BJ_usable, syst_size;
+    vector_PRECISION b_backup;
+    vector_PRECISION xtmp;
+    local_gmres_PRECISION_struct local_p;
+  } block_jacobi_PRECISION_struct;
+#endif
+
   typedef struct {
     vector_PRECISION x, b, r, w, *V, *Z;
     complex_PRECISION **H, *y, *gamma, *c, *s;
@@ -163,6 +189,9 @@
 #endif
 #ifdef POLYPREC
     polyprec_PRECISION_struct polyprec_PRECISION;
+#endif
+#ifdef BLOCK_JACOBI
+    block_jacobi_PRECISION_struct block_jacobi_PRECISION;
 #endif
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
     int syst_size;

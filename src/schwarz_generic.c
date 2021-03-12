@@ -29,6 +29,13 @@ void smoother_PRECISION_def( level_struct *l ) {
   l->p_PRECISION.op = &(l->s_PRECISION.op);
   l->p_PRECISION.v_start = 0;
   l->p_PRECISION.v_end = l->inner_vector_size;
+#ifdef BLOCK_JACOBI
+  if ( l->level==0 ) {
+    l->p_PRECISION.block_jacobi_PRECISION.local_p.op = &(l->s_PRECISION.op);
+    l->p_PRECISION.block_jacobi_PRECISION.local_p.v_start = 0;
+    l->p_PRECISION.block_jacobi_PRECISION.local_p.v_end = l->inner_vector_size;
+  }
+#endif
   if ( g.method == 6 ) {
     l->p_PRECISION.eval_operator = (l->depth > 0)?g5D_apply_coarse_operator_PRECISION:g5D_plus_clover_PRECISION;
   } else {

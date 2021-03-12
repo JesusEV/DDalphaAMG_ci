@@ -104,6 +104,7 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->polyprec_PRECISION.h_ritz = NULL;
   p->polyprec_PRECISION.lejas = NULL;
   p->polyprec_PRECISION.random_rhs = NULL;
+  p->polyprec_PRECISION.xtmp = NULL;
 
   p->polyprec_PRECISION.eigslvr.vl = NULL;
   p->polyprec_PRECISION.eigslvr.vr = NULL;
@@ -115,6 +116,11 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
   p->Va = NULL;
   p->Za = NULL;
+#endif
+
+#ifdef BLOCK_JACOBI
+  p->block_jacobi_PRECISION.b_backup = NULL;
+  local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
 }
 
@@ -270,7 +276,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   // FIXME : is this function-pointer-assignment really necessary ?
 #if defined(GCRODR) || defined(POLYPREC)
   //p->polyprec_PRECISION.eigslvr.eigslvr_PRECISION = eigslvr_PRECISION;
-#endif 
+#endif
 
   // copy of Hesselnberg matrix
 #if defined(GCRODR) && defined(POLYPREC)
@@ -371,6 +377,26 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   {
     p->Va[i] = p->Va[0] + i*vl;
     p->Za[i] = p->Za[0] + i*vl;
+  }
+#endif
+
+#ifdef BLOCK_JACOBI
+  p->block_jacobi_PRECISION.syst_size = vl;
+
+  if (l->level==0) {
+    // these two always go together
+    p->block_jacobi_PRECISION.BJ_usable = 0;
+    p->block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
+
+    MALLOC( p->block_jacobi_PRECISION.b_backup, complex_PRECISION, vl );
+    MALLOC( p->block_jacobi_PRECISION.xtmp, complex_PRECISION, vl );
+
+    p->block_jacobi_PRECISION.local_p.polyprec_PRECISION.d_poly = g.local_polyprec_d;
+
+    local_fgmres_PRECISION_struct_alloc( g.local_polyprec_d, 1, vl, g.coarse_tol, 
+                                         _COARSE_GMRES, _NOTHING, NULL,
+                                         coarse_local_apply_schur_complement_PRECISION,
+                                         &(p->block_jacobi_PRECISION.local_p), l );
   }
 #endif
 }
@@ -476,6 +502,14 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
     FREE( p->Za, complex_PRECISION, p->restart_length+2 );
 #endif
 
+#ifdef BLOCK_JACOBI
+  if (l->level==0) {
+    FREE( p->block_jacobi_PRECISION.b_backup, complex_PRECISION, p->block_jacobi_PRECISION.syst_size );
+    FREE( p->block_jacobi_PRECISION.xtmp, complex_PRECISION, p->block_jacobi_PRECISION.syst_size );
+
+    local_fgmres_PRECISION_struct_free( &(p->block_jacobi_PRECISION.local_p), l );
+  }
+#endif
 }
 
 
@@ -511,7 +545,11 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
   // compute start and end indices for core
   // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
-  
+
+  START_MASTER(threading)
+  if (l->level==0) printf0( "g ---> start=%d, end=%d, diff=%d, m0=%f, op=%p\n", p->v_start, p->v_end, p->v_end-p->v_start, p->op->m0, p->op );
+  END_MASTER(threading)
+
   for( ol=0; ol<p->num_restart && finish==0; ol++ )  {
   
     if( ol == 0 && p->initial_guess_zero ) {
@@ -595,11 +633,45 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
           END_MASTER(threading)
         }
 #endif
+
+        //if ( l->level==0 ) printf0("g rel residual (gmres) = %f\n", gamma_jp1/norm_r0);
+
         if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
+
+#ifdef BLOCK_JACOBI
+          if ( l->level==0 )
+          {
+            // backup of p->x, just in case tol hasn't been reached we need to restore ...
+            vector_PRECISION_copy( p->block_jacobi_PRECISION.xtmp, p->x, start, end, l );
+
+            compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
+                                        p->y, p->gamma, p->H, j, (res==_NO_RES)?ol:1, p, l, threading );
+
+            p->eval_operator( p->w, p->x, p->op, l, threading );
+            vector_PRECISION_minus( p->r, p->block_jacobi_PRECISION.b_backup, p->w, start, end, l ); // compute r = b - w
+            PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
+            PRECISION betaxx = global_norm_PRECISION( p->r, start, end, l, threading );
+            if ( betaxx/norm_r0xx < p->tol ) {
+              finish = 1;
+            } else {
+              // restore p->x
+              vector_PRECISION_copy( p->x, p->block_jacobi_PRECISION.xtmp, start, end, l );
+            }
+            START_MASTER(threading)
+            if ( betaxx/norm_r0xx > 1E+5 ) printf0("Divergence of fgmres_PRECISION, iter = %d, level=%d\n", iter, l->level );
+            END_MASTER(threading)
+          } else {
+            finish = 1;
+            START_MASTER(threading)
+            if ( gamma_jp1/norm_r0 > 1E+5 ) printf0("Divergence of fgmres_PRECISION, iter = %d, level=%d\n", iter, l->level );
+            END_MASTER(threading)
+          }
+#else
           finish = 1;
           START_MASTER(threading)
           if ( gamma_jp1/norm_r0 > 1E+5 ) printf0("Divergence of fgmres_PRECISION, iter = %d, level=%d\n", iter, l->level );
           END_MASTER(threading)
+#endif
         }
       } else {
         START_MASTER(threading)
@@ -609,8 +681,21 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
         break;
       }
     } // end of a single restart
+#ifdef BLOCK_JACOBI
+    if ( l->level==0 ) {
+      if ( finish==0 ) {
+        compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
+                                    p->y, p->gamma, p->H, j, (res==_NO_RES)?ol:1, p, l, threading );
+      }
+    } else {
+      compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
+                                  p->y, p->gamma, p->H, j, (res==_NO_RES)?ol:1, p, l, threading );
+    }
+#else
     compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
                                 p->y, p->gamma, p->H, j, (res==_NO_RES)?ol:1, p, l, threading );
+#endif
+
   } // end of fgmres
 
   START_LOCKED_MASTER(threading)
@@ -952,7 +1037,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       int k = p->gcrodr_PRECISION.k;
       vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
       complex_PRECISION **B = p->gcrodr_PRECISION.ort_B;
-      complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
+      //complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
       vector_PRECISION *DPCk = p->gcrodr_PRECISION.DPC;
 #endif
 
@@ -967,7 +1052,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       MPI_Request req;
       MPI_Status stat;
       int start, end, i;
-      const complex_PRECISION sigma = 0;
+      //const complex_PRECISION sigma = 0;
       compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
       if ( j == 0 ){
@@ -1002,7 +1087,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         complex_PRECISION *bf2 = p->gcrodr_PRECISION.Bbuff[0]+(k+j+1);
 
         // space to orthogonalize against
-        vector_PRECISION *ort_sp[k+j+1];
+        vector_PRECISION ort_sp[k+j+1];
         for (i=0; i<k; i++) ort_sp[i] = Ck[i];
         for (i=0; i<(j+1); i++) ort_sp[k+i] = V[i];
 
@@ -1061,7 +1146,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 
       apply_operator_PRECISION( Z[j], V[j], p, l, threading );
 
-      double wait_tbeg, wait_tend;
+      double wait_tbeg=0.0, wait_tend=0.0;
 
       if (g.low_level_meas == 1) {
         START_MASTER(threading)
@@ -1165,7 +1250,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       int k = p->gcrodr_PRECISION.k;
       vector_PRECISION *Ck = p->gcrodr_PRECISION.C;
       complex_PRECISION **B = p->gcrodr_PRECISION.ort_B;
-      complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
+      //complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
       vector_PRECISION *PCk = p->gcrodr_PRECISION.PC;
       vector_PRECISION *DPCk = p->gcrodr_PRECISION.DPC;
 #endif
@@ -1193,11 +1278,11 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       else
         vector_PRECISION_copy( V[j], Va[j-1], start, end, l );
 
-      double lr_tbeg, lr_tend;
-      double prec_tbeg, prec_tend;
-      double matmul_tbeg, matmul_tend;
-      double wait_tbeg, wait_tend;
-      double axpy_tbeg, axpy_tend;
+      //double lr_tbeg=0.0, lr_tend=0.0;
+      double prec_tbeg=0.0, prec_tend=0.0;
+      double matmul_tbeg=0.0, matmul_tend=0.0;
+      double wait_tbeg=0.0, wait_tend=0.0;
+      double axpy_tbeg=0.0, axpy_tend=0.0;
 
 #ifdef GCRODR
       // orthogonalize against Ck whenever necessary
@@ -1208,7 +1293,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         complex_PRECISION *bf2 = p->gcrodr_PRECISION.Bbuff[0]+(k+j+1);
 
         // space to orthogonalize against
-        vector_PRECISION *ort_sp[k+j+1];
+        vector_PRECISION ort_sp[k+j+1];
         for (i=0; i<k; i++) ort_sp[i] = Ck[i];
         for (i=0; i<(j+1); i++) ort_sp[k+i] = V[i];
 
