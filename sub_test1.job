@@ -1,17 +1,20 @@
 #!/bin/bash -x
 #SBATCH --account=hwu29
-#SBATCH --nodes=500
+#SBATCH --nodes=128
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=48
+#SBATCH --cpus-per-task=1
 #SBATCH --output=mpi-out.%j
 #SBATCH --error=mpi-err.%j
-#SBATCH --time=00:59:00
+#SBATCH --time=01:59:00
 #SBATCH --partition=batch
 
 #du -hs *
 #du -hs ../../
 
+module load Score-P Scalasca
+
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 make clean
 make -j 32
-. run -i sample_very_large.ini
+#. run -i sample_very_large.ini
+. run -i sample_large.ini

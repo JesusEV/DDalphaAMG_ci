@@ -116,7 +116,17 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             if ( g.method == 6 ) {
               g5D_coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
             } else {
+
+              START_MASTER(threading)
+              g.coarsest_time -= MPI_Wtime();
+              END_MASTER(threading)
+
               coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
+
+              START_MASTER(threading)
+              g.coarsest_time += MPI_Wtime();
+              END_MASTER(threading)
+
             }
           } else {
             fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );

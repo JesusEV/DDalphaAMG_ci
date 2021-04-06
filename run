@@ -115,7 +115,7 @@ do
   if [ ${iparam[$i]} = "-o" -o ${iparam[$i]} = "-output" ]
   then
     ipa[0]=1
-  elif [ ${iparam[$i]} = "-db" -o ${iparam[$i]} = "-debug" -o ${iparam[$i]} = "-devel" ]
+  elif [ ${iparam[$i]} = "-db" -o ${iparam[$i]} = "-debug" ]
   then
     ipa[1]=1
     mydebug="debug_"
@@ -184,10 +184,16 @@ fi
 
 # run programm
 
+#MPIRUN=/opt/parastation/bin/mpiexec
+#MPIRUN=/home/ramirez/installs/openmpi/dir/bin/mpirun
+#NVPROF=
+
 if [ ${ipa[0]} = 0  ]
 then
 #   /opt/mpich/ch-p4/bin/mpirun $shareoption -np $np $exec $inputfile
-  mpirun $shareoption -np $np $exec $inputfile
+  #mpirun -default-hostfile /etc/openmpi-default-hostfile $shareoption -np $np $exec $inputfile
+  #$MPIRUN -default-hostfile /etc/openmpi-default-hostfile $shareoption -np $np $NVPROF ./$exec $inputfile
+  scalasca -analyze srun ./$exec $inputfile
 else
   cp $inputfile output/${opf}.txt
   echo "" >> output/${opf}.txt
@@ -197,5 +203,7 @@ else
   echo "+----------------------------------------------------------------------------------+" >> ../output/${opf}.txt
   echo "" >> output/${opf}.txt
   echo "" >> output/${opf}.txt
-  mpirun $shareoption -np $np $exec $inputfile >> ../output/${opf}.txt & disown
+  #mpirun -default-hostfile /etc/openmpi-default-hostfile $shareoption -np $np $exec $inputfile >> ../output/${opf}.txt & disown
+  #$MPIRUN -default-hostfile /etc/openmpi-default-hostfile $shareoption -np $np $NVPROF ./$exec $inputfile >> ../output/${opf}.txt & disown
+  scalasca -analyze srun ./$exec $inputfile >> ../output/${opf}.txt & disown
 fi

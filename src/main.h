@@ -411,6 +411,8 @@
     double coarse_time, prec_time, *output_table[8], cur_storage, max_storage, total_time,
       plaq_hopp, plaq_clov, norm_res, plaq, bicgstab_tol, twisted_bc[4], test;
 
+    double coarsest_time;
+
     double m0, setup_m0;
 
 #ifdef HAVE_TM

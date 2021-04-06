@@ -723,6 +723,8 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
     if ( g.coarse_time > 0 ) 
       printf0("|        coarse grid time: %-8.4lf seconds (%04.1lf%%)        |\n",
               g.coarse_time, 100*(g.coarse_time/(t1-t0)) );
+    printf0("|        coarsest grid time: %-8.4lf seconds (%04.1lf%%)        |\n",
+              g.coarsest_time, 100*(g.coarsest_time/(t1-t0)) );
     printf0("|  consumed core minutes*: %-8.2le (solve only)           |\n", ((t1-t0)*g.num_processes*MAX(1,threading->n_core))/60.0 );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");
@@ -1553,6 +1555,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     for ( i=0; i<k; i++ )
       buffer[i] = tmpx[i];
     if ( g.num_processes > 1 ) {
+      printf0("CALLING MPI_Allreduce(...) !!!\n");
       PROF_PRECISION_START( _ALLR );
       MPI_Allreduce( buffer, bf, k, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
       PROF_PRECISION_STOP( _ALLR, 1 );
@@ -1583,6 +1586,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   for( i=0; i<=j; i++ )
     buffer[i] = tmp[i];
   if ( g.num_processes > 1 ) {
+    printf0("CALLING MPI_Allreduce(...) !!!\n");
     PROF_PRECISION_START( _ALLR );
     MPI_Allreduce( buffer, H[j], j+1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
     PROF_PRECISION_STOP( _ALLR, 1 );
@@ -1604,6 +1608,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   for( i=0; i<=j; i++ )
     buffer[i] = tmp[i];
   if ( g.num_processes > 1 ) {
+    printf0("CALLING MPI_Allreduce(...) !!!\n");
     PROF_PRECISION_START( _ALLR );
     MPI_Allreduce( buffer, tmp, j+1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
     PROF_PRECISION_STOP( _ALLR, 1 );
