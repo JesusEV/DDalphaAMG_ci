@@ -205,9 +205,9 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
   l->dup_H = 0;
   END_MASTER(threading)
 
-  START_MASTER(threading)
-  MPI_Barrier(l->gs_PRECISION.level_comm);
-  END_MASTER(threading)
+  //START_MASTER(threading)
+  //MPI_Barrier(l->gs_PRECISION.level_comm);
+  //END_MASTER(threading)
 
   START_MASTER(threading)
   p->b = buff0;

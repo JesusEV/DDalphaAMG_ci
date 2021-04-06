@@ -422,6 +422,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     if ( p->gcrodr_PRECISION.update_CU == 1 ) {
 
+
+      printf0("UPDATE CU !!\n");
+
+
       // Yk = copy(Uk)
       START_MASTER(threading);
       complex_PRECISION **tmp_ptr = p->gcrodr_PRECISION.U;
