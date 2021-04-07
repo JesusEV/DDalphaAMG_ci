@@ -34,48 +34,134 @@
       p->eval_operator( l->p_PRECISION.block_jacobi_PRECISION.xtmp, input, p->op, l, threading );
       block_jacobi_apply_PRECISION( output, l->p_PRECISION.block_jacobi_PRECISION.xtmp, p, l, threading );
 
+      //printf("BJ usable = %d\n", p->block_jacobi_PRECISION.BJ_usable);
+
+      //START_MASTER(threading)
+      //printf0("SHAIT1\n");
+      //printf0("BJ usable = %d\n", p->block_jacobi_PRECISION.BJ_usable);
+      //END_MASTER(threading)
+
       // --------------------------------------------------------------------------------
+      //START_MASTER(threading)
       /*
       if ( p->block_jacobi_PRECISION.BJ_usable==1 ) {
         {
           PRECISION tmpx1, tmpx2;
-          int start = p->v_start;
-          int end = p->v_end;
+
+          //int start = p->v_start;
+          //int end = p->v_end;
+
+          int start, end;
+          compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
+
           //local_gmres_PRECISION_struct *loc_p = &(p->block_jacobi_PRECISION.local_p);
 
-          int size = end-start;
+          int size = p->v_end - p->v_start;
           int exp_fctr = 10;
 
-          vector_PRECISION solution = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
-          vector_PRECISION rhs = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
-          vector_PRECISION x = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
+          START_MASTER(threading)
+          p->block_jacobi_PRECISION.xxxtmp[0] = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
+          p->block_jacobi_PRECISION.xxxtmp[1] = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
+          p->block_jacobi_PRECISION.xxxtmp[2] = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
+          END_MASTER(threading)
 
-          vector_PRECISION_define_random( solution, start, end, l );
+          SYNC_MASTER_TO_ALL(threading)
+          SYNC_CORES(threading)
+
+          vector_PRECISION solution = p->block_jacobi_PRECISION.xxxtmp[0];
+          vector_PRECISION rhs = p->block_jacobi_PRECISION.xxxtmp[1];
+          vector_PRECISION x = p->block_jacobi_PRECISION.xxxtmp[2];
+
+          SYNC_MASTER_TO_ALL(threading)
+          SYNC_CORES(threading)
+
+          START_MASTER(threading)
+          vector_PRECISION_define_random( solution, p->v_start, p->v_end, l );
+          END_MASTER(threading)
+
+          START_MASTER(threading)
+          printf0("solution[0] = %f+i%f\n", creal(solution[0]), cimag(solution[0]));
+          END_MASTER(threading)
+
+          SYNC_MASTER_TO_ALL(threading)
+          SYNC_CORES(threading)
+
+          START_MASTER(threading)
+          printf0("SHAIT2\n");
+          END_MASTER(threading)
 
           p->eval_operator(rhs, solution, p->op, l, threading);
+
+          START_MASTER(threading)
+          printf0("SHAIT2\n");
+          END_MASTER(threading)
+
+          SYNC_MASTER_TO_ALL(threading)
+          SYNC_CORES(threading)
 
           // x ~ w
           //local_apply_polyprec_PRECISION( x, NULL, rhs, 0, l, threading );
           block_jacobi_apply_PRECISION( x, rhs, p, l, threading );
 
-          vector_PRECISION diff_sol = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
+          START_MASTER(threading)
+          printf0("rhs[0] = %f+i%f\n", creal(rhs[0]), cimag(rhs[0]));
+          END_MASTER(threading)
+
+          START_MASTER(threading)
+          printf0("x[0] = %f+i%f\n", creal(x[0]), cimag(x[0]));
+          END_MASTER(threading)
+
+          START_MASTER(threading)
+          p->block_jacobi_PRECISION.xxxtmp[3] = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
+          END_MASTER(threading)
+
+          SYNC_MASTER_TO_ALL(threading)
+          SYNC_CORES(threading)
+
+          vector_PRECISION diff_sol = p->block_jacobi_PRECISION.xxxtmp[3];
+
+          SYNC_MASTER_TO_ALL(threading)
+          SYNC_CORES(threading)
+
+          //vector_PRECISION diff_sol = (vector_PRECISION) malloc( exp_fctr*size*size*sizeof(complex_PRECISION) );
 
           vector_PRECISION_minus( diff_sol, x, solution, start, end, l );
 
-          tmpx1 = global_norm_PRECISION( diff_sol, p->v_start, p->v_end, l, threading );
-          tmpx2 = global_norm_PRECISION( solution, p->v_start, p->v_end, l, threading );
+          START_MASTER(threading)
+          printf0("diff_sol[0] = %f+i%f\n", creal(diff_sol[0]), cimag(diff_sol[0]));
+          END_MASTER(threading)
+
+          tmpx1 = global_norm_PRECISION( diff_sol, start, end, l, threading );
+          tmpx2 = global_norm_PRECISION( solution, start, end, l, threading );
 
           printf0("g (proc=%d) ---> approx rel error BJ = %f\n", g.my_rank, tmpx1/tmpx2);
 
+          START_MASTER(threading)
           free(solution);
           free(rhs);
           free(x);
           free(diff_sol);
+          END_MASTER(threading)
         }
       }
+      //END_MASTER(threading)
 
-      //MPI_Finalize();
-      //exit(0);
+      START_MASTER(threading)
+      printf0("SHAIT3\n");
+      END_MASTER(threading)
+
+      SYNC_MASTER_TO_ALL(threading)
+      SYNC_CORES(threading)
+
+      START_MASTER(threading)
+      MPI_Barrier( MPI_COMM_WORLD );
+      MPI_Finalize();
+      END_MASTER(threading)
+
+      SYNC_MASTER_TO_ALL(threading)
+      SYNC_CORES(threading)
+
+      exit(0);
       */
       // --------------------------------------------------------------------------------
     } else {

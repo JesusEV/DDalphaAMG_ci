@@ -1035,7 +1035,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   if ( l->level == 0 && l->depth > 0 ) {
 
 
-    if ( l->level==0 ) printf0("AHA1!\n");
+    //if ( l->level==0 ) printf0("AHA1!\n");
 
 
     if (prec == NULL)
@@ -1503,7 +1503,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 
 
 
-  if ( l->level==0 ) printf0("AHA2!\n");
+  //if ( l->level==0 ) printf0("AHA2!\n");
 
 
 
@@ -1566,7 +1566,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     for ( i=0; i<k; i++ )
       buffer[i] = tmpx[i];
     if ( g.num_processes > 1 ) {
-      if ( l->level==0 ) printf0("CALLING MPI_Allreduce(...) !!!\n");
+      //if ( l->level==0 ) printf0("CALLING MPI_Allreduce(...) !!!\n");
       PROF_PRECISION_START( _ALLR );
       MPI_Allreduce( buffer, bf, k, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
       PROF_PRECISION_STOP( _ALLR, 1 );
@@ -1597,7 +1597,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   for( i=0; i<=j; i++ )
     buffer[i] = tmp[i];
   if ( g.num_processes > 1 ) {
-    if ( l->level==0 ) printf0("CALLING MPI_Allreduce(...) !!!\n");
+    //if ( l->level==0 ) printf0("CALLING MPI_Allreduce(...) !!!\n");
     PROF_PRECISION_START( _ALLR );
     MPI_Allreduce( buffer, H[j], j+1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
     PROF_PRECISION_STOP( _ALLR, 1 );
@@ -1619,7 +1619,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   for( i=0; i<=j; i++ )
     buffer[i] = tmp[i];
   if ( g.num_processes > 1 ) {
-    if ( l->level==0 ) printf0("CALLING MPI_Allreduce(...) !!!\n");
+    //if ( l->level==0 ) printf0("CALLING MPI_Allreduce(...) !!!\n");
     PROF_PRECISION_START( _ALLR );
     MPI_Allreduce( buffer, tmp, j+1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
     PROF_PRECISION_STOP( _ALLR, 1 );

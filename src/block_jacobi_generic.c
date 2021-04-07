@@ -160,10 +160,10 @@
     */
     //----------------------------------------------------
 
-    SYNC_MASTER_TO_ALL(threading)
-    SYNC_CORES(threading)
+    //SYNC_MASTER_TO_ALL(threading)
+    //SYNC_CORES(threading)
 
-    START_MASTER(threading)
+    //START_MASTER(threading)
     if ( p->block_jacobi_PRECISION.BJ_usable==1 ) {
       local_apply_polyprec_PRECISION( out, NULL, in, 0, l, threading );
       /*
@@ -196,7 +196,7 @@
         tmpx1= (PRECISION)sqrt((double)tmpx1);
         VECTOR_FOR( int i=start, i<end, tmpx2 += NORM_SQUARE_PRECISION(solution[i]), i++, l );
         tmpx2= (PRECISION)sqrt((double)tmpx2);
-        printf("l (proc=%d) ---> approx rel error local POLYPREC = %f\n", g.my_rank, tmpx1/tmpx2);
+        printf0("l (proc=%d) ---> approx rel error local POLYPREC = %f\n", g.my_rank, tmpx1/tmpx2);
 
         free(solution);
         free(rhs);
@@ -205,14 +205,17 @@
       }
       */
     }
-    END_MASTER(threading)
+    //END_MASTER(threading)
 
-    SYNC_MASTER_TO_ALL(threading)
-    SYNC_CORES(threading)
+    //SYNC_MASTER_TO_ALL(threading)
+    //SYNC_CORES(threading)
 
     //START_MASTER(threading)
     //MPI_Barrier( MPI_COMM_WORLD );
+    //MPI_Finzalize();
     //END_MASTER(threading)
+
+    //exit(0);
   }
 
   /*
