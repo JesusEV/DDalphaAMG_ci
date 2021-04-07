@@ -423,11 +423,17 @@ int local_arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vect
                                   complex_PRECISION **H, complex_PRECISION* buffer, int j, void (*prec)(),
                                   local_gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
 
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading)
+
   int i;
   int start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
   p->eval_operator( w, V[j], p->op, l, threading );
+
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading)
 
   // orthogonalization
   complex_PRECISION tmp[j+1];
@@ -864,6 +870,9 @@ void coarse_local_diag_ee_PRECISION( vector_PRECISION y, vector_PRECISION x, ope
 void coarse_local_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECISION in,
                                                     operator_PRECISION_struct *op, level_struct *l,
                                                     struct Thread *threading ) {
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading)
+
   int start, end;
   compute_core_start_end(op->num_even_sites*l->num_lattice_site_var, l->inner_vector_size, &start, &end, l, threading);
 
@@ -882,6 +891,9 @@ void coarse_local_apply_schur_complement_PRECISION( vector_PRECISION out, vector
   coarse_diag_oo_inv_PRECISION( tmp[0], in, op, l, threading );
 
   vector_PRECISION_minus( out, out, tmp[0], start, end, l );
+
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading)
 }
 
 
@@ -1062,6 +1074,9 @@ void local_re_construct_lejas_PRECISION( level_struct *l, struct Thread *threadi
 void local_apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
                                      int res, level_struct *l, struct Thread *threading )
 {
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading)
+
   int i;
 
   int start, end;
@@ -1087,6 +1102,9 @@ void local_apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi
     vector_PRECISION_saxpy(accum_prod, accum_prod, product, 1./lejas[i], start, end, l);
   }
   vector_PRECISION_copy( phi, accum_prod, start, end, l );
+
+  SYNC_MASTER_TO_ALL(threading);
+  SYNC_CORES(threading)
 }
 
 
