@@ -247,8 +247,6 @@ void local_fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION t
 
 void local_fgmres_PRECISION_struct_free( local_gmres_PRECISION_struct *p, level_struct *l ) {
 
-  //return;
-
   int k=0;
 
   //int m = p->restart_length;
@@ -367,10 +365,6 @@ void local_qr_update_PRECISION( complex_PRECISION **H, complex_PRECISION *s,
 
 int local_fgmres_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
 
-  // start and end indices for vector functions, this is always process-specific
-  //int start;
-  //int end;
-
   int j=-1, finish=0, iter=0, il;
   complex_PRECISION gamma0 = 0;
 
@@ -378,10 +372,6 @@ int local_fgmres_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, st
 
   if ( l->depth > 0 ) p->timing = 1;
 
-  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
-  //compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
-  //start = p->v_start;
-  //end = p->v_end;
   int start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
@@ -389,12 +379,7 @@ int local_fgmres_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, st
   // always assume initial guess set to zero
   vector_PRECISION_copy( p->r, p->b, start, end, l );
 
-  //gamma0 = 0;
-  //VECTOR_FOR( int i=start, i<end, gamma0 += NORM_SQUARE_PRECISION(p->r[i]), i++, l );
-  //gamma0 = (PRECISION)sqrt((double)gamma0);
   gamma0 = process_norm_PRECISION( p->r, start, end, l, threading );
-
-  //printf0("gamma0 = %f+i%f\n", creal(gamma0), cimag(gamma0));
 
   START_MASTER(threading)
   p->gamma[0] = gamma0;
@@ -439,12 +424,6 @@ int local_arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vect
                                   local_gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
 
   int i;
-  // start and end indices for vector functions depending on thread
-  //int start, end;
-  // compute start and end indices for core
-  //start = p->v_start;
-  //end = p->v_end;
-
   int start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
@@ -466,16 +445,7 @@ int local_arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vect
   for( i=0; i<=j; i++ )
     vector_PRECISION_saxpy( w, w, V[i], -H[j][i], start, end, l );
 
-  // normalization
-  //PRECISION tmp2 = 0;
-  //VECTOR_FOR( int i=start, i<end, tmp2 += NORM_SQUARE_PRECISION(w[i]), i++, l );
-  //tmp2 = (PRECISION)sqrt((double)tmp2);
-
   PRECISION tmp2 = process_norm_PRECISION( w, start, end, l, threading );
-
-  //START_MASTER(threading)
-  //printf0("tmp2 = %f+i%f\n", creal(tmp2), cimag(tmp2));
-  //END_MASTER(threading)
 
   START_MASTER(threading)
   H[j][j+1] = tmp2;
@@ -894,15 +864,6 @@ void coarse_local_diag_ee_PRECISION( vector_PRECISION y, vector_PRECISION x, ope
 void coarse_local_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECISION in,
                                                     operator_PRECISION_struct *op, level_struct *l,
                                                     struct Thread *threading ) {
-
-  // start and end indices, local i.e. per-process
-  //int start = op->num_even_sites*l->num_lattice_site_var;
-  //int end = l->inner_vector_size;
-
-  //START_MASTER(threading)
-  //printf0("in[0] = %f+i%f\n", creal(in[0]), cimag(in[0]));
-  //END_MASTER(threading)
-
   int start, end;
   compute_core_start_end(op->num_even_sites*l->num_lattice_site_var, l->inner_vector_size, &start, &end, l, threading);
 
@@ -921,10 +882,6 @@ void coarse_local_apply_schur_complement_PRECISION( vector_PRECISION out, vector
   coarse_diag_oo_inv_PRECISION( tmp[0], in, op, l, threading );
 
   vector_PRECISION_minus( out, out, tmp[0], start, end, l );
-
-  //START_MASTER(threading)
-  //printf0("out[0] = %f+i%f\n", creal(out[0]), cimag(out[0]));
-  //END_MASTER(threading)
 }
 
 
@@ -1019,11 +976,6 @@ void local_leja_ordering_PRECISION( local_gmres_PRECISION_struct *p )
 
 void local_update_lejas_PRECISION( local_gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading )
 {
-
-  //int start, end;
-  //start = p->v_start;
-  //end = p->v_end;
-
   int start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
@@ -1054,7 +1006,6 @@ void local_update_lejas_PRECISION( local_gmres_PRECISION_struct *p, level_struct
   SYNC_CORES(threading)
 
   START_MASTER(threading)
-  //vector_PRECISION_define( random_rhs, 1.0, start, end, l );
   vector_PRECISION_define_random( random_rhs, p->v_start, p->v_end, l );
   END_MASTER(threading)
 
@@ -1104,17 +1055,6 @@ void local_re_construct_lejas_PRECISION( level_struct *l, struct Thread *threadi
 
   SYNC_MASTER_TO_ALL(threading);
   SYNC_CORES(threading)
-
-  //START_MASTER(threading)
-  //MPI_Barrier( MPI_COMM_WORLD );
-  //MPI_Finalize();
-  //END_MASTER(threading)
-
-  //SYNC_MASTER_TO_ALL(threading);
-  //SYNC_CORES(threading)
-
-  //exit(0);
-
 }
 
 
@@ -1122,17 +1062,10 @@ void local_re_construct_lejas_PRECISION( level_struct *l, struct Thread *threadi
 void local_apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
                                      int res, level_struct *l, struct Thread *threading )
 {
-  //int i, start, end;
   int i;
-
-  //start = l->p_PRECISION.block_jacobi_PRECISION.local_p.v_start;
-  //end = l->p_PRECISION.block_jacobi_PRECISION.local_p.v_end;
 
   int start, end;
   compute_core_start_end(l->p_PRECISION.block_jacobi_PRECISION.local_p.v_start, l->p_PRECISION.block_jacobi_PRECISION.local_p.v_end, &start, &end, l, threading);
-
-  //vector_PRECISION_copy( phi, eta, start, end, l );
-  //return;
 
   local_gmres_PRECISION_struct *p = &( l->p_PRECISION.block_jacobi_PRECISION.local_p );
 

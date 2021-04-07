@@ -170,7 +170,7 @@
     vector_PRECISION xtmp;
     local_gmres_PRECISION_struct local_p;
 
-    vector_PRECISION xxxtmp[4];
+    //vector_PRECISION xxxtmp[4];
 
   } block_jacobi_PRECISION_struct;
 #endif
