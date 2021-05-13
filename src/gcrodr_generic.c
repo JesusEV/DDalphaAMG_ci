@@ -105,7 +105,7 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
     MALLOC( p->gcrodr_PRECISION.Bbuff, complex_PRECISION*, g_ln );
 
     p->gcrodr_PRECISION.Bbuff[0] = NULL;
-    MALLOC( p->gcrodr_PRECISION.Bbuff[0], complex_PRECISION, g_ln*(g_ln+1) );
+    MALLOC( p->gcrodr_PRECISION.Bbuff[0], complex_PRECISION, g_ln*(g_ln+1)*2 );
     for ( i=1; i<g_ln; i++ ) {
       p->gcrodr_PRECISION.Bbuff[i] = p->gcrodr_PRECISION.Bbuff[0] + i*(g_ln+1);
     }
@@ -302,7 +302,7 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
 #endif
 
     // for eigensolving
-    FREE( p->gcrodr_PRECISION.Bbuff[0], complex_PRECISION, g_ln*(g_ln+1) );
+    FREE( p->gcrodr_PRECISION.Bbuff[0], complex_PRECISION, g_ln*(g_ln+1)*2 );
     FREE( p->gcrodr_PRECISION.Bbuff, complex_PRECISION*, g_ln );
     FREE( p->gcrodr_PRECISION.gev_A[0], complex_PRECISION, g_ln*g_ln );
     FREE( p->gcrodr_PRECISION.gev_B[0], complex_PRECISION, g_ln*g_ln );
@@ -815,8 +815,10 @@ void gev_buildAB_PRECISION( complex_PRECISION **A, complex_PRECISION **B, comple
                             level_struct *l, struct Thread *threading ){
 
   int start, end, i, j, k;
+  int g_ln = p->restart_length + p->gcrodr_PRECISION.k;
 
   complex_PRECISION **Bbuff = p->gcrodr_PRECISION.Bbuff;
+  complex_PRECISION *Bbuffx = Bbuff[0] + g_ln*(g_ln+1);
   // tmpy is stored in column-major
   complex_PRECISION tmpy[(mk+1)*(mk)];
 
@@ -837,11 +839,18 @@ void gev_buildAB_PRECISION( complex_PRECISION **A, complex_PRECISION **B, comple
   START_MASTER(threading)
   if ( g.num_processes > 1 ) {
     PROF_PRECISION_START( _ALLR );
-    MPI_Allreduce( tmpy, Bbuff[0], (mk+1)*mk, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
+    MPI_Allreduce( tmpy, Bbuffx, (mk+1)*mk, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
     PROF_PRECISION_STOP( _ALLR, 1 );
   } else {
     for( i=0; i<(mk+1)*mk; i++ )
-      Bbuff[0][i] = tmpy[i];
+      Bbuffx[i] = tmpy[i];
+  }
+
+  // from Bbuffx to Bbuff
+  for ( j=0; j<mk; j++ ) {
+    for ( i=0; i<(mk+1); i++ ) {
+      Bbuff[j][i] = (Bbuffx+j*(mk+1))[i];
+    }
   }
 
   for ( j=0; j<mk; j++ ) {
