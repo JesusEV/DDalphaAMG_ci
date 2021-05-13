@@ -222,8 +222,16 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       }
 #endif
 
-      solve( solution, source, l, threading );    
-      
+      START_MASTER(threading)
+      g.avg_b1 = 0.0;
+      g.avg_b2 = 0.0;
+      g.avg_crst = 0.0;
+      END_MASTER(threading)
+      solve( solution, source, l, threading );
+      START_MASTER(threading)
+      printf0( "avg coarsest iters = %f\n",g.avg_crst );
+      END_MASTER(threading)
+
       if(g.bc==2)
      apply_twisted_bc_to_vector_double( solution, solution, minus_twisted_bc, l);
       
@@ -304,7 +312,15 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
   }
 #endif
 
+  START_MASTER(threading)
+  g.avg_b1 = 0.0;
+  g.avg_b2 = 0.0;
+  g.avg_crst = 0.0;
+  END_MASTER(threading)
   solve( solution, source, l, threading );
+  START_MASTER(threading)
+  printf0( "avg coarsest iters = %f\n",g.avg_crst );
+  END_MASTER(threading)
 
   if(g.bc==2)
     apply_twisted_bc_to_vector_double( solution, solution, minus_twisted_bc, l);

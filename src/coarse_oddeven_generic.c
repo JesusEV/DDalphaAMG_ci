@@ -1528,6 +1528,12 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   fgmres_iters = fgmres_PRECISION( p, l, threading );
 #endif
 
+  START_MASTER(threading)
+  g.avg_b1 += fgmres_iters;
+  g.avg_b2 += 1;
+  g.avg_crst = g.avg_b1/g.avg_b2;
+  END_MASTER(threading)
+
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 

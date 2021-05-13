@@ -446,6 +446,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       int i_length = p->v_end - p->v_start;
       pqr_PRECISION( i_length, k, p->gcrodr_PRECISION.C, p->gcrodr_PRECISION.R, p, l, threading );
+      // re-orthogonalize
+      //pqr_PRECISION( i_length, k, p->gcrodr_PRECISION.C, p->gcrodr_PRECISION.R, p, l, threading );
 
       SYNC_MASTER_TO_ALL(threading);
       SYNC_CORES(threading)
@@ -815,7 +817,8 @@ void gev_buildAB_PRECISION( complex_PRECISION **A, complex_PRECISION **B, comple
   int start, end, i, j, k;
 
   complex_PRECISION **Bbuff = p->gcrodr_PRECISION.Bbuff;
-  complex_PRECISION tmpy[mk+1];
+  // tmpy is stored in column-major
+  complex_PRECISION tmpy[(mk+1)*(mk)];
 
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
@@ -825,28 +828,29 @@ void gev_buildAB_PRECISION( complex_PRECISION **A, complex_PRECISION **B, comple
   SYNC_CORES(threading)
 
   for ( j=0; j<mk; j++ ) {
-    process_multi_inner_product_PRECISION( mk+1, tmpy, W, Z[j], p->v_start, p->v_end, l, threading );
+    process_multi_inner_product_PRECISION( mk+1, tmpy+j*(mk+1), W, Z[j], p->v_start, p->v_end, l, threading );
+  }
 
-    SYNC_MASTER_TO_ALL(threading)
-    SYNC_CORES(threading)
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
 
-    START_MASTER(threading)
-    if ( g.num_processes > 1 ) {
-      PROF_PRECISION_START( _ALLR );
-      MPI_Allreduce( tmpy, Bbuff[j], mk+1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
-      PROF_PRECISION_STOP( _ALLR, 1 );
-    } else {
-      for( i=0; i<(mk+1); i++ )
-        Bbuff[j][i] = tmpy[i];
-    }
+  START_MASTER(threading)
+  if ( g.num_processes > 1 ) {
+    PROF_PRECISION_START( _ALLR );
+    MPI_Allreduce( tmpy, Bbuff[0], (mk+1)*mk, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
+    PROF_PRECISION_STOP( _ALLR, 1 );
+  } else {
+    for( i=0; i<(mk+1)*mk; i++ )
+      Bbuff[0][i] = tmpy[i];
+  }
 
+  for ( j=0; j<mk; j++ ) {
     if (p->gcrodr_PRECISION.CU_usable == 1) {
       if (j<p->gcrodr_PRECISION.k) for (i=0; i<(mk+1); i++) Bbuff[j][i] *= G[j][j];
     }
-    END_MASTER(threading)
-
-    SYNC_MASTER_TO_ALL(threading)
   }
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)
 
   // FIXME : improve the following matrix-matrix multiplication by using more threads than <master>
   START_MASTER(threading)
@@ -1183,14 +1187,34 @@ void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PREC
   SYNC_CORES(threading)
 
   // compute \tilde{ Uk }
+  complex_PRECISION tmpy[k+1];
+  complex_PRECISION **Bbuff = p->gcrodr_PRECISION.Bbuff;
+
   for ( i=0; i<k; i++ ) {
-    complex_PRECISION diag_term = global_norm_PRECISION( Uk[i], p->v_start, p->v_end, l, threading );
+    process_multi_inner_product_PRECISION( 1, tmpy+i, &(Uk[i]), Uk[i], p->v_start, p->v_end, l, threading );
+  }
+
+  START_MASTER(threading)
+  if ( g.num_processes > 1 ) {
+    PROF_PRECISION_START( _ALLR );
+    MPI_Allreduce( tmpy, Bbuff[0], k, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
+    PROF_PRECISION_STOP( _ALLR, 1 );
+  } else {
+    for( i=0; i<k; i++ )
+      Bbuff[0][i] = tmpy[i];
+  }
+
+  for ( i=0; i<k; i++ ) {
+    complex_PRECISION diag_term = sqrt( creal(Bbuff[0][i]) );
     START_MASTER(threading)
     diag_term = 1.0 / diag_term;
     p->gcrodr_PRECISION.G[i][i]  = diag_term;
     p->gcrodr_PRECISION.Gc[i][i] = diag_term;
     END_MASTER(threading)
   }
+  END_MASTER(threading)
+
+  SYNC_MASTER_TO_ALL(threading)
 
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
   p->gcrodr_PRECISION.recompute_DPCk_poly = 1;

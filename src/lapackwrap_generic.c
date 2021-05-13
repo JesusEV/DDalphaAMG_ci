@@ -98,7 +98,7 @@ void dirctslvr_PRECISION(dirctslvr_PRECISION_struct* dirctslvr)
 void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **R, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading )
 {
 
-  int i,j, k = p->gcrodr_PRECISION.k;
+  int j, k = p->gcrodr_PRECISION.k;
 
   int start, end;
   compute_core_start_end( p->v_start, p->v_end, &start, &end, l, threading );
@@ -109,43 +109,45 @@ void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **
   memset( R[0], 0.0, sizeof(complex_PRECISION)*k*k );
   END_MASTER(threading)
 
-  for ( i=0; i<k; i++ ) {
-    {
-      PRECISION nrm_Ai = global_norm_PRECISION( Ax[i], p->v_start, p->v_end, l, threading );
-      START_MASTER(threading)
-      R[i][i] = nrm_Ai;
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
-    }
+  for( j=0;j<k;j++ ) {
 
-    vector_PRECISION_real_scale( Ax[i], Ax[i], 1/creal(R[i][i]), start, end, l );
-
-    for ( j=i+1; j<k; j++ ) {
-
-      complex_PRECISION *bf = p->gcrodr_PRECISION.R[j]+i;
+    if( j>0 ) {
+      complex_PRECISION *bf = p->gcrodr_PRECISION.R[j];
       complex_PRECISION *buffer = p->gcrodr_PRECISION.Bbuff[0];
-      complex_PRECISION tmpx[1];
-      process_multi_inner_product_PRECISION( 1, tmpx, Ax+i, Ax[j], p->v_start, p->v_end, l, threading );
+      complex_PRECISION tmpx[j];
+      process_multi_inner_product_PRECISION( j, tmpx, Ax, Ax[j], p->v_start, p->v_end, l, threading );
       START_MASTER(threading)
-      // buffer is of length m, and k<m
-      for ( int ww=0; ww<1; ww++ )
+      for ( int ww=0; ww<j; ww++ )
         buffer[ww] = tmpx[ww];
       if ( g.num_processes > 1 ) {
         PROF_PRECISION_START( _ALLR );
-        MPI_Allreduce( buffer, bf, 1, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
+        MPI_Allreduce( buffer, bf, j, MPI_COMPLEX_PRECISION, MPI_SUM, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm );
         PROF_PRECISION_STOP( _ALLR, 1 );
       } else {
-        for( int ww=0; ww<1; ww++ )
+        for( int ww=0; ww<j; ww++ )
           bf[ww] = buffer[ww];
       }
       END_MASTER(threading)
       SYNC_MASTER_TO_ALL(threading)
 
-      vector_PRECISION_saxpy( Ax[j], Ax[j], Ax[i], -R[j][i], start, end, l );
+      for( int ww=0; ww<j; ww++ ) {
+        vector_PRECISION_saxpy( Ax[j], Ax[j], Ax[ww], -R[j][ww], start, end, l );
+        SYNC_MASTER_TO_ALL(threading)
+      }
+
     }
+
+    {
+      PRECISION nrm_Ai = global_norm_PRECISION( Ax[j], p->v_start, p->v_end, l, threading );
+      START_MASTER(threading)
+      R[j][j] = nrm_Ai;
+      END_MASTER(threading)
+      SYNC_MASTER_TO_ALL(threading)
+      vector_PRECISION_real_scale( Ax[j], Ax[j], 1/creal(R[j][j]), start, end, l );
+      SYNC_MASTER_TO_ALL(threading)
+    }
+
   }
-
-
 
   // --------------------------------------------------------------------------------------------------------------
 
