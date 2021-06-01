@@ -581,15 +581,22 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
       PRECISION betaxx = global_norm_PRECISION( p->gcrodr_PRECISION.r_aux, start, end, l, threading );
 
-      //printf("(proc=%d) 'real' rel residual = %f\n", g.my_rank, betaxx/norm_r0xx);
+      START_MASTER(threading)
+      printf0("(proc=%d) 'real' rel residual = %f\n", g.my_rank, betaxx/norm_r0xx);
+      END_MASTER(threading)
 
       if ( betaxx/norm_r0xx > p->tol ) {
         p->gcrodr_PRECISION.finish = 0;
       }
     }
 
-    apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
-    vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+    if ( l->level==0 && p->block_jacobi_PRECISION.BJ_usable==1 ) {
+      block_jacobi_apply_PRECISION( l->p_PRECISION.block_jacobi_PRECISION.xtmp, p->w, p, l, threading );
+      vector_PRECISION_minus( p->r, p->b, l->p_PRECISION.block_jacobi_PRECISION.xtmp, start, end, l ); // compute r = b - w
+    } else {
+      apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+      vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+    }
 
 #else
 
@@ -654,6 +661,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     SYNC_CORES(threading)
 
   } else{ error0("Invalid value for p->gcrodr_PRECISION.CU_usable \n"); }
+
+  PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
 
   for ( ol=0; ol < p->num_restart; ol++ )  {
 
@@ -742,20 +751,29 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       SYNC_CORES(threading)
       vector_PRECISION_minus( p->gcrodr_PRECISION.r_aux, p->block_jacobi_PRECISION.b_backup, p->w, start, end, l ); // compute r = b - w
 
-      PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
+      //PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
       PRECISION betaxx = global_norm_PRECISION( p->gcrodr_PRECISION.r_aux, start, end, l, threading );
 
-      //printf0("(proc=%d) 'real' rel residual = %f\n", g.my_rank, betaxx/norm_r0xx);
+      START_MASTER(threading)
+      printf0("(proc=%d) 'real' rel residual = %f\n", g.my_rank, betaxx/norm_r0xx);
+      END_MASTER(threading)
 
       if ( betaxx/norm_r0xx > p->tol ) {
         p->gcrodr_PRECISION.finish = 0;
       }
     }
 
-    apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
-    SYNC_MASTER_TO_ALL(threading)
-    SYNC_CORES(threading)
-    vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+    if ( l->level==0 && p->block_jacobi_PRECISION.BJ_usable==1 ) {
+      block_jacobi_apply_PRECISION( l->p_PRECISION.block_jacobi_PRECISION.xtmp, p->w, p, l, threading );
+      SYNC_MASTER_TO_ALL(threading)
+      SYNC_CORES(threading)
+      vector_PRECISION_minus( p->r, p->b, l->p_PRECISION.block_jacobi_PRECISION.xtmp, start, end, l ); // compute r = b - w
+    } else {
+      apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+      SYNC_MASTER_TO_ALL(threading)
+      SYNC_CORES(threading)
+      vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+    }
 
 #else
 
@@ -931,16 +949,23 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
   if ( l->level == 0 && l->depth > 0 ) {
     arnoldi_step_PRECISION( p->V, p->Z, p->w, p->H, p->y, 0, p->preconditioner, p, l, threading );
   }
-#endif   
+#endif
 
 #ifdef BLOCK_JACOBI
+  int rewinder = p->restart_length/10;
+  if (rewinder<6) rewinder = 6;
+  if (rewinder>10) rewinder = 10;
   // two more iterations might be enough to cover the difference between 'real' and 'fake' residuals
-  for( il=0; (il<2) || (il<p->restart_length && finish==0); il++) {
+  for( il=0; (il < rewinder) || (il<p->restart_length && finish==0); il++) {
 #else
   for( il=0; il<p->restart_length && finish==0; il++) {
 #endif
     j = il; iter++;
-      
+
+    START_MASTER(threading)
+    printf0( "IL : j = %d\n",j );
+    END_MASTER(threading)
+
     // one step of Arnoldi
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
     if ( l->level == 0 && l->depth > 0 ) {
@@ -970,7 +995,9 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
       SYNC_CORES(threading)
       gamma_jp1 = cabs( p->gamma[j+1] );
 
-      //printf0("g (proc=%d,j=%d) rel residual (gcro-dr) = %f\n", g.my_rank, j, gamma_jp1/norm_r0);
+      START_MASTER(threading)
+      printf0("g (proc=%d,j=%d) rel residual (gcro-dr) = %f\n", g.my_rank, j, gamma_jp1/norm_r0);
+      END_MASTER(threading)
 
       if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
 

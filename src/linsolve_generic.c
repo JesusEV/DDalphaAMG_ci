@@ -1225,9 +1225,13 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       
       SYNC_MASTER_TO_ALL(threading)
       SYNC_CORES(threading)
-      if ( creal_PRECISION(((complex_PRECISION*)threading->workspace)[0]) < 0.)
+      if ( (creal_PRECISION(((complex_PRECISION*)threading->workspace)[0]) < 0.) || (sqrt(creal_PRECISION(H[j-1][j])) <= p->tol/10) )
+      //if ( (creal_PRECISION(((complex_PRECISION*)threading->workspace)[0]) < 0.) )
       {
           H[j-1][j] = global_norm_PRECISION( V[j], p->v_start, p->v_end, l, threading );
+          START_MASTER(threading)
+          printf0( "FULL NORM !!\n" );
+          END_MASTER(threading)
       }
       else
       {
@@ -1497,9 +1501,13 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       
       SYNC_MASTER_TO_ALL(threading)
       SYNC_CORES(threading)
-      if ( creal_PRECISION(((complex_PRECISION*)threading->workspace)[0]) < 0.)
+      if ( (creal_PRECISION(((complex_PRECISION*)threading->workspace)[0]) < 0.) || (sqrt(creal_PRECISION(H[j-1][j])) <= p->tol/10))
+      //if ( (creal_PRECISION(((complex_PRECISION*)threading->workspace)[0]) < 0.) )
       {
           H[j-1][j] = global_norm_PRECISION( V[j], p->v_start, p->v_end, l, threading );
+          START_MASTER(threading)
+          printf0( "FULL NORM !!\n" );
+          END_MASTER(threading)
       }
       else
       {
