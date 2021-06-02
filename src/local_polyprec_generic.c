@@ -437,7 +437,6 @@ int local_arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vect
 
   // orthogonalization
   complex_PRECISION tmp[j+1];
-  //local_process_multi_inner_product_PRECISION( j+1, tmp, V, w, start, end, l, threading );
   process_multi_inner_product_PRECISION( j+1, tmp, V, w, start, end, l, threading );
 
   START_MASTER(threading)

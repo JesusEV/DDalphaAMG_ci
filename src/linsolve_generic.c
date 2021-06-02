@@ -1048,12 +1048,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       vector_PRECISION *DPCk = p->gcrodr_PRECISION.DPC;
 #endif
 
-      if ( g.low_level_meas == 1 ) {
-        START_MASTER(threading)
-        printf0("\nREGION 1 ---\n");
-        END_MASTER(threading)
-      }
-
       SYNC_MASTER_TO_ALL(threading)
       SYNC_CORES(threading)
       MPI_Request req;
@@ -1153,15 +1147,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 
       apply_operator_PRECISION( Z[j], V[j], p, l, threading );
 
-      double wait_tbeg=0.0, wait_tend=0.0;
-
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        wait_tbeg = MPI_Wtime();
-        //printf0("wait time = %lf\n", wait_tend-wait_tbeg);
-        END_MASTER(threading)
-      }
-
       START_MASTER(threading)
       PROF_PRECISION_START( _ALLR );
       if ( g.num_processes > 1 ) {
@@ -1169,13 +1154,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       }
       PROF_PRECISION_STOP( _ALLR, 0 );
       END_MASTER(threading)
-
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        wait_tend = MPI_Wtime();
-        printf0("wait time = %lf\n", wait_tend-wait_tbeg);
-        END_MASTER(threading)
-      }
 
 #ifdef GCRODR
       if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
@@ -1274,12 +1252,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     else
     {
 
-      if ( g.low_level_meas == 1 ) {
-        START_MASTER(threading)
-        printf0("\nREGION 2 ---\n");
-        END_MASTER(threading)
-      }
-
       // ------------------------------------------------------------------------------------
       vector_PRECISION *Va = p->Va;
       vector_PRECISION *Za = p->Za;
@@ -1324,12 +1296,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       }
       else
         vector_PRECISION_copy( V[j], Va[j-1], start, end, l );
-
-      //double lr_tbeg=0.0, lr_tend=0.0;
-      double prec_tbeg=0.0, prec_tend=0.0;
-      double matmul_tbeg=0.0, matmul_tend=0.0;
-      double wait_tbeg=0.0, wait_tend=0.0;
-      double axpy_tbeg=0.0, axpy_tend=0.0;
 
 #ifdef GCRODR
       // orthogonalize against Ck whenever necessary
@@ -1402,43 +1368,10 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       END_MASTER(threading)
 #endif
 
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        prec_tbeg = MPI_Wtime();
-        //printf0("preconditioner time = %lf\n", prec_tend-prec_tbeg);
-        END_MASTER(threading)
-      }
-
       if (prec == NULL) vector_PRECISION_copy( Za[j-1], Va[j-1], start, end, l );
       else prec( Za[j-1], NULL, Va[j-1], _NO_RES, l, threading );
 
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        prec_tend = MPI_Wtime();
-        printf0("preconditioner time = %lf\n", prec_tend-prec_tbeg);
-        END_MASTER(threading)
-      }
-
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        matmul_tbeg = MPI_Wtime();
-        END_MASTER(threading)
-      }
-
       apply_operator_PRECISION( Va[j], Za[j-1], p, l, threading );
-
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        matmul_tend = MPI_Wtime();
-        printf0("matmul time = %lf\n", matmul_tend-matmul_tbeg);
-        END_MASTER(threading)
-      }
-
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        wait_tbeg = MPI_Wtime();
-        END_MASTER(threading)
-      }
 
       START_MASTER(threading)
       PROF_PRECISION_START( _ALLR );
@@ -1447,13 +1380,6 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       }
       PROF_PRECISION_STOP( _ALLR, 0 );
       END_MASTER(threading)
-
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        wait_tend = MPI_Wtime();
-        printf0("wait time = %lf\n", wait_tend-wait_tbeg);
-        END_MASTER(threading)
-      }
 
 #ifdef GCRODR
       if ( l->level==0 && p->gcrodr_PRECISION.orth_against_Ck == 1 ) {
@@ -1537,22 +1463,9 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       }
 #endif
 
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        axpy_tbeg = MPI_Wtime();
-        END_MASTER(threading)
-      }
-
       for( i=0; i<=j-1; i++ )
         vector_PRECISION_saxpy( Z[j], Z[j], Z[i], -H[j-1][i], start, end, l );
       vector_PRECISION_real_scale( Z[j], Z[j], 1/H[j-1][j], start, end, l );
-
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        axpy_tend = MPI_Wtime();
-        printf0("axpy time = %lf\n", axpy_tend-axpy_tbeg);
-        END_MASTER(threading)
-      }
 
       START_MASTER(threading)
         H[j-1][j-1] += sigma;

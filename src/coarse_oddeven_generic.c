@@ -644,8 +644,6 @@ void coarse_oddeven_free_PRECISION( level_struct *l ) {
 void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
                                     const int amount, level_struct *l, struct Thread *threading ) {
 
-  double pos_tbeg=0.0, pos_tend=0.0, neg_tbeg=0.0, neg_tend=0.0, tbeg=0.0, tend=0.0;
-
   START_NO_HYPERTHREADS(threading)
 
   int mu, i, index, num_site_var=l->num_lattice_site_var,
@@ -688,12 +686,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   }
   compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-  
   // compute U_mu^dagger coupling
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;
@@ -731,19 +723,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("(p) some compute time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    neg_tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-  
   START_LOCKED_MASTER(threading)
   if ( op->c.comm ) {
     for ( mu=0; mu<4; mu++ ) {
@@ -757,25 +736,12 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   }
   END_LOCKED_MASTER(threading)
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    neg_tend = MPI_Wtime();
-    printf0("(p) negative wait time = %lf\n", neg_tend-neg_tbeg);
-    END_MASTER(threading)
-  }
-  
   if ( amount == _EVEN_SITES ) {
     start = 0; num_lattice_sites = op->num_even_sites;
   } else if ( amount == _ODD_SITES ) {
     start = op->num_even_sites, num_lattice_sites = op->num_odd_sites;
   }
   compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
 
   // compute U_mu couplings
   for ( i=core_start; i<core_end; i++ ) {
@@ -799,19 +765,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("(p) some compute time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    pos_tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-  
   START_LOCKED_MASTER(threading)
   if ( op->c.comm ) {
     for ( mu=0; mu<4; mu++ ) {
@@ -820,13 +773,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     }
   }
   END_LOCKED_MASTER(threading)
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    pos_tend = MPI_Wtime();
-    printf0("(p) positive wait time = %lf\n", pos_tend-pos_tbeg);
-    END_MASTER(threading)
-  }
 
   END_NO_HYPERTHREADS(threading)
 }
@@ -836,7 +782,6 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
                                       const int amount, level_struct *l, struct Thread *threading ) {
 
 #ifdef OPTIMIZED_COARSE_NEIGHBOR_COUPLING_PRECISION
-  //double neg_tbeg=0.0, neg_tend=0.0, pos_tbeg=0.0, pos_tend=0.0;
 #ifndef COMM_HIDING_COARSEOP
   int sign = -1;
   coarse_pn_hopping_term_PRECISION_vectorized( out, in, op, amount, l, sign, threading);
@@ -845,7 +790,6 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
 #endif
   return;
 #else
-  double neg_tbeg=0.0, neg_tend=0.0, pos_tbeg=0.0, pos_tend=0.0;
   START_NO_HYPERTHREADS(threading)
 
   int mu, i, index, num_site_var=l->num_lattice_site_var,
@@ -925,12 +869,6 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
     coarse_n_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
-  if (g.low_level_meas == 1) {  
-    START_MASTER(threading)
-    neg_tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-
   START_LOCKED_MASTER(threading)
   if ( op->c.comm ) {
     for ( mu=0; mu<4; mu++ ) {
@@ -944,13 +882,6 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
   }
   END_LOCKED_MASTER(threading)
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    neg_tend = MPI_Wtime();
-    printf0("negative wait time = %lf\n", neg_tend-neg_tbeg);
-    END_MASTER(threading)
-  }
-  
   if ( amount == _EVEN_SITES ) {
     start = 0; num_lattice_sites = op->num_even_sites;
   } else if ( amount == _ODD_SITES ) {
@@ -980,12 +911,6 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
     coarse_n_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    pos_tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-  
   START_LOCKED_MASTER(threading)
   if ( op->c.comm ) {
     for ( mu=0; mu<4; mu++ ) {
@@ -994,13 +919,6 @@ void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in,
     }
   }
   END_LOCKED_MASTER(threading)
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    pos_tend = MPI_Wtime();
-    printf0("positive wait time = %lf\n", pos_tend-pos_tbeg);
-    END_MASTER(threading)
-  }
 
   END_NO_HYPERTHREADS(threading)
 #endif
@@ -1151,7 +1069,6 @@ void coarse_pn_hopping_term_PRECISION_vectorized( vector_PRECISION out, vector_P
                                     const int amount, level_struct *l, int sign, struct Thread *threading ) {
 
 #ifdef OPTIMIZED_COARSE_NEIGHBOR_COUPLING_PRECISION
-  double pos_tbeg=0.0, pos_tend=0.0, neg_tbeg=0.0, neg_tend=0.0, tbeg=0.0, tend=0.0;
 
   START_NO_HYPERTHREADS(threading)
 
@@ -1201,12 +1118,6 @@ void coarse_pn_hopping_term_PRECISION_vectorized( vector_PRECISION out, vector_P
     }
     compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
 
-    if (g.low_level_meas == 1) {
-      START_MASTER(threading)
-      tbeg = MPI_Wtime();
-      END_MASTER(threading)
-    }
-
     // prepare for sending to fw: compute hopping terms into forward boundary buffer
     for ( i=core_start; i<core_end; i++ ) {
       for(int mu=0; mu<4; mu++) {
@@ -1217,19 +1128,6 @@ void coarse_pn_hopping_term_PRECISION_vectorized( vector_PRECISION out, vector_P
         D_vectorized = op->D_transformed_vectorized + 4*link_offset*neighbor_fw[5*i] + mu*link_offset;
         coarse_hopp( out_pt, in_pt, D_vectorized, l );
       }
-    }
-
-    if (g.low_level_meas == 1) {
-      START_MASTER(threading)
-      tend = MPI_Wtime();
-      printf0("(n) some compute time = %lf\n", tend-tbeg);
-      END_MASTER(threading)
-    }
-
-    if (g.low_level_meas == 1) {
-      START_MASTER(threading)
-      neg_tbeg = MPI_Wtime();
-      END_MASTER(threading)
     }
 
     START_LOCKED_MASTER(threading)
@@ -1243,13 +1141,6 @@ void coarse_pn_hopping_term_PRECISION_vectorized( vector_PRECISION out, vector_P
     }
     END_LOCKED_MASTER(threading)
 
-    if (g.low_level_meas == 1) {
-      START_MASTER(threading)
-      neg_tend = MPI_Wtime();
-      printf0("(n) negative wait time = %lf\n", neg_tend-neg_tbeg);
-      END_MASTER(threading)
-    }
-
   }
   else
     SYNC_CORES(threading)
@@ -1261,12 +1152,6 @@ void coarse_pn_hopping_term_PRECISION_vectorized( vector_PRECISION out, vector_P
     start = op->num_even_sites, num_lattice_sites = op->num_odd_sites;
   }
   compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
 
   // assumptions (1) self coupling has already been performed
   //          OR (2) "out" is initialized with zeros
@@ -1291,21 +1176,8 @@ void coarse_pn_hopping_term_PRECISION_vectorized( vector_PRECISION out, vector_P
     }
   }
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("(n) some compute time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
   // wait for terms from bw and add them
   if ( l->num_processes > 1 && op->c.comm ) {
-
-    if (g.low_level_meas == 1) {
-      START_MASTER(threading)
-      pos_tbeg = MPI_Wtime();
-      END_MASTER(threading)
-    }
 
     START_LOCKED_MASTER(threading)
     for ( mu=0; mu<4; mu++ ) {
@@ -1313,13 +1185,6 @@ void coarse_pn_hopping_term_PRECISION_vectorized( vector_PRECISION out, vector_P
       ghost_wait_PRECISION( out, mu, +1, &(op->c), plus_dir_param, l );
     }
     END_LOCKED_MASTER(threading)
-
-    if (g.low_level_meas == 1) {
-      START_MASTER(threading)
-      pos_tend = MPI_Wtime();
-      printf0("(n) positive wait time = %lf\n", pos_tend-pos_tbeg);
-      END_MASTER(threading)
-    }
 
   }
   else
@@ -1591,16 +1456,6 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
 
   vector_PRECISION *tmp = op->buffer;
 
-  double tend=0.0, tbeg=0.0;
-  
-  SYNC_CORES(threading)
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
@@ -1608,25 +1463,11 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
   coarse_diag_ee_PRECISION( out, in, op, l, threading );
   PROF_PRECISION_STOP( _SC, 0, threading );
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("diag ee time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
   SYNC_CORES(threading)
   vector_PRECISION_define( tmp[0], 0, start, end, l );
-  SYNC_CORES(threading)
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
 
   PROF_PRECISION_START( _NC, threading );
   coarse_hopping_term_PRECISION( tmp[0], in, op, _ODD_SITES, l, threading );
@@ -1635,38 +1476,12 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("hopping pos time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-
   PROF_PRECISION_START( _SC, threading );
   coarse_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l, threading );
   PROF_PRECISION_STOP( _SC, 1, threading );
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("diag oo time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
 
   PROF_PRECISION_START( _NC, threading );
   coarse_n_hopping_term_PRECISION( out, tmp[1], op, _EVEN_SITES, l, threading );
@@ -1675,12 +1490,6 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("hopping neg time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
 }
 
 
@@ -1745,16 +1554,6 @@ void g5D_coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_P
 
   vector_PRECISION *tmp = op->buffer;
 
-  double tend=0.0, tbeg=0.0;
-  
-  SYNC_CORES(threading)
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
@@ -1762,36 +1561,10 @@ void g5D_coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_P
   coarse_diag_ee_PRECISION( out, in, op, l, threading );
   PROF_PRECISION_STOP( _SC, 0, threading );
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("diag ee time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-
   vector_PRECISION_define( tmp[0], 0, start_odd, end_odd, l );
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("define time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
 
   PROF_PRECISION_START( _NC, threading );
   coarse_hopping_term_PRECISION( tmp[0], in, op, _ODD_SITES, l, threading );
@@ -1800,38 +1573,12 @@ void g5D_coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_P
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("hopping pos time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-
   PROF_PRECISION_START( _SC, threading );
   coarse_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l, threading );
   PROF_PRECISION_STOP( _SC, 1, threading );
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("diag oo time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
 
   PROF_PRECISION_START( _NC, threading );
   coarse_n_hopping_term_PRECISION( out, tmp[1], op, _EVEN_SITES, l, threading );
@@ -1840,34 +1587,11 @@ void g5D_coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_P
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("hopping neg time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tbeg = MPI_Wtime();
-    END_MASTER(threading)
-  }
-
-  SYNC_CORES(threading)
   coarse_gamma5_PRECISION( out, out, start_even, end_even, l );
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    tend = MPI_Wtime();
-    printf0("gamma5 time = %lf\n", tend-tbeg);
-    END_MASTER(threading)
-  }
-
-  SYNC_MASTER_TO_ALL(threading)
-  SYNC_CORES(threading)
 }
 
 

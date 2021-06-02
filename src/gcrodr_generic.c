@@ -357,7 +357,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   p->gcrodr_PRECISION.hatW[g_ln] = p->V[p->restart_length];
   END_MASTER(threading)
 
-  // TODO : add <extra> profiling (this extra profiling is to be added to FGMRES)
+  // TODO : add <extra> profiling (this extra profiling is to be added to FGMRES) ?
 
   // start and end indices for vector functions depending on thread
   // NOTE : in this context, <m> changes! It is not (necessarily) p->restart_length
@@ -422,10 +422,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     if ( p->gcrodr_PRECISION.update_CU == 1 ) {
 
-
-      printf0("UPDATE CU !!\n");
-
-
       // Yk = copy(Uk)
       START_MASTER(threading);
       complex_PRECISION **tmp_ptr = p->gcrodr_PRECISION.U;
@@ -446,7 +442,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       int i_length = p->v_end - p->v_start;
       pqr_PRECISION( i_length, k, p->gcrodr_PRECISION.C, p->gcrodr_PRECISION.R, p, l, threading );
-      // re-orthogonalize
+      // re-orthogonalize ?
       //pqr_PRECISION( i_length, k, p->gcrodr_PRECISION.C, p->gcrodr_PRECISION.R, p, l, threading );
 
       SYNC_MASTER_TO_ALL(threading);
@@ -475,12 +471,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       SYNC_CORES(threading)
 
       p->gcrodr_PRECISION.update_CU = 0;
-
-      if (g.low_level_meas == 1) {
-        START_MASTER(threading)
-        printf0("updated Ck and Uk !\n");
-        END_MASTER(threading)
-      }
 
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
       p->gcrodr_PRECISION.recompute_DPCk_poly = 1;
@@ -522,7 +512,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
     vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
-    // TODO : restore this portion of code, but with a flag that indicates that the first k diagonal entries
+    // TODO : restore (?) this portion of code, but with a flag that indicates that the first k diagonal entries
     //        of G need to be recomputed
     /*
     START_MASTER(threading)
@@ -581,9 +571,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
       PRECISION betaxx = global_norm_PRECISION( p->gcrodr_PRECISION.r_aux, start, end, l, threading );
 
-      START_MASTER(threading)
-      printf0("(proc=%d) 'real' rel residual = %f\n", g.my_rank, betaxx/norm_r0xx);
-      END_MASTER(threading)
+      //START_MASTER(threading)
+      //printf0("(proc=%d) 'real' rel residual = %f\n", g.my_rank, betaxx/norm_r0xx);
+      //END_MASTER(threading)
 
       if ( betaxx/norm_r0xx > p->tol ) {
         p->gcrodr_PRECISION.finish = 0;
@@ -640,12 +630,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     p->gcrodr_PRECISION.CU_usable=1;
     END_MASTER(threading)
     SYNC_MASTER_TO_ALL(threading);
-
-    if (g.low_level_meas == 1) {
-      START_MASTER(threading)
-      printf0("created Ck and Uk !\n");
-      END_MASTER(threading)
-    }
 
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
       p->gcrodr_PRECISION.recompute_DPCk_poly = 1;
@@ -754,9 +738,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       //PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
       PRECISION betaxx = global_norm_PRECISION( p->gcrodr_PRECISION.r_aux, start, end, l, threading );
 
-      START_MASTER(threading)
-      printf0("(proc=%d) 'real' rel residual = %f\n", g.my_rank, betaxx/norm_r0xx);
-      END_MASTER(threading)
+      //START_MASTER(threading)
+      //printf0("(proc=%d) 'real' rel residual = %f\n", g.my_rank, betaxx/norm_r0xx);
+      //END_MASTER(threading)
 
       if ( betaxx/norm_r0xx > p->tol ) {
         p->gcrodr_PRECISION.finish = 0;
@@ -962,9 +946,9 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 #endif
     j = il; iter++;
 
-    START_MASTER(threading)
-    printf0( "IL : j = %d\n",j );
-    END_MASTER(threading)
+    //START_MASTER(threading)
+    //printf0( "IL : j = %d\n",j );
+    //END_MASTER(threading)
 
     // one step of Arnoldi
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
@@ -995,9 +979,9 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
       SYNC_CORES(threading)
       gamma_jp1 = cabs( p->gamma[j+1] );
 
-      START_MASTER(threading)
-      printf0("g (proc=%d,j=%d) rel residual (gcro-dr) = %f\n", g.my_rank, j, gamma_jp1/norm_r0);
-      END_MASTER(threading)
+      //START_MASTER(threading)
+      //printf0("g (proc=%d,j=%d) rel residual (gcro-dr) = %f\n", g.my_rank, j, gamma_jp1/norm_r0);
+      //END_MASTER(threading)
 
       if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
 

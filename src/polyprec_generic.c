@@ -115,7 +115,6 @@ void leja_ordering_PRECISION( gmres_PRECISION_struct *p )
 
   for (i=0; i < d_poly-1; i++)
   {
-
     for (j=i; j<d_poly; j++ ) 
       L[i][j] = cabs( L[i][j] - leja );
 
@@ -205,10 +204,6 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
   l->dup_H = 0;
   END_MASTER(threading)
 
-  //START_MASTER(threading)
-  //MPI_Barrier(l->gs_PRECISION.level_comm);
-  //END_MASTER(threading)
-
   START_MASTER(threading)
   p->b = buff0;
   p->num_restart = buff2;
@@ -248,14 +243,6 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
                                int res, level_struct *l, struct Thread *threading )
 {
 
-  //PRECISION tmpx;
-
-  // computing residual for zero initial guess
-  //tmpx = global_norm_PRECISION( eta, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l, threading );
-  //START_MASTER(threading)
-  //printf0("g --- > before global POLYPREC, norm(r_i) = %f\n", tmpx);
-  //END_MASTER(threading)
-
   int i, start, end;
 
   compute_core_start_end(l->p_PRECISION.v_start, l->p_PRECISION.v_end, &start, &end, l, threading);
@@ -285,13 +272,6 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
-  // computing residual for solution p->x
-  //apply_operator_PRECISION( l->p_PRECISION.w, phi, &(l->p_PRECISION), l, threading ); // compute w = D*x
-  //vector_PRECISION_minus( l->p_PRECISION.w, eta, l->p_PRECISION.w, start, end, l ); // compute r = b - w
-  //tmpx = global_norm_PRECISION( l->p_PRECISION.w, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l, threading );
-  //START_MASTER(threading)
-  //printf0("g --- > after global POLYPREC, norm(r_f) = %f\n", tmpx);
-  //END_MASTER(threading)
 }
 
 #endif
