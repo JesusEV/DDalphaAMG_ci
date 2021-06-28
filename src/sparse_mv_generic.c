@@ -43,8 +43,10 @@ void spmv_PRECISION( vector_PRECISION out, vector_PRECISION in, vector_PRECISION
   }
 
   for( i=0;i<8;i++ ){
-    MPI_Wait( &reqs[i],&stat );
-    MPI_Wait( &reqr[i],&stat );
+    if( proc_neighbors[i]!=g.my_rank ) {
+      MPI_Wait( &reqs[i],&stat );
+      MPI_Wait( &reqr[i],&stat );
+    }
   }
 
   vector_PRECISION_define( out,0,p->v_start,p->v_end,l );
