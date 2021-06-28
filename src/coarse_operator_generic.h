@@ -239,22 +239,170 @@
         phi_pt += num_eig_vect;//4
         clover_pt += clover_step_size2;
       }
-    } else
+    } else {
 #endif
+
+
+    
+/*
+  //To-Dos: 
+// remove index k and use clover_pt ++ 
+
+
+      int show_vars = 0;
+
+      if (show_vars == 1){
+        printf("####################################################\n");
+//    printf("# phis: \t %ld\n", phi_end_pt - phi_pt);		
+        printf("# site_var: \t %d\n", site_var);			// no of rows in U
+        printf("# num_eig_vect: \t %d\n", num_eig_vect);		// no of rows in A B C and D
+        printf("# clover_step_size1: \t %d\n", clover_step_size1);	// no of els in A and D
+        printf("# clover_step_size2: \t %d\n", clover_step_size2);	// no of els in B and C
+        printf("#\n");
+      }
+
+//  complex_PRECISION *vals = malloc(SQUARE(site_var) * sizeof(complex_PRECISION));
+      complex_PRECISION my_eta[site_var];
+      complex_PRECISION my_phi[site_var];
+      complex_PRECISION vals[SQUARE(site_var)];
+      int colInd[SQUARE(site_var)];
+      int rowPtr[site_var +1];
+
+      int i, j;
+      for (i = 0; i < site_var; i++){
+        my_eta[i] = *(eta+i);
+        my_phi[i] = *(phi+i);
+      }
+
+
+      int k, c, r;	// index in matrix, col no., row no.
+
+	// A 
+      for (k = 0, c = 0; c < num_eig_vect; c++, k++){
+        for (r = 0; r < c; r++, k++){
+          vals[r * site_var + c] = *(clover_pt + k);
+          vals[c * site_var + r] = conj_PRECISION(*(clover_pt + k));
+        }
+        vals[c*site_var + c] = *(clover_pt + k);
+      }
+
+  //remove this line as well as soon k++ is removed
+      clover_pt += clover_step_size1;
+
+
+
+	// D
+      for (k = 0, c = num_eig_vect; c < 2*num_eig_vect; c++, k++){
+        for (r = num_eig_vect; r < c; r++, k++){
+          vals[r * site_var + c] = *(clover_pt + k);
+          vals[c * site_var + r] = conj_PRECISION(*(clover_pt + k));
+        }
+        vals[c * site_var + c] = *(clover_pt + k);
+      }
+
+  //remove this line as well as soon k++ is removed
+      clover_pt += clover_step_size1;
+
+
+	// C
+      for (c = 0, k = 0; c < num_eig_vect; c++){
+        for (r = 0; r < num_eig_vect; r++, k++){
+          vals[(c +  num_eig_vect) * site_var + r] =  -1.0*(conj_PRECISION(*(clover_pt + k)));
+//    vals[(r +  num_eig_vect) * site_var + c] =  -1.0*(conj_PRECISION(*(clover_pt + k)));
+        }
+      }
+
+  //no clover_pt correction / change this once k++ is removed
+
+
+	// B
+      for (c = num_eig_vect, k = 0; c < 2*num_eig_vect; c++){
+        for (r = 0; r < num_eig_vect; r++, k++){
+          vals[r * site_var + c] = *(clover_pt + k);
+        }
+      }
+  
+  
+
+	//set colInd and rowPtr
+      for (i = 0; i < site_var; i++){
+        rowPtr[i] = i * site_var;
+        for (j = 0; j < site_var; j++){
+          colInd[i * site_var + j] = j;
+        }
+      }
+      rowPtr[site_var] = site_var;
+
+
+
+
+      char T = 'T', N = 'N', C = 'C';
+      complex_PRECISION one = 1, zero = 0;
+      int one_i = 1;
+//  extern void zgemv_(char *transA, int *m, int *n, double complex *alpha, double complex *A, int *lda, double complex *X, int *incx, double complex *beta, double  complex *Y, int *incy);
+      gemv_PRECISION(&T, &site_var, &site_var, &one, &vals[0], &site_var, &my_phi[0], &one_i, &zero, &my_eta[0], &one_i);
+  //		  T, m        , n        , alpha, A      , lda      , X         , incx  , beta , Y         , incy
+
+
+      if (show_vars == 1){
+        printf("#\n");
+        printf("# len of vals: \t %ld\n", sizeof(vals)/sizeof(vals[0]));	// no of els in vals
+        printf("# len of colInd: \t %ld\n", sizeof(colInd)/sizeof(colInd[0]));// no of els in colInd
+        printf("# len of rowPtr: \t %ld\n", sizeof(rowPtr)/sizeof(rowPtr[0]));// no of els in rowPtr
+        printf("####################################################\n");
+      }
+
+      if (show_vars == 1){
+        j = 0;
+        for (i = 0; i < sizeof(vals)/sizeof(vals[0]); i++){
+          if (vals[i] == 0) j++;
+        }
+        printf("found %d elements equal to 0\n", j);
+      }
+
+
+	// correction to make the rest of the code work ;)
+      clover_pt -= 2*clover_step_size1;
+
+      complex_PRECISION *eta_0 = eta_pt;
+
+
+      */
+
+
       while ( phi_pt < phi_end_pt ) {
-        // A
+      // A
         mvp_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
         clover_pt += clover_step_size1; eta_pt += num_eig_vect; phi_pt += num_eig_vect;
-        // D
+      // D
         mvp_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
         clover_pt += clover_step_size1; phi_pt -= num_eig_vect;
-        // C = -B*
+      // C = -B*
         nmvh_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
         phi_pt += num_eig_vect; eta_pt -= num_eig_vect;
-        // B
+      // B
         mv_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
         clover_pt += clover_step_size2; phi_pt += num_eig_vect; eta_pt += site_var;
       }
+
+
+
+
+
+
+      /*
+      for (i = 0; i < site_var; i++){
+        printf("I:\t%d,\tDD:\t%+4.2f %+4.2fi,\town:\t%+4.2f %+4.2fi\n", i, creal(*(eta_0 +i)), cimag(*(eta_0 +i)), creal(my_eta[i]), cimag(my_eta[i]));
+      }
+      exit(0);
+      */
+
+
+
+
+
+
+    }
   }
 
   static inline void coarse_add_block_diagonal_PRECISION( vector_PRECISION eta, vector_PRECISION phi,
@@ -403,7 +551,118 @@
       nmv_PRECISION( eta, D, phi, num_eig_vect );
     } else {
 #endif
-      // A  
+
+
+//####################################################################
+//		MY CODE
+//####################################################################
+
+      complex_PRECISION my_eta[2 * num_eig_vect];
+      complex_PRECISION my_phi[2 * num_eig_vect];
+      complex_PRECISION vals[4 * num_eig_vect2];
+      int colInd[4 * num_eig_vect2];
+      int rowPtr[4 * num_eig_vect2 +1];
+
+      int i, j;
+      for (i = 0; i < 2 * num_eig_vect; i++){
+        my_eta[i] = *(eta+i);
+        my_phi[i] = *(phi+i);
+      }
+
+
+/*
+      for (i = 0; i < num_eig_vect; i++){
+        printf("I:\t%d,\tDD:\t%+4.2f %+4.2fi,\town:\t%+4.2f %+4.2fi\n", i, creal(*(eta +i)), cimag(*(eta +i)), creal(my_eta[i]), cimag(my_eta[i]));
+      }
+      exit(0);
+
+*/
+      int k, c, r;	// index in matrix, col no., row no.
+	
+
+	// A 
+      for (c = 0, k = 0; c < num_eig_vect; c++){
+        for (r = 0; r < num_eig_vect; r++, k++){
+          vals[r * (2*num_eig_vect) + c] = *(D + k);
+        }
+      }
+
+	// C
+      for (c = 0, k = 0; c < num_eig_vect; c++){
+        for (r = num_eig_vect; r < 2 * num_eig_vect; r++, k++){
+          vals[r * (2*num_eig_vect) + c] = *(D + num_eig_vect2 + k);
+        }
+      }
+
+	// B
+      for (c = num_eig_vect, k = 0; c < 2*num_eig_vect; c++){
+        for (r = 0; r < num_eig_vect; r++, k++){
+          vals[r * (2*num_eig_vect) + c] = *(D + 2 * num_eig_vect2 + k);
+        }
+      }
+
+   
+	// D
+      for (c = num_eig_vect, k = 0; c < 2*num_eig_vect; c++){
+        for (r = num_eig_vect; r < 2*num_eig_vect; r++, k++){
+          vals[r * (2*num_eig_vect) + c] = *(D + 3 * num_eig_vect2 + k);
+        }
+      }
+
+
+
+
+/*		REDO THIS SECTION COMPLETELY
+	//set colInd and rowPtr
+      for (i = 0; i < num_eig_vect2; i++){
+        rowPtr[i] = i * num_eig_vect2;
+        for (j = 0; j < num_eig_vect2; j++){
+          colInd[i * num_eig_vect2 + j] = j;
+        }
+      }
+      rowPtr[num_eig_vect2] = num_eig_vect2;
+*/
+
+
+
+
+      char T = 'T', N = 'N', C = 'C';
+      complex_PRECISION one = 1, zero = 0, m_one = -1;
+      int one_i = 1;
+      int m = 2 * num_eig_vect, n = 2 * num_eig_vect;
+      int lda = 2 * num_eig_vect;
+//  extern void zgemv_(char *transA, int *m, int *n, double complex *alpha, double complex *A, int *lda, double complex *X, int *incx, double complex *beta, double  complex *Y, int *incy);
+      gemv_PRECISION(&T, &m, &n, &m_one, &vals[0], &lda, &my_phi[0], &one_i, &one, &my_eta[0], &one_i);
+  //		  T, m        , n        , alpha, A      , lda      , X         , incx  , beta , Y         , incy
+   
+/*
+      if (show_vars == 1){
+        printf("#\n");
+        printf("# len of vals: \t %ld\n", sizeof(vals)/sizeof(vals[0]));	// no of els in vals
+        printf("# len of colInd: \t %ld\n", sizeof(colInd)/sizeof(colInd[0]));// no of els in colInd
+        printf("# len of rowPtr: \t %ld\n", sizeof(rowPtr)/sizeof(rowPtr[0]));// no of els in rowPtr
+        printf("####################################################\n");
+      }
+
+      if (show_vars == 1){
+        j = 0;
+        for (i = 0; i < sizeof(vals)/sizeof(vals[0]); i++){
+          if (vals[i] == 0) j++;
+        }
+        printf("found %d elements equal to 0\n", j);
+      }
+      */
+
+      complex_PRECISION *eta_0 = eta;
+
+
+
+//###########################################################
+// 		ORIGINAL DDalphaAMG
+//###########################################################
+
+      // A    
+      // eta -= D*phi, D stored columnwise
       nmv_PRECISION( eta, D, phi, num_eig_vect );
       // C
       eta += num_eig_vect;
@@ -418,6 +677,25 @@
       eta += num_eig_vect;
       D += num_eig_vect2;
       nmv_PRECISION( eta, D, phi, num_eig_vect );
+
+
+//###########################################################
+// 		END OF ORIGINAL DDalphaAMG
+//###########################################################
+
+/*
+      for (i = 0; i < 2 * num_eig_vect; i++){
+        printf("I:\t%d,\tDiff:\t%+4.2f %+4.2fi \n", i, creal(*(eta_0 
++i)) - creal(my_eta[i]), cimag(*(eta_0 +i)) - cimag(my_eta[i]));
+      }
+      exit(0);
+    */
+
+
+
+
+
+
 #ifdef HAVE_TM1p1
     }
 #endif

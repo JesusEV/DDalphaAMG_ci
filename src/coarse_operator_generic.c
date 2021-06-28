@@ -403,8 +403,12 @@ void coarse_self_couplings_PRECISION( vector_PRECISION eta, vector_PRECISION phi
     clover_size = (2*num_eig_vect*num_eig_vect+num_eig_vect), 
     block_size = (num_eig_vect*num_eig_vect+num_eig_vect);
 
+
   coarse_self_couplings_clover_PRECISION( eta+start*vector_size, phi+start*vector_size,
-                                          op->clover+start*clover_size, (end-start)*vector_size, l );
+                                          op->clover+start*clover_size, 
+					  (end-start)*vector_size, l );
+
+
 #ifdef HAVE_TM // tm_term
   if (op->mu + op->mu_odd_shift != 0.0 || op->mu + op->mu_even_shift != 0.0 )
     coarse_add_anti_block_diagonal_PRECISION( eta+start*vector_size, phi+start*vector_size, 

@@ -681,25 +681,165 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   
   if ( amount == _EVEN_SITES ) {
     start = op->num_even_sites, num_lattice_sites = op->num_odd_sites;
-  } else if ( amount == _ODD_SITES ) {
+ } else if ( amount == _ODD_SITES ) {
     start = 0; num_lattice_sites = op->num_even_sites;
   }
   compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
 
+
+//################################################
+
+
+  int do_my_stuff = 0;
+
+
+// CHANGE DAGGER_PART OF MATRIX TO CONJUGATE TRANSPOSED
+  printf("start writing matrix....\n");
+  printf("size of vals: %d\n", 4*4*4*4 * 9 * num_link_var);
+  printf("num_link_var: %d\n", num_link_var);
+  printf("num_site_var: %d\n", num_site_var);
+  
+  int bs = SQUARE(num_site_var); // block size for each coupling block
+  printf("bs: %d\n", bs);
+//  exit(0);
+  
+  complex_PRECISION *vals; //4*4*4*4 * 9 * num_link_var];	//adapt variable lattice site number
+  vals = malloc(4*4*4*4 * 9 * bs * sizeof(complex_PRECISION));
+    /*	vals = [[self_coupling of site 1][T+_coupling site 1][T-_coupling site 1][Z+_coupling site 1][Z-_coupling site 1] .... [X+_coupling site 1][X-_coupling site 1]
+  [self_coup site 2][T+_coup site 2]....[X-_coup site N]]
+  each of the inner [] contain num_link_var elements -> to store 1 block row in matrix (entire coupling of one site) we need 9 * num_link_var elements
+  
+  [[self, T+, T-, Z+, Z-, Y+, Y-, X+, X-][self, T+, T-, Z+, Z-, Y+, Y-, X+, X-]....]
+  */
+  int *rowInd, *colInd;
+  rowInd = malloc(4*4*4*4 * 9 * bs * sizeof(complex_PRECISION));
+  colInd = malloc(4*4*4*4 * 9 * bs * sizeof(complex_PRECISION));
+  printf("allocation complete!\n");
+  int k, lx;
+  int vstart = 0, cstart = 0, rstart = 0;
+//################################################
+  
   // compute U_mu^dagger coupling
   for ( i=core_start; i<core_end; i++ ) {
-    index = 5*i;
-    in_pt = in + num_site_var*op->neighbor_table[index];
+    printf("set index\n");
+    index = 5*i;	
+    printf("set in_pt\n");					// 5 = self + T-neighb. + Z-n + Y-n + X-n
+    in_pt = in + num_site_var*op->neighbor_table[index];  
+    
+    printf("set D_pt\n");
+    // col ind: neighbor_table[index]
     D_pt = op->D + num_4link_var*op->neighbor_table[index] + 0*num_link_var;
-    index++;
+
+/*####################################################
+    for k = 0 .. num_link_var
+	vals[vstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + T*num_link_var + k]
+				find correct blockrow		       skip self coup.    will be 0      index for copying
+				= *(op->D + num_4link_var*op->neighbor_table[index] + 0*num_link_var + k)
+				    D start   						T*num_link_var
+	vstart, colstart, rowstart should be starting position for each process
+	
+	colInd[colstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + T*num_link_var + k]
+		           same as for vals
+				= sites/process * process_id * 9 * num_link_var    + floor(k/site_var)
+				   call this: p_col_offset 
+				  
+	rowInd[rowstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + T*num_link_var + k]
+		           same as for vals
+				= sites/process * process_id * 9 * num_link_var    + k mod site_var
+				   call this: p_row_offset = p_col_offset
+				   	  
+*/
+    if (do_my_stuff == 1){
+
+	    if (index != 0){
+		    printf("inside if clause\n");
+		    for (k = 0; k < bs; k++){
+		    	//    startpos 	find correct block row			skip self coupl.   write T+ coupl. ("2*" due to structure of vals[self, T+, T-, Z+, Z-...]
+		    	printf("k:%d,\tpos:%d\n", k, vstart + (9 * bs)*op->neighbor_table[index] + bs    + 2*T*bs + k);
+		//    	printf("dagger val in D: %f, %f\n", creal(conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + T*bs + k))), cimag(conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + T*bs + k))));
+		//    	vals[vstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*T*num_link_var + k] = 
+		//			conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + T*num_link_var + k)); //columwise in D and rowwise in vals, CONJUGATE
+			// 				startpos   find block row  				write T coupl.     	
+		    	
+		    	//	startpos 	find correct block row			 skip self coupl.	write T coupl.
+		//    	colInd[cstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*T*num_link_var + k] = 
+		//    			num_link_var * op->neighbor_table[index + 1 + T]  +  	k % num_site_var;	//int(k / num_site_var);
+		    	//		find col. start of T coupl. 	+1 = skip self coupl.		NOT [rounds down (colwise storage)] but row-wise
+		    	
+		    	//	startpos 	find correct block row			 skip self coupl.	write T coupl.
+		//    	rowInd[rstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*T*num_link_var + k] = 
+		//    			num_link_var * op->neighbor_table[index] + 		(int)(k / num_site_var); //k % num_site_var;
+		    	//		find row start of self coupl.				NOT [row is quickly changing index] but columnwise
+		    }
+		    exit(0);
+	    }
+	    
+    }
+//################################################
+    printf("increase index\n");
+    index++;		//first elements in n_t contains node itself, then T-neighbor, Z, Y, X
+    printf("set out_pt\n");
     out_pt = out + num_site_var*op->neighbor_table[index+T];
+    printf("call daggered_hopp\n");
+    // row ind: neighbor_table[index+T]
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
+//################################################
+
+/* op->D[ num4link * neighbor[index] + T * numlink] = node index, T
+				       0
+   op->D[ num4link * neighbor[index] + Z * numlink] = node index, Z
+				       1
+   op->D[ num4link * neighbor[index] + Y * numlink] = node index, Y
+				       2
+
+*/
+
+//    printf("index:\t%4d\tin_pt:\t%4d\tout_pt:\t%4d\n", index-1, in_pt, out_pt);
+//     printf("index:\t%d,\tnum4link:\t%d,\tnum_link:\t%d\n", index, num_4link_var, num_link_var);
+//     printf("p-id:\t%d,\tindex:\t%d,\tnt[i]:\t%d,\tnt[i+1]:\t%d\n", g.my_rank, index, op->neighbor_table[index-1], op->neighbor_table[index]);
+//	neighbor_table is counting up (0 .. 7)
+
+//################################################
   }
+//################################################
+  exit(0);
+  if (do_my_stuff == 1){
+
+	  int myi = 0;
+	  printf("\tnt[i]:%d,\tnt[i+1]:%d,\tnt[i+2]:%d,\tnt[i+3]:%d,\tnt[i+4]:%d\n", op->neighbor_table[myi+0], op->neighbor_table[myi+1], op->neighbor_table[myi+2], op->neighbor_table[myi+3], op->neighbor_table[myi+4]);
+	//  printf("T:%d,\tZ:%d,\tY:%d,\tX:%d\n", T, Z, Y, X);
+	//					   0, 1, 2, 3
+	  printf("num_4link: %d,\tnum_link: %d,\tnum_site: %d\n", num_4link_var, num_link_var, num_site_var);
+	  exit(0);
+  }
+//################################################
+
   SYNC_CORES(threading)
+
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;
     in_pt = in + num_site_var*op->neighbor_table[index];
     D_pt = op->D + num_4link_var*op->neighbor_table[index] + 1*num_link_var;
+        
+    //###########################################################################
+    for (k = 0; k < num_link_var; k++){
+    	//    startpos 	find correct block row			skip self coupl.   write Z+ coupl.("2*" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	vals[vstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*Z*num_link_var + k] = 
+			conj_PRECISOIN(*(op->D + num_4link_var*op->neighbor_table[index] + Z*num_link_var + k));//columwise in D and rowwise in vals, CONJUGATE
+	// 		startpos   find block row  				write Z coupl.     	
+    	
+    	//	startpos 	find correct block row			 skip self coupl.	write z+ coupl.
+    	colInd[cstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*Z*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index + 1 + Z]  +  	k % num_site_var; //int(k / num_site_var);
+    	//		find col. start of Z coupl. 	+1 = skip self coupl.		NOT [rounds down (column wise storage)] but row-wise
+    	
+    	//	startpos 	find correct block row			 skip self coupl.	write Z+ coupl.
+    	rowInd[rstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*Z*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index] + 		(int)(k / num_site_var); //k % num_site_var;
+    	//		find row start of self coupl.				NOT [row is quickly changing index] but columnwise	
+    }
+    //############################################################################
+    
     index++;
     out_pt = out + num_site_var*op->neighbor_table[index+Z];
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
@@ -709,6 +849,26 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     index = 5*i;
     in_pt = in + num_site_var*op->neighbor_table[index];
     D_pt = op->D + num_4link_var*op->neighbor_table[index] + 2*num_link_var;
+    
+    //###########################################################################
+    for (k = 0; k < num_link_var; k++){
+    	//    startpos 	find correct block row			skip self coupl.   write Y+ coupl.("2*" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	vals[vstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*Y*num_link_var + k] = 
+			conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + Y*num_link_var + k)); //columwise in D and rowwise in vals, CONJUGATE
+	// 		startpos   find block row  				write Y coupl.     	
+    	
+    	//	startpos 	find correct block row			 skip self coupl.	write Y+ coupl.
+    	colInd[cstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*Y*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index + 1 + Y]  +  	k % num_site_var; // int(k / num_site_var);
+    	//		find col. start of Y coupl. 	+1 = skip self coupl.		NOT [rounds down (column wise storage)] but row-wise
+    	
+    	//	startpos 	find correct block row			 skip self coupl.	write Y+ coupl.
+    	rowInd[rstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*Y*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index] + 		(int)(k / num_site_var); //k % num_site_var;
+    	//		find row start of self coupl.				NOT [row is quickly changing index] but columnwise	
+    }
+    //############################################################################
+    
     index++;
     out_pt = out + num_site_var*op->neighbor_table[index+Y];
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
@@ -718,6 +878,26 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     index = 5*i;
     in_pt = in + num_site_var*op->neighbor_table[index];
     D_pt = op->D + num_4link_var*op->neighbor_table[index] + 3*num_link_var;
+    
+    //###########################################################################
+    for (k = 0; k < num_link_var; k++){
+    	//    startpos 	find correct block row			skip self coupl.   write X+ coupl.("2*" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	vals[vstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*X*num_link_var + k] = 
+			conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + X*num_link_var + k)); //columwise in D and rowwise in vals, CONJUGATE
+	// 		startpos   find block row  				write X coupl.     	
+    	
+    	//	startpos 	find correct block row			 skip self coupl.	write X+ coupl.
+    	colInd[cstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*X*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index + 1 + X]  +  	k % num_site_var; // int(k / num_site_var);
+    	//		find col. start of X coupl. 	+1 = skip self coupl.		NOT [rounds down (column wise storage)] but row-wise
+    	
+    	//	startpos 	find correct block row			 skip self coupl.	write X+ coupl.
+    	rowInd[rstart + (9 * num_link_var)*op->neighbor_table[index] + num_link_var    + 2*X*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index] + 		(int)(k / num_site_var); //k % num_site_var;
+    	//		find row start of self coupl.				NOT [row is quickly changing index] but columnwise	
+    }
+    //############################################################################
+    
     index++;
     out_pt = out + num_site_var*op->neighbor_table[index+X];
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
@@ -746,21 +926,99 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   // compute U_mu couplings
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;
-    out_pt = out + num_site_var*op->neighbor_table[index];
+    out_pt = out + num_site_var*op->neighbor_table[index];	// block row
     D_pt = op->D + num_4link_var*op->neighbor_table[index];
     index++;
-    in_pt = in + num_site_var*op->neighbor_table[index+T];
+    //###########################################################################
+    for (k = 0; k < num_link_var; k++){
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write T- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	vals[vstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*T + 1)*num_link_var + k] = 
+			*(op->D + num_4link_var*op->neighbor_table[index-1] + T*num_link_var + k); //columwise in D and in vals
+	// 		startpos   find block row  				write T coupl.     	
+    	
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write T- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	colInd[cstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*T+1)*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index + T]  +  	(int)(k / num_site_var);
+    	//		find col. start of T coupl. 	+1 = skip self coupl.		rounds down (column wise storage)
+    	
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write T- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	rowInd[rstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*T+1)*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index-1] + 		k % num_site_var;
+    	//		find row start of self coupl.				row is quickly changing index    	
+    }
+    //############################################################################
+    in_pt = in + num_site_var*op->neighbor_table[index+T];	// block col
     coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
     
-    D_pt += num_link_var;
+    
+    
+    D_pt += num_link_var;	// D_pt = op->D + num_4link_var*op->neighbor_table[index-1] + Z*num_link_var;
+    //###########################################################################
+    for (k = 0; k < num_link_var; k++){
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write Z- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	vals[vstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*Z + 1)*num_link_var + k] = 
+			*(op->D + num_4link_var*op->neighbor_table[index-1] + Z*num_link_var + k); //columwise in D and in vals
+	// 		startpos   find block row  				write Z coupl.     	
+    	
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write Z- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	colInd[cstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*Z+1)*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index + T]  +  	(int)(k / num_site_var);
+    	//		find col. start of Z coupl. 	+1 = skip self coupl.		rounds down (column wise storage)
+    	
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write Z- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	rowInd[rstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*Z+1)*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index-1] + 		k % num_site_var;
+    	//		find row start of self coupl.				row is quickly changing index    	
+    }
+    //############################################################################
     in_pt = in + num_site_var*op->neighbor_table[index+Z];
     coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
     
-    D_pt += num_link_var;
+    
+    
+    D_pt += num_link_var;	// D_pt = op->D + num_4link_var*op->neighbor_table[index-1] + Y*num_link_var;
+    //###########################################################################
+    for (k = 0; k < num_link_var; k++){
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write Y- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	vals[vstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*Y + 1)*num_link_var + k] = 
+			*(op->D + num_4link_var*op->neighbor_table[index-1] + Y*num_link_var + k); //columwise in D and in vals
+	// 		startpos   find block row  				write Y coupl.     	
+    	
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write Y- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	colInd[cstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*Y+1)*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index + Y]  +  	(int)(k / num_site_var);
+    	//		find col. start of Y coupl. 	+1 = skip self coupl.		rounds down (column wise storage)
+    	
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write Y- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	rowInd[rstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*Y+1)*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index-1] + 		k % num_site_var;
+    	//		find row start of self coupl.				row is quickly changing index    	
+    }
+    //############################################################################
     in_pt = in + num_site_var*op->neighbor_table[index+Y];
     coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
     
-    D_pt += num_link_var;
+    
+    
+    D_pt += num_link_var;	// D_pt = op->D + num_4link_var*op->neighbor_table[index-1] + X*num_link_var;
+    //###########################################################################
+    for (k = 0; k < num_link_var; k++){
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write X- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	vals[vstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*X + 1)*num_link_var + k] = 
+			*(op->D + num_4link_var*op->neighbor_table[index-1] + X*num_link_var + k); //columwise in D and in vals
+	// 		startpos   find block row  				write X coupl.     	
+    	
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write X- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	colInd[cstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*X+1)*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index + X]  +  	(int)(k / num_site_var);
+    	//		find col. start of X coupl. 	+1 = skip self coupl.		rounds down (column wise storage)
+    	
+    	//    startpos   find correct block row (-1 cause index++)	skip self coupl.   write X- coupl.("2* +1" due to structure of vals[self, T+, T-, Z+, Z-...]
+    	rowInd[rstart + (9 * num_link_var)*op->neighbor_table[index-1] + num_link_var    + (2*X+1)*num_link_var + k] = 
+    			num_link_var * op->neighbor_table[index-1] + 		k % num_site_var;
+    	//		find row start of self coupl.				row is quickly changing index    	
+    }
+    //############################################################################
     in_pt = in + num_site_var*op->neighbor_table[index+X];
     coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }

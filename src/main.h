@@ -106,6 +106,13 @@
 
   //#define MKL_float MKL_Complex8
   //#define MKL_double MKL_Complex16
+
+
+
+  #define gemv_double zgemv_
+  #define gemv_float cgemv_
+  extern void zgemv_(char *transA, int *m, int *n, double complex *alpha, double complex *A, int *lda, double complex *X, int *incx, double complex *beta, double  complex *Y, int *incy);
+  extern void cgemv_(char *transA, int *m, int *n, float complex *alpha, float complex *A, int *lda, float complex *X, int *incx, float complex *beta, float  complex *Y, int *incy);
 #endif
 
 
