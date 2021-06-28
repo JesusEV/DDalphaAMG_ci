@@ -122,6 +122,12 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->block_jacobi_PRECISION.b_backup = NULL;
   local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
+
+#ifdef MUMPS_ADDS
+  p->mumps_vals = NULL;
+  p->mumps_Is = NULL;
+  p->mumps_Js = NULL;
+#endif
 }
 
 
@@ -399,6 +405,14 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
                                          &(p->block_jacobi_PRECISION.local_p), l );
   }
 #endif
+
+#ifdef MUMPS_ADDS
+  int site_var = l->num_lattice_site_var;
+  int nr_nodes = l->num_inner_lattice_sites;
+  MALLOC( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes );
+  MALLOC( p->mumps_Is,int,SQUARE(site_var)*nr_nodes );
+  MALLOC( p->mumps_Js,int,SQUARE(site_var)*nr_nodes );
+#endif
 }
 
 
@@ -509,6 +523,14 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
 
     local_fgmres_PRECISION_struct_free( &(p->block_jacobi_PRECISION.local_p), l );
   }
+#endif
+
+#ifdef MUMPS_ADDS
+  int site_var = l->num_lattice_site_var;
+  int nr_nodes = l->num_inner_lattice_sites;
+  FREE( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes );
+  FREE( p->mumps_Is,int,SQUARE(site_var)*nr_nodes );
+  FREE( p->mumps_Js,int,SQUARE(site_var)*nr_nodes );
 #endif
 }
 

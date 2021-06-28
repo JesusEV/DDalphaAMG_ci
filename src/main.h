@@ -106,9 +106,9 @@
 
   //#define MKL_float MKL_Complex8
   //#define MKL_double MKL_Complex16
+#endif
 
-
-
+#ifdef MUMPS_ADDS
   #define gemv_double zgemv_
   #define gemv_float cgemv_
   extern void zgemv_(char *transA, int *m, int *n, double complex *alpha, double complex *A, int *lda, double complex *X, int *incx, double complex *beta, double  complex *Y, int *incy);
@@ -639,3 +639,6 @@
   #include "polyprec_double.h"
   #include "polyprec_float.h"
 #endif
+
+  #include "sparse_mv_float.h"
+  #include "sparse_mv_double.h"

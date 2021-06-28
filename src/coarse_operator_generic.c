@@ -690,6 +690,26 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
   PROF_PRECISION_STOP( _SC, 1, threading );
 
+  // ---------
+  // check through "sparse BLAS" that the self-coupling is correct
+
+  vector_PRECISION etax=NULL;
+  MALLOC( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
+
+  // up to the self coupling -- n=SQUARE(site_var)*nr_nodes
+  int nx = SQUARE(l->num_lattice_site_var)*l->num_inner_lattice_sites;
+
+  //spmv_PRECISION( etax, phi, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js,
+  //                nx, &(l->p_PRECISION), l, threading );
+
+  // TODO #2 : compare <eta> against <etax>
+
+  FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
+
+  // ---------
+
+  exit(0);
+
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 

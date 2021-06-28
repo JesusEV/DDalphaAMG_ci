@@ -200,6 +200,12 @@
     int syst_size;
     vector_PRECISION *Va, *Za;
 #endif
+
+#ifdef MUMPS_ADDS
+    vector_PRECISION mumps_vals;
+    int *mumps_Is,*mumps_Js;
+#endif
+
   } gmres_PRECISION_struct;
 
   typedef struct {
