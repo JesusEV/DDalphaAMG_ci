@@ -243,7 +243,7 @@
 #endif
 
 
-
+#ifdef MUMPS_ADDS
 
   // TODO #1 : 
   // 		sparse vals and indices : l->p_PRECISION.mumps_vals , l->p_PRECISION.mumps_Is , l->p_PRECISION.mumps_Js
@@ -258,20 +258,15 @@
       int show_vars = 0;
 
 //  complex_PRECISION *vals = malloc(SQUARE(site_var) * sizeof(complex_PRECISION));
-      complex_PRECISION my_eta[site_var];
-      complex_PRECISION my_phi[site_var];
-      complex_PRECISION vals[SQUARE(site_var)];
-      int colInd[SQUARE(site_var)];
-      int rowPtr[site_var +1];
 
       int nr_nodes = l->num_inner_lattice_sites;
       int i, j, k; // k = index in matrix
       int skip = 0;	//skip number of elements in Blockrow in large matrix (for self coupl. only skip = 0, else 8 * SQUARE(site_var))
       k = 0;
-      for (j = 0; j < nr_nodes; j++, k++){
+      for (j = 0; j < nr_nodes; j++){
         for (i = 0; i < SQUARE(site_var); i++, k++){
-          *(l->p_PRECISION.mumps_Is +k) = j * site_var + (int)(i/site_var);	// col indices
-          *(l->p_PRECISION.mumps_Js +k) = j *site_var + i % site_var;		// row indices
+          *(l->p_PRECISION.mumps_Js +k) = j * site_var + (int)(i/site_var);	// col indices
+          *(l->p_PRECISION.mumps_Is +k) = j * site_var + (i % site_var); 	// row indices
         }
         k += skip;
       }
@@ -280,40 +275,46 @@
 /*      for (k = 0; k < nr_nodes * SQUARE(site_var); k++){
         printf("I: %d, J: %d\n", *(l->p_PRECISION.mumps_Is + k), *(l->p_PRECISION.mumps_Js + k));
       }
-*/
 
-     
+      printf("len of Is, Js: %ld\n", nr_nodes * SQUARE(site_var));
+      for (k = 0; k < nr_nodes * SQUARE(site_var); k++){
+        if (*(l->p_PRECISION.mumps_Is + k) == 0) printf("found 0 in Is at k: %d\n", k);
+        if (*(l->p_PRECISION.mumps_Js + k) == 0) printf("found 0 in Js at k: %d\n", k);
+      }
+      exit(0);
+*/
       int c, r;	// col no., row no.
       for (j = 0; j < nr_nodes; j++){
 
-	// A 
-        for (k = 0, c = 0; c < num_eig_vect; c++, k++){
-          for (r = 0; r < c; r++, k++){
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + c] = *(clover_pt + k);
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + c * site_var + r] = conj_PRECISION(*(clover_pt + k));
+	// A store column-wise
+        for (k = 0, r = 0; r < num_eig_vect; r++, k++){
+          for (c = 0; c < r; c++, k++){
+            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + c * site_var + r] = *(clover_pt + k);
+            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + c] = conj_PRECISION(*(clover_pt + k));
           }
-          l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + c*site_var + c] = *(clover_pt + k);
+          l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + r] = *(clover_pt + k);
+        }
+
+
+  //remove this line as well, as soon k++ is removed
+        clover_pt += clover_step_size1;
+
+	// D store column-wise
+        for (k = 0, r = num_eig_vect; r < 2*num_eig_vect; r++, k++){
+          for (c = num_eig_vect; c < r; c++, k++){
+            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + c * site_var + r] = *(clover_pt + k);
+            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + c] = conj_PRECISION(*(clover_pt + k));
+          }
+          l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + r] = *(clover_pt + k);
         }
 
   //remove this line as well, as soon k++ is removed
         clover_pt += clover_step_size1;
 
-	// D
-        for (k = 0, c = num_eig_vect; c < 2*num_eig_vect; c++, k++){
-          for (r = num_eig_vect; r < c; r++, k++){
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + c] = *(clover_pt + k);
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + c * site_var + r] = conj_PRECISION(*(clover_pt + k));
-          }
-          l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + c * site_var + c] = *(clover_pt + k);
-        }
-
-  //remove this line as well, as soon k++ is removed
-        clover_pt += clover_step_size1;
-
-	// C
-        for (c = 0, k = 0; c < num_eig_vect; c++){
-          for (r = 0; r < num_eig_vect; r++, k++){
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + (c +  num_eig_vect) * site_var + r] =  -1.0*(conj_PRECISION(*(clover_pt + k)));
+	// C store column-wise
+        for (r = num_eig_vect, k = 0; r < 2*num_eig_vect; r++){
+          for (c = 0; c < num_eig_vect; c++, k++){
+            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + (r * site_var) + c] = -1.0*(conj_PRECISION(*(clover_pt + k)));
 //      l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + (r +  num_eig_vect) * site_var + c] =  -1.0*(conj_PRECISION(*(clover_pt + k)));
           }
         }
@@ -321,35 +322,49 @@
   //no clover_pt correction / change this once k++ is removed
 
 
-	// B
-        for (c = num_eig_vect, k = 0; c < 2*num_eig_vect; c++){
-          for (r = 0; r < num_eig_vect; r++, k++){
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + c] = *(clover_pt + k);
+	// B store column-wise / transposed from former storage
+        for (r = 0, k = 0; r < num_eig_vect; r++){
+          for (c = 0; c < num_eig_vect; c++, k++){
+            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + (c * site_var) + r + num_eig_vect] = *(clover_pt + k);
           }
         }
 
 	clover_pt += clover_step_size2;
 
+	// here self coupl. is col-wise in mumps_vals[]
+
 	// add skipping num for hopping terms in mumps_vals
       }  // end for loop over the blocks
+      
+/*
 
+      printf("len of mumps_vals: %ld\n", nr_nodes * SQUARE(site_var));
+      for (k = 0; k < nr_nodes * SQUARE(site_var); k++){
+        if (*(l->p_PRECISION.mumps_vals + k) == 0) printf("found 0 in vals at k: %d\n", k);
+      }
+      exit(0);
+*/
 
+/*
+//	old dense blas call
 
-
-/*	old dense blas call
-      char T = 'T'; //due to row wise storage
+      complex_PRECISION my_eta[site_var];
+      char N = 'T';
       complex_PRECISION one = 1, zero = 0;
       int one_i = 1;
 //  extern void zgemv_(char *transA, int *m, int *n, double complex *alpha, double complex *A, int *lda, double complex *X, int *incx, double complex *beta, double  complex *Y, int *incy);
-      gemv_PRECISION(&T, &site_var, &site_var, &one, &vals[0], 
-&site_var, &my_phi[0], &one_i, &zero, &my_eta[0], &one_i);
-  //		  T, m        , n        , alpha, A      , lda      , X         , incx  , beta , Y         , incy
+      gemv_PRECISION(&N, &site_var, &site_var, &one, &l->p_PRECISION.mumps_vals[0], &site_var, &phi[0], &one_i, &zero, &my_eta[0], &one_i);
+ 	 //		  T, m        , n        , alpha, A      , lda      , X         , incx  , beta , Y         , incy
+
+
+
 */
 
-
-
-
       clover_pt = clover;	//reset to function input
+      vector_PRECISION eta_0 = eta;
+
+#endif
+
 
       while ( phi_pt < phi_end_pt ) {
 
@@ -372,14 +387,16 @@
 
 
 
-
-      /*	old comparison for dense blas call
+#ifdef MUMPS_ADDS
+/* 
+	//	old comparison for dense blas call
       for (i = 0; i < site_var; i++){
-        printf("I:\t%d,\tDD:\t%+4.2f %+4.2fi,\town:\t%+4.2f %+4.2fi\n", i, creal(*(eta_0 +i)), cimag(*(eta_0 +i)), creal(my_eta[i]), cimag(my_eta[i]));
+        printf("I:\t%d,\tDiff:\t%+f %+fi\n", i, creal(*(eta_0 +i)) - creal(*(my_eta +i)), cimag(*(eta_0 +i)) - cimag(*(my_eta +i)));
+//        printf("I:\t%d,\tmy_eta:\t%+f %+fi\n", i, creal(*(my_eta +i)), cimag(*(my_eta +i)));
       }
       exit(0);
-      */
-
+*/
+#endif
 
 
 
