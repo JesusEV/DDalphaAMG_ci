@@ -696,7 +696,7 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   vector_PRECISION etax=NULL;
   MALLOC(etax, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
   // up to the self coupling -- n=SQUARE(site_var)*nr_nodes
-  int nx = SQUARE(l->num_lattice_site_var)*l->num_inner_lattice_sites;
+  int nx = SQUARE(l->num_lattice_site_var)*l->num_inner_lattice_sites*l->num_processes;
 //  int nx = SQUARE(l->num_lattice_site_var); //*l->num_inner_lattice_sites;
 
   printf("calling spmv...\n");
@@ -709,10 +709,9 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 //  printf("len: %ld, \ts: %d\n", len, sizeof(etax));
 //			      a lot,  8
   len = SQUARE(l->num_lattice_site_var);
-  for (i = 0; i < len; i ++){
-    printf("i: %d, etax: %f, %f\n", i, creal(*(etax+i)), cimag(*(etax +i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
+  for (i = 0; i < 10; i ++){
+    printf("i: %d, etax: %f, %f, eta: %f, %f\n", i, CSPLIT(*(etax+i)), CSPLIT(*(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
   }
-
 
   FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
 

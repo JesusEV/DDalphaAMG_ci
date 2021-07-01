@@ -33,7 +33,9 @@ void spmv_PRECISION( vector_PRECISION out, vector_PRECISION in, vector_PRECISION
   ins[8] = in;
 
   for( i=0;i<8;i++ ){
-    if( proc_neighbors[i]==g.my_rank ) ins[i] = in;
+    if( proc_neighbors[i]==g.my_rank ){
+      ins[i] = in;
+    }
     else{
       ins[i] = NULL;
       MALLOC( ins[i],complex_PRECISION,vl );
@@ -54,18 +56,22 @@ void spmv_PRECISION( vector_PRECISION out, vector_PRECISION in, vector_PRECISION
   for( w=0;w<n;w++ ){
     i = Is[w];
     jx = Js[w];
-    px = jx/vl;
+    px = jx/(vl*l->num_lattice_site_var);
     if( px==g.my_rank ) inx = in;
     else{
       for( wx=0;wx<8;wx++ ){
         if( px==proc_neighbors[wx] ) inx = ins[wx];
       }
     }
+
+    j = jx%vl;
+    //printf("i=%d,j=%d, lth=%d, vl=%d, vl/48=%d, l->num_lattice_site_var=%d, n=%d\n", i,j,vl*l->num_lattice_site_var, vl, vl/48, l->num_lattice_site_var, n);
+    //printf("j=%d,jx=%d\n", j,jx);
+    //printf("in=%p,inx=%p\n", in,inx);
+    rval = inx[j];
+    out[i] += A[w]*rval;
   }
 
-  j = jx%vl;
-  rval = inx[j];
-  out[i] += A[w]*rval;
-
   END_MASTER(threading)
+
 }
