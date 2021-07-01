@@ -265,8 +265,9 @@
       k = 0;
       for (j = 0; j < nr_nodes; j++){
         for (i = 0; i < SQUARE(site_var); i++, k++){
-          *(l->p_PRECISION.mumps_Js +k) = j * site_var + (int)(i/site_var);	// col indices
-          *(l->p_PRECISION.mumps_Is +k) = j * site_var + (i % site_var); 	// row indices
+          *(l->p_PRECISION.mumps_Is +k) = j * site_var + (int)(i/site_var);	// col indices
+          *(l->p_PRECISION.mumps_Js +k) = j * site_var + (i % site_var); 	
+// row indices
         }
         k += skip;
       }

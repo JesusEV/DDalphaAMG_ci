@@ -708,11 +708,15 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   int len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;
 //  printf("len: %ld, \ts: %d\n", len, sizeof(etax));
 //			      a lot,  8
-  len = SQUARE(l->num_lattice_site_var);
-  for (i = 0; i < 10; i ++){
-    printf("i: %d, etax: %f, %f, eta: %f, %f\n", i, CSPLIT(*(etax+i)), CSPLIT(*(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
-  }
+//  len = SQUARE(l->num_lattice_site_var);	// first block
 
+
+  // CHECK DIFF BETWEEN SPARSE BLAS RES. (etax) AND OLD DDalphaAMG RES. (eta)
+  for (i = 0; i < len; i ++){
+    if (abs(*(etax+i) - *(eta+i)) > 0.00001) {
+      printf("i: %d, etax - eta: %f, %f\n", i, CSPLIT(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
+    }
+  }
   FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
 
   // ---------
