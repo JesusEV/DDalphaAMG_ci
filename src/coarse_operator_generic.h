@@ -249,25 +249,20 @@
   // 		sparse vals and indices : l->p_PRECISION.mumps_vals , l->p_PRECISION.mumps_Is , l->p_PRECISION.mumps_Js
 
 
-    
+
 
   //To-Dos: 
 // remove index k and use clover_pt ++ 
 
 
-      int show_vars = 0;
-
-//  complex_PRECISION *vals = malloc(SQUARE(site_var) * sizeof(complex_PRECISION));
 
       int nr_nodes = l->num_inner_lattice_sites;
       int i, j, k; // k = index in matrix
-      int skip = 0;	//skip number of elements in Blockrow in large matrix (for self coupl. only skip = 0, else 8 * SQUARE(site_var))
-      k = 0;
-      for (j = 0; j < nr_nodes; j++){
+      int skip = 8 * SQUARE(site_var);	//skip number of elements in Blockrow in large matrix (for self coupl. only skip = 0, else 8 * SQUARE(site_var))
+      for (j = 0, k = 0; j < nr_nodes; j++){
         for (i = 0; i < SQUARE(site_var); i++, k++){
           *(l->p_PRECISION.mumps_Is +k) = j * site_var + (int)(i/site_var);	// col indices
-          *(l->p_PRECISION.mumps_Js +k) = j * site_var + (i % site_var); 	
-// row indices
+          *(l->p_PRECISION.mumps_Js +k) = j * site_var + (i % site_var); 	// row indices
         }
         k += skip;
       }
@@ -290,10 +285,10 @@
 	// A store column-wise
         for (k = 0, r = 0; r < num_eig_vect; r++, k++){
           for (c = 0; c < r; c++, k++){
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + c * site_var + r] = *(clover_pt + k);
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + c] = conj_PRECISION(*(clover_pt + k));
+            l->p_PRECISION.mumps_vals[j*9*SQUARE(site_var) + c * site_var + r] = *(clover_pt + k);
+            l->p_PRECISION.mumps_vals[j*9*SQUARE(site_var) + r * site_var + c] = conj_PRECISION(*(clover_pt + k));
           }
-          l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + r] = *(clover_pt + k);
+          l->p_PRECISION.mumps_vals[j*9*SQUARE(site_var) + r * site_var + r] = *(clover_pt + k);
         }
 
 
@@ -303,10 +298,10 @@
 	// D store column-wise
         for (k = 0, r = num_eig_vect; r < 2*num_eig_vect; r++, k++){
           for (c = num_eig_vect; c < r; c++, k++){
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + c * site_var + r] = *(clover_pt + k);
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + c] = conj_PRECISION(*(clover_pt + k));
+            l->p_PRECISION.mumps_vals[j*9*SQUARE(site_var) + c * site_var + r] = *(clover_pt + k);
+            l->p_PRECISION.mumps_vals[j*9*SQUARE(site_var) + r * site_var + c] = conj_PRECISION(*(clover_pt + k));
           }
-          l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + r * site_var + r] = *(clover_pt + k);
+          l->p_PRECISION.mumps_vals[j*9*SQUARE(site_var) + r * site_var + r] = *(clover_pt + k);
         }
 
   //remove this line as well, as soon k++ is removed
@@ -315,8 +310,8 @@
 	// C store column-wise
         for (r = num_eig_vect, k = 0; r < 2*num_eig_vect; r++){
           for (c = 0; c < num_eig_vect; c++, k++){
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + (r * site_var) + c] = -1.0*(conj_PRECISION(*(clover_pt + k)));
-//      l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + (r +  num_eig_vect) * site_var + c] =  -1.0*(conj_PRECISION(*(clover_pt + k)));
+            l->p_PRECISION.mumps_vals[j*9*SQUARE(site_var) + (r * site_var) + c] = -1.0*(conj_PRECISION(*(clover_pt + k)));
+//      l->p_PRECISION.mumps_vals[j*9*SQUARE(site_var) + (r +  num_eig_vect) * site_var + c] =  -1.0*(conj_PRECISION(*(clover_pt + k)));
           }
         }
 
@@ -326,15 +321,14 @@
 	// B store column-wise / transposed from former storage
         for (r = 0, k = 0; r < num_eig_vect; r++){
           for (c = 0; c < num_eig_vect; c++, k++){
-            l->p_PRECISION.mumps_vals[j * SQUARE(site_var) + (c * site_var) + r + num_eig_vect] = *(clover_pt + k);
+            l->p_PRECISION.mumps_vals[j*9*SQUARE(site_var) + (c * site_var) + r + num_eig_vect] = *(clover_pt + k);
           }
         }
 
 	clover_pt += clover_step_size2;
 
-	// here self coupl. is col-wise in mumps_vals[]
-
-	// add skipping num for hopping terms in mumps_vals
+	// skipping num for hopping terms in mumps_vals
+        k += skip;
       }  // end for loop over the blocks
       
 /*
@@ -553,7 +547,7 @@
     } else {
 #endif
 
-
+#ifdef MUMPS_ADDS_2
 //####################################################################
 //		MY CODE
 //####################################################################
@@ -564,11 +558,11 @@
       int colInd[4 * num_eig_vect2];
       int rowPtr[4 * num_eig_vect2 +1];
 
-      int i, j;
-      for (i = 0; i < 2 * num_eig_vect; i++){
-        my_eta[i] = *(eta+i);
-        my_phi[i] = *(phi+i);
-      }
+	// here is 2 * num_eig_vect = sitevar and num_eig_vect2 = SQUARE(site_var)
+      printf("numeig: %d, numeig2: %d\n", num_eig_vect, num_eig_vect2);
+      exit(0);
+      int i, j, k;
+      int skip = num_eig_vect2;
 
 
 /*
@@ -578,7 +572,7 @@
       exit(0);
 
 */
-        int k, c, r;	// index in matrix, col no., row no.
+        int c, r;	// index in matrix, col no., row no.
 	
 
 	// A 
@@ -627,21 +621,17 @@ k);
   //		  T, m        , n        , alpha, A      , lda      , X         , incx  , beta , Y         , incy
    
 /*
-      if (show_vars == 1){
         printf("#\n");
         printf("# len of vals: \t %ld\n", sizeof(vals)/sizeof(vals[0]));	// no of els in vals
         printf("# len of colInd: \t %ld\n", sizeof(colInd)/sizeof(colInd[0]));// no of els in colInd
         printf("# len of rowPtr: \t %ld\n", sizeof(rowPtr)/sizeof(rowPtr[0]));// no of els in rowPtr
         printf("####################################################\n");
-      }
 
-      if (show_vars == 1){
         j = 0;
         for (i = 0; i < sizeof(vals)/sizeof(vals[0]); i++){
           if (vals[i] == 0) j++;
         }
         printf("found %d elements equal to 0\n", j);
-      }
       */
 
       complex_PRECISION *eta_0 = eta;
@@ -651,6 +641,7 @@ k);
 //###########################################################
 // 		ORIGINAL DDalphaAMG
 //###########################################################
+#endif
 
       // A    
       // eta -= D*phi, D stored columnwise
@@ -670,6 +661,8 @@ k);
       nmv_PRECISION( eta, D, phi, num_eig_vect );
 
 
+#ifdef MUMPS_ADDS_2
+
 //###########################################################
 // 		END OF ORIGINAL DDalphaAMG
 //###########################################################
@@ -683,7 +676,7 @@ k);
     */
 
 
-
+#endif
 
 
 

@@ -688,15 +688,17 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   coarse_self_couplings_PRECISION_vectorized( eta, phi, op, start, end, l );
 #endif
 
-  PROF_PRECISION_STOP( _SC, 1, threading );
 
+
+#ifdef MUMPS_ADDS
   // ---------
   // check through "sparse BLAS" that the self-coupling is correct
 
   vector_PRECISION etax=NULL;
   MALLOC(etax, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
   // up to the self coupling -- n=SQUARE(site_var)*nr_nodes
-  int nx = SQUARE(l->num_lattice_site_var)*l->num_inner_lattice_sites*l->num_processes;
+  int nx = SQUARE(l->num_lattice_site_var) 
+* l->num_inner_lattice_sites * l->num_processes * 9;
 //  int nx = SQUARE(l->num_lattice_site_var); //*l->num_inner_lattice_sites;
 
   printf("calling spmv...\n");
@@ -705,7 +707,7 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
   // TODO #2 : compare <eta> against <etax>
   int i;
-  int len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;
+  int len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
 //  printf("len: %ld, \ts: %d\n", len, sizeof(etax));
 //			      a lot,  8
 //  len = SQUARE(l->num_lattice_site_var);	// first block
@@ -713,15 +715,18 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
   // CHECK DIFF BETWEEN SPARSE BLAS RES. (etax) AND OLD DDalphaAMG RES. (eta)
   for (i = 0; i < len; i ++){
-    if (abs(*(etax+i) - *(eta+i)) > 0.00001) {
-      printf("i: %d, etax - eta: %f, %f\n", i, CSPLIT(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
-    }
+    printf("i: %d, etax - eta: %f, %f\n", i, cimag(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
   }
   FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
 
   // ---------
 
   exit(0);
+#endif
+
+
+
+  PROF_PRECISION_STOP( _SC, 1, threading );
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
@@ -733,6 +738,8 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 #else
   coarse_hopping_term_PRECISION_vectorized( eta, phi, op, _FULL_SYSTEM, l, threading ); 
 #endif
+
+
 
   PROF_PRECISION_STOP( _NC, 1, threading );
 
