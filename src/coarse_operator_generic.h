@@ -280,7 +280,9 @@
       exit(0);
 */
       int c, r;	// col no., row no.
-      for (j = 0; j < nr_nodes; j++){
+//      nr_nodes / g.num_processes * g.my_rank 			= nodes per process * p_id
+//	nr_nodes / g.num_processes * (g.my_rank +1)		= first node of next process
+      for (j = nr_nodes / g.num_processes * g.my_rank; j < nr_nodes / g.num_processes * (g.my_rank + 1); j++){
 
 	// A store column-wise
         for (k = 0, r = 0; r < num_eig_vect; r++, k++){
@@ -331,8 +333,8 @@
         k += skip;
       }  // end for loop over the blocks
       
-/*
 
+/*
       printf("len of mumps_vals: %ld\n", nr_nodes * SQUARE(site_var));
       for (k = 0; k < nr_nodes * SQUARE(site_var); k++){
         if (*(l->p_PRECISION.mumps_vals + k) == 0) printf("found 0 in vals at k: %d\n", k);
@@ -359,8 +361,6 @@
       vector_PRECISION eta_0 = eta;
 
 #endif
-
-
       while ( phi_pt < phi_end_pt ) {
 
 

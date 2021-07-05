@@ -691,6 +691,29 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
 
 #ifdef MUMPS_ADDS
+  // first: communicate Vals
+  START_MASTER(threading)
+
+  if (g.num_processes > 1) {
+  
+    int nr_nodes = l->num_inner_lattice_sites;  
+    int site_var = l->num_lattice_site_var;  
+    int p_els = (nr_nodes/g.num_processes) * SQUARE(site_var);	//start offset per process = amount of elements on each process
+    int p_start = p_els * g.my_rank;
+
+    //MPI_Allgather
+    //MPI_Allgather(void* send_data, int send_count, MPI_Datatype dt, void* recv_data, int recv_count, MPI_Datatype dt, MPI_Comm comm);
+    MPI_Allgather((l->p_PRECISION.mumps_vals + p_start), 	p_els,	MPI_COMPLEX_PRECISION,	(l->p_PRECISION.mumps_vals),	p_els,	MPI_COMPLEX_PRECISION, g.comm_cart);
+//			send data,			    send_count	MPI_datatype		recieve data			recv_count	Recv datatype,	communicator
+  }
+  
+  printf("Allgather done!\n");
+  END_MASTER(threading)
+  
+//Sync?
+//  exit(0);
+
+
   // ---------
   // check through "sparse BLAS" that the self-coupling is correct
 
