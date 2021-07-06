@@ -39,15 +39,16 @@ void spmv_PRECISION( vector_PRECISION out, vector_PRECISION in, vector_PRECISION
     else{
       ins[i] = NULL;
       MALLOC( ins[i],complex_PRECISION,vl );
-      MPI_Isend( in, vl, MPI_COMPLEX_PRECISION, proc_neighbors[i], MPI_ANY_TAG, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &reqs[i] );
-      MPI_Irecv( ins[i], vl, MPI_COMPLEX_PRECISION, proc_neighbors[i], MPI_ANY_TAG, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &reqr[i] );
+      // hardcoded the <5> as a tag, as MPI_ANY_TAG was (weirdly) throwing an error
+      MPI_Isend( in, vl, MPI_COMPLEX_PRECISION, proc_neighbors[i], 5, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &(reqs[i]) );
+      MPI_Irecv( ins[i], vl, MPI_COMPLEX_PRECISION, proc_neighbors[i], 5, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &(reqr[i]) );
     }
   }
 
   for( i=0;i<8;i++ ){
     if( proc_neighbors[i]!=g.my_rank ) {
-      MPI_Wait( &reqs[i],&stat );
-      MPI_Wait( &reqr[i],&stat );
+      MPI_Wait( &(reqs[i]),&stat );
+      MPI_Wait( &(reqr[i]),&stat );
     }
   }
 
