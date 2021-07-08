@@ -408,7 +408,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 
 #ifdef MUMPS_ADDS
   int site_var = l->num_lattice_site_var;
-  int nr_nodes = l->num_inner_lattice_sites;
+  int nr_nodes = l->num_inner_lattice_sites * g.num_processes;
   MALLOC( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes * 9);
   MALLOC( p->mumps_Is,int,SQUARE(site_var)*nr_nodes * 9); // nr. of el per node * nr. of nodes * 9 	//9 = self + T+ + T- + Z+ + Z- + Y+ ...
   MALLOC( p->mumps_Js,int,SQUARE(site_var)*nr_nodes * 9);
@@ -527,7 +527,7 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
 
 #ifdef MUMPS_ADDS
   int site_var = l->num_lattice_site_var;
-  int nr_nodes = l->num_inner_lattice_sites;
+  int nr_nodes = l->num_inner_lattice_sites * g.num_processes;
   FREE( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes );
   FREE( p->mumps_Is,int,SQUARE(site_var)*nr_nodes );
   FREE( p->mumps_Js,int,SQUARE(site_var)*nr_nodes );

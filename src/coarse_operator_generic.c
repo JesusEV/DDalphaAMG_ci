@@ -697,39 +697,54 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   if (g.num_processes > 1) {
   
     int nr_nodes = l->num_inner_lattice_sites;  
-    int site_var = l->num_lattice_site_var;  
-    int p_els = (nr_nodes/g.num_processes) * SQUARE(site_var);	//start offset per process = amount of elements on each process
+    int site_var = l->num_lattice_site_var;
+    printf("\nsite_var: %d\n", site_var);
+    printf("nr_nodes: %d\n", nr_nodes);
+    int p_els = nr_nodes * 9 * SQUARE(site_var);	//start offset per process = amount of elements on each process
     int p_start = p_els * g.my_rank;
+    printf("rank: %d, \tp_start: %d\n", g.my_rank, p_start);
 
     //MPI_Allgather
     //MPI_Allgather(void* send_data, int send_count, MPI_Datatype dt, void* recv_data, int recv_count, MPI_Datatype dt, MPI_Comm comm);
     MPI_Allgather((l->p_PRECISION.mumps_vals + p_start), 	p_els,	MPI_COMPLEX_PRECISION,	(l->p_PRECISION.mumps_vals),	p_els,	MPI_COMPLEX_PRECISION, g.comm_cart);
 //			send data,			    send_count	MPI_datatype		recieve data			recv_count	Recv datatype,	communicator
+
+    if (g.my_rank == 0){
+      // check self coupl elements != 0
+      int i, j, k;
+
+
+/*      for (i = 0, k = 0; i < 1; i++){
+        for (j = 0; j < SQUARE(site_var); j++, k++){
+          printf("i: %d, \tj: %d, \tIs: %d, \tJs: %d\n", i, j, l->p_PRECISION.mumps_Is[k], l->p_PRECISION.mumps_Js[k]);
+        }
+        k += 8 * SQUARE(site_var);
+      }
+      exit(0);
+*/
+
+
+      for (i = 0, k = 0; i < 256; i++){
+        for (j = 0; j < SQUARE(site_var); j++, k++){
+          if (l->p_PRECISION.mumps_vals[k] == 0){
+            printf("vals = 0 in blockrow %d, \telement %d\n", i, j);
+          }
+/*          if (l->p_PRECISION.mumps_Is[k] == 0){
+            printf("Is   = 0 in blockrow %d, \telement %d\n", i, j);
+          }
+          if (l->p_PRECISION.mumps_Js[k] == 0){
+            printf("Js   = 0 in blockrow %d, \telement %d\n", i, j);
+          }
+*/      }
+        k += 8 * SQUARE(site_var);
+      }
+    }
+//    exit(0);
   }
-  
   printf("Allgather done!\n");
   END_MASTER(threading)
   
 //Sync?
-//  exit(0);
-
-#endif
-
-
-
-  PROF_PRECISION_STOP( _SC, 1, threading );
-
-  SYNC_MASTER_TO_ALL(threading)
-  SYNC_CORES(threading)
-
-  PROF_PRECISION_START( _NC, threading );
-
-#ifndef OPTIMIZED_COARSE_NEIGHBOR_COUPLING_PRECISION
-  coarse_hopping_term_PRECISION( eta, phi, op, _FULL_SYSTEM, l, threading );
-#else
-  coarse_hopping_term_PRECISION_vectorized( eta, phi, op, _FULL_SYSTEM, l, threading ); 
-#endif
-
 
 
 
@@ -756,30 +771,46 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   // TODO #2 : compare <eta> against <etax>
   int len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
 
-  len = l->num_lattice_site_var;	// first block row
-
-//---------------- check vals[i] != 0 anymore
-  int i;
-//  int bs = SQUARE(l->num_lattice_site_var) * 9;				//first block row
-  int bs = SQUARE(l->num_lattice_site_var) * 9 * 256;			//all block rows
-/*
-  for (i = 0; i < bs; i++){
-    printf("i %d,\tv: %f, %f\n", i, creal(l->p_PRECISION.mumps_vals[i]), cimag(l->p_PRECISION.mumps_vals[i]));
-  }
-  printf("\n\n\n");
-// NO ZEROS FOUND IN VALS == ALL ELEMENTS ARE SET TO REALISTIC POSITIONS
-//  exit(0);
-*/
-
+//  len = 65*l->num_lattice_site_var;	// first block row
+  if (g.my_rank == 0){
+    int i;
   // CHECK DIFF BETWEEN SPARSE BLAS RES. (etax) AND OLD DDalphaAMG RES. (eta)
-  for (i = 0; i < len; i ++){
-    printf("i: %d, etax - eta: %f, %f\n", i, cimag(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
+    for (i = 0; i < len; i ++){
+      printf("i: %d, etax - eta: %f, %f\n", i, cimag(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
+//      printf("i: %d, etax: %f, %f\n", i, cimag(*(etax+i)), cimag(*(etax+i)));
+//      printf("i: %d, etax - eta: %f, %f\n", i, cimag(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
+    }
   }
+
   FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
 
   // ---------
 
   exit(0);
+
+
+
+
+
+
+#endif
+
+
+
+
+
+  PROF_PRECISION_STOP( _SC, 1, threading );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+  PROF_PRECISION_START( _NC, threading );
+
+#ifndef OPTIMIZED_COARSE_NEIGHBOR_COUPLING_PRECISION
+  coarse_hopping_term_PRECISION( eta, phi, op, _FULL_SYSTEM, l, threading );
+#else
+  coarse_hopping_term_PRECISION_vectorized( eta, phi, op, _FULL_SYSTEM, l, threading ); 
+#endif
 
 
 
