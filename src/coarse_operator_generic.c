@@ -713,38 +713,6 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 //Sync?
 //  exit(0);
 
-
-  // ---------
-  // check through "sparse BLAS" that the self-coupling is correct
-
-  vector_PRECISION etax=NULL;
-  MALLOC(etax, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
-  // up to the self coupling -- n=SQUARE(site_var)*nr_nodes
-  int nx = SQUARE(l->num_lattice_site_var) 
-* l->num_inner_lattice_sites * l->num_processes * 9;
-//  int nx = SQUARE(l->num_lattice_site_var); //*l->num_inner_lattice_sites;
-
-  printf("calling spmv...\n");
-  spmv_PRECISION( etax, phi, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js,
-                  nx, &(l->p_PRECISION), l, threading );
-
-  // TODO #2 : compare <eta> against <etax>
-  int i;
-  int len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
-//  printf("len: %ld, \ts: %d\n", len, sizeof(etax));
-//			      a lot,  8
-//  len = SQUARE(l->num_lattice_site_var);	// first block
-
-
-  // CHECK DIFF BETWEEN SPARSE BLAS RES. (etax) AND OLD DDalphaAMG RES. (eta)
-  for (i = 0; i < len; i ++){
-    printf("i: %d, etax - eta: %f, %f\n", i, cimag(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
-  }
-  FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
-
-  // ---------
-
-  exit(0);
 #endif
 
 
@@ -761,6 +729,61 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 #else
   coarse_hopping_term_PRECISION_vectorized( eta, phi, op, _FULL_SYSTEM, l, threading ); 
 #endif
+
+
+
+
+
+  // ---------
+  // check through "sparse BLAS" that the self-coupling is correct
+
+  vector_PRECISION etax=NULL;
+  MALLOC(etax, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
+  // up to the self coupling -- n=SQUARE(site_var)*nr_nodes
+  int nx = SQUARE(l->num_lattice_site_var) 
+* l->num_inner_lattice_sites * l->num_processes * 9;
+//  int nx = SQUARE(l->num_lattice_site_var); //*l->num_inner_lattice_sites;
+
+  printf("calling spmv...\n");
+  spmv_PRECISION( etax, phi, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js,
+                  nx, &(l->p_PRECISION), l, threading );
+
+
+
+
+
+  // TODO #2 : compare <eta> against <etax>
+  int len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
+
+  len = l->num_lattice_site_var;	// first block row
+
+//---------------- check vals[i] != 0 anymore
+  int i;
+//  int bs = SQUARE(l->num_lattice_site_var) * 9;				//first block row
+  int bs = SQUARE(l->num_lattice_site_var) * 9 * 256;			//all block rows
+/*
+  for (i = 0; i < bs; i++){
+    printf("i %d,\tv: %f, %f\n", i, creal(l->p_PRECISION.mumps_vals[i]), cimag(l->p_PRECISION.mumps_vals[i]));
+  }
+  printf("\n\n\n");
+// NO ZEROS FOUND IN VALS == ALL ELEMENTS ARE SET TO REALISTIC POSITIONS
+//  exit(0);
+*/
+
+  // CHECK DIFF BETWEEN SPARSE BLAS RES. (etax) AND OLD DDalphaAMG RES. (eta)
+  for (i = 0; i < len; i ++){
+    printf("i: %d, etax - eta: %f, %f\n", i, cimag(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
+  }
+  FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
+
+  // ---------
+
+  exit(0);
+
+
+
+
+
 
 
 
