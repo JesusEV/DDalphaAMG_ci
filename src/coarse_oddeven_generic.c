@@ -717,17 +717,12 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 #endif
 
 
-
-
- 
-
-
   
   // compute U_mu^dagger coupling
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;		// 5 = self + T-neighb. + Z-n + Y-n + X-n
     in_pt = in + num_site_var*op->neighbor_table[index];
-    // col ind: neighbor_table[index]
+    // block col ind: neighbor_table[index]
     D_pt = op->D + num_4link_var*op->neighbor_table[index] + 0*num_link_var;
 
 
@@ -739,72 +734,70 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 //		[-B*	 D*]
 //Storage order A C B D
 
-//    for (j = 0; j < 4; j++) {
+    for (j = 0; j < 4; j++) {
 	// LOOP FOR T = 0, Z = 1, Y = 2, X = 3
 
 	// A* ###########################
     for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl.
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + k) = 
-			-1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	0*num_link_var + k)); 	//columwise in D
+      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + k) = 
+			-1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	j*num_link_var + k)); 	//columwise in D
 	//				    proc start		find correct block row					start of T- coupling
 
-      *(rowInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 0] + 		k%(int)(num_site_var*0.5);
+      *(rowInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + k) = 
+			p_start +	num_site_var * op->neighbor_table[index + 1 + j] + 		k/(int)(num_site_var*0.5);
 	//	proc start		block row start						fast changing index
 
-      *(colInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5);
+      *(colInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + k) = 
+					num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5);
 	//		no p_start	find start of T- coupling 				slow changing index	
     }
 	// -C* ##################################
     for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part C
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-				1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	0*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
+      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+				1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	j*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
 //						    proc start		find correct block row					start of T- coupling	start of part C
 
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 0] + 		k%(int)(num_site_var*0.5);
+      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			p_start +	num_site_var * op->neighbor_table[index + 1 + j] + 		k/(int)(num_site_var*0.5);
 	//	proc start		block row start						fast changing index
 
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+					num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
 	//		no p_start	find start of T- coupling 				slow changing index	right half
     }
 	// -B* #################################
     for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part B
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-				1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	0*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
+      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+				1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	j*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
 //						    proc start		find correct block row				start of T- coupling	start of part B
 
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 0] + 		k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5);
+      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+			p_start +	num_site_var * op->neighbor_table[index + 1 + j] + 		k/(int)(num_site_var*0.5) + (int)(num_site_var*0.5);
 	//	proc start		block row start						fast changing index		lower half
 
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5)	+0;
+      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+					num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5)	+0;
 	//		no p_start	find start of T- coupling 				slow changing index	left half
     }
 	// D* #################################
     for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part B
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-				-1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	0*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
+      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+				-1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	j*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
 //					    proc start		find correct block row 				 start of T- coupling	start of part D
 
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 0] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+			p_start +	num_site_var * op->neighbor_table[index + 1 + j] + 		k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
 	//	proc start		block row start						fast changing index		lower half
 
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*0*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*j*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+					num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
 	//		no p_start	find start of T- coupling 				slow changing index	right half
     }
-
-
-//    }	//end of for loop over directions
+    }	//end of for loop over directions
 
 
 // ########################################################################
@@ -812,86 +805,14 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
     index++;		//first elements in n_t contains node itself, then T-neighbor, Z, Y, X
     out_pt = out + num_site_var*op->neighbor_table[index+T];
-    // row ind: neighbor_table[index+T]
+    // block row ind: neighbor_table[index+T]
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
   SYNC_CORES(threading)
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;
     in_pt = in + num_site_var*op->neighbor_table[index];
-    D_pt = op->D + num_4link_var*op->neighbor_table[index] + 1*num_link_var;    
-    
-
-
-
-//#########################################################
-
-	// A* ###########################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl.
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + k) = 
-			-1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	1*num_link_var + k)); 	//columwise in D
-	//				    proc start		find correct block row(+j due to -mu(x +mu_hat)	start of T- coupling
-
-      *(rowInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 1] + 		k%(int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index
-
-      *(colInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5);
-	//		no p_start	find start of T- coupling 				slow changing index	
-    }
-	// -C* ##################################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part C
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-				1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	1*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
-//						    proc start		find correct block row				start of T- coupling	start of part C
-
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 1] + 		k%(int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index
-
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
-	//		no p_start	find start of T- coupling 				slow changing index	right half
-    }
-	// -B* #################################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part B
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-				1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index + 1 + 1] + 	1*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
-//						    proc start		find correct block row				start of T- coupling	start of part B
-
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 1] + 		k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index		lower half
-
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5)	+0;
-	//		no p_start	find start of T- coupling 				slow changing index	left half
-    }
-	// D* #################################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part B
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-				-1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	1*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
-//					    proc start		find correct block row 				 start of T- coupling	start of part D
-
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 1] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index		lower half
-
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*1*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
-	//		no p_start	find start of T- coupling 				slow changing index	right half
-    }
-
-//#################################
-
-
-
-
+    D_pt = op->D + num_4link_var*op->neighbor_table[index] + 1*num_link_var;
     index++;
     out_pt = out + num_site_var*op->neighbor_table[index+Z];
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
@@ -901,74 +822,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     index = 5*i;
     in_pt = in + num_site_var*op->neighbor_table[index];
     D_pt = op->D + num_4link_var*op->neighbor_table[index] + 2*num_link_var;
-
-
-// ########################################
-
-	// A* ###########################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl.
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + k) = 
-			-1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	2*num_link_var + k)); 	//columwise in D
-	//				    proc start		find correct block row(+j due to -mu(x +mu_hat)	start of T- coupling
-
-      *(rowInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 2] + 		k%(int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index
-
-      *(colInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5);
-	//		no p_start	find start of T- coupling 				slow changing index	
-    }
-	// -C* ##################################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part C
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-				1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	2*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
-//						    proc start		find correct block row				start of T- coupling	start of part C
-
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 2] + 		k%(int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index
-
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
-	//		no p_start	find start of T- coupling 				slow changing index	right half
-    }
-	// -B* #################################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part B
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-				1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	2*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
-//						    proc start		find correct block row				start of T- coupling	start of part B
-
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 2] + 		k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index		lower half
-
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5)	+0;
-	//		no p_start	find start of T- coupling 				slow changing index	left half
-    }
-	// D* #################################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part B
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-				-1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	2*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
-//					    proc start		find correct block row 				 start of T- coupling	start of part D
-
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 2] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index		lower half
-
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*2*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
-	//		no p_start	find start of T- coupling 				slow changing index	right half
-    }
-
-//###########################################
-
-
     index++;
     out_pt = out + num_site_var*op->neighbor_table[index+Y];
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
@@ -978,81 +831,10 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     index = 5*i;
     in_pt = in + num_site_var*op->neighbor_table[index];
     D_pt = op->D + num_4link_var*op->neighbor_table[index] + 3*num_link_var;
-
-// ###########################################
-
-	// A* ###########################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl.
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + k) = 
-			-1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	3*num_link_var + k)); 	//columwise in D
-	//				    proc start		find correct block row(+j due to -mu(x +mu_hat)	start of T- coupling
-
-      *(rowInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 3] + 		k%(int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index
-
-      *(colInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5);
-	//		no p_start	find start of T- coupling 				slow changing index	
-    }
-	// -C* ##################################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part C
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-				1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	3*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
-//						    proc start		find correct block row				start of T- coupling	start of part C
-
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 3] + 		k%(int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index
-
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
-	//		no p_start	find start of T- coupling 				slow changing index	right half
-    }
-	// -B* #################################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part B
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-				1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	3*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
-//						    proc start		find correct block row				start of T- coupling	start of part B
-
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 3] + 		k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index		lower half
-
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5)	+0;
-	//		no p_start	find start of T- coupling 				slow changing index	left half
-    }
-	// D* #################################
-    for (k = 0; k < SQUARE(num_site_var/2); k ++){
-//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part B
-      *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-				-1.0 * conj_PRECISION(*(op->D + p_start + 	num_4link_var*op->neighbor_table[index] + 	3*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
-//					    proc start		find correct block row 				 start of T- coupling	start of part D
-
-      *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-			p_start +	num_site_var * op->neighbor_table[index + 1 + 3] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
-	//	proc start		block row start						fast changing index		lower half
-
-      *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*3*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
-					num_site_var * op->neighbor_table[index] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
-	//		no p_start	find start of T- coupling 				slow changing index	right half
-    }
-
-
-//##################################################
-
     index++;
     out_pt = out + num_site_var*op->neighbor_table[index+X];
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
-
-
-
-
 
 
 
@@ -1076,14 +858,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   }
   compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
 
-
-
-
-
-
-
-/*
-//	THIS PART WORKS CORRECTLY
 
 
 
@@ -1189,35 +963,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
-
-
-*/
-
-
-
-
-
-#ifdef MUMPS_ADDS
-/*
-START_LOCKED_MASTER(threading)
-
-
-    for (k = 0; k < 256 * 9 * num_link_var; k++){
-      if (*(vals+k) == (complex_PRECISION)(0)){
-        printf("k: %d\n", k);
-	exit(0);
-    	printf("V: %f, %fi, \tI: %d, J:%d\n", 	
-				creal(vals[p_start + k]),
-				cimag(vals[p_start + k]),
-				rowInd[p_start + k],
-				colInd[p_start + k]);
-      }
-    }
-    exit(0);
-END_LOCKED_MASTER(threading)
-*/
-
-#endif
 
   START_LOCKED_MASTER(threading)
   if ( op->c.comm ) {
