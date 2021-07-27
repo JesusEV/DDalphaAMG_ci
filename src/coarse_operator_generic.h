@@ -356,7 +356,7 @@
 */
 
       clover_pt = clover;	//reset to function input
-      vector_PRECISION eta_0 = eta;
+//      vector_PRECISION eta_0 = eta;
 
 #endif
       while ( phi_pt < phi_end_pt ) {

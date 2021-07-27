@@ -646,6 +646,13 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
   START_NO_HYPERTHREADS(threading)
 
+  memset(l->p_PRECISION.mumps_vals, 0, SQUARE(l->num_lattice_site_var) * 9 * l->num_inner_lattice_sites * sizeof(complex_PRECISION));
+  memset(out, 0, l->p_PRECISION.v_end - l->p_PRECISION.v_start * sizeof(complex_PRECISION));
+
+
+
+
+
   int mu, i, index, num_site_var=l->num_lattice_site_var,
       num_4link_var=4*4*l->num_parent_eig_vect*l->num_parent_eig_vect,
       num_link_var=4*l->num_parent_eig_vect*l->num_parent_eig_vect,
@@ -689,27 +696,15 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
 #ifdef MUMPS_ADDS
 
-//################################################
-/*
-  printf("start writing matrix....\n");
-  printf("size of vals: %d\n", 4*4*4*4 * 9 * num_link_var);
-  printf("num_link_var: %d\n", num_link_var);
-  printf("num_site_var: %d\n", num_site_var);
-
-//  exit(0); // here is hopping_term_PRECISION()
-*/
   
-  complex_PRECISION *vals = l->p_PRECISION.mumps_vals;
     /*	vals = [[self_coupling of site 1][T-_coupling site 1][T+_coupling site 1][Z-_coupling site 1][Z+_coupling site 1] .... [X-_coupling site 1][X+_coupling site 1]
   [self_coup site 2][T-_coup site 2]....[X+_coup site N]]
   each of the inner [] contain num_link_var elements -> to store 1 block row in matrix (entire coupling of one site) we need 9 * num_link_var elements
 
   vals =   [[self, T-, T+, Z-, Z+, Y-, Y+, X-, X+][self, T-, T+, Z-, Z+, Y-, Y+, X-, X+]....]
   */
-  int *rowInd, *colInd;
-  rowInd = l->p_PRECISION.mumps_Is;
-  colInd = l->p_PRECISION.mumps_Js;
-  int j, k;
+
+  int k;
   int nr_nodes = l->num_inner_lattice_sites;
   int p_start = num_link_var * nr_nodes * 9 * g.my_rank; // offset in sparse matrix for each process
   int p_dt_start = g.my_rank * nr_nodes * num_4link_var;
@@ -720,7 +715,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 #endif
 
 
-  
+/*
   // compute U_mu^dagger coupling
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;		// 5 = self + T-neighb. + Z-n + Y-n + X-n
@@ -729,7 +724,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     D_pt = op->D + num_4link_var*op->neighbor_table[index] + 0*num_link_var;
 
 
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_2
 // ########################################################################
 
 	//mu - dagger couplings
@@ -839,6 +834,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
+*/
 
 
   START_LOCKED_MASTER(threading)
@@ -864,14 +860,17 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
 
 
+
+
   // compute U_mu couplings
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;
     out_pt = out + num_site_var*op->neighbor_table[index];	// block row
     D_pt = op->D + num_4link_var*op->neighbor_table[index];
 
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_2
     //###########################################################################
+  int j;
 
 // U(x) =	[ A	B]
 //		[ C	D]
@@ -882,15 +881,15 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 	// A
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //	skip to proc start	find correct block row				skip self coupl.	find pos of T+ coupl. ("2* +1" due to structure of vals[self, T-, T+, Z-, Z+...]
-        *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j + 1)*num_link_var + k) = 
+        *(l->p_PRECISION.mumps_vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j + 1)*num_link_var + k) = 
 			-1.0 * *(op->D + p_dt_start + 	num_4link_var*op->neighbor_table[index] + 	j*num_link_var + k); 	//columwise in D
 	//				    proc start		find correct block row				start of T- coupling
 
-        *(rowInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j +1)*num_link_var + k) = 
+        *(l->p_PRECISION.mumps_Is + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j +1)*num_link_var + k) = 
 			p_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5);
 	//	proc start		block row start						fast changing index
 
-        *(colInd + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j +1)*num_link_var + k) = 
+        *(l->p_PRECISION.mumps_Js + p_start +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j +1)*num_link_var + k) = 
 					num_site_var * op->neighbor_table[index +1 + j] +	k/(int)(num_site_var*0.5);
 	//		no p_start	find start of T- coupling 				slow changing index
       }
@@ -898,15 +897,15 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 	// C
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //	skip to proc start	find correct block row				skip self coupl.	find pos of T+ coupl. 	find start of part C
-        *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j+1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+        *(l->p_PRECISION.mumps_vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j+1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
 			-1.0 * *(op->D + p_dt_start + 	num_4link_var*op->neighbor_table[index] + 	j*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k); 	//columwise in D
 //			    proc start		find correct block row				start of T coupling	start of part C
 
-        *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j +1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+        *(l->p_PRECISION.mumps_Is + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j +1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
 			p_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
 	//	proc start		block row start						fast changing index	lower half
 
-        *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j +1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+        *(l->p_PRECISION.mumps_Js + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j +1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
 					num_site_var * op->neighbor_table[index +1 + j] +	k/(int)(num_site_var*0.5) + 	0;
 	//		no p_start	find start of T- coupling 				slow changing index		left half
       }
@@ -914,15 +913,15 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 	// B
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //	skip to proc start	find correct block row				skip self coupl.	find pos of T+ coupl. 	find start of part B
-        *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+        *(l->p_PRECISION.mumps_vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
 			-1.0 * *(op->D + p_dt_start + 	num_4link_var*op->neighbor_table[index] + 	j*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k); 	//columwise in D
 //			    proc start		find correct block row				start of T coupling	start of part B
 
-        *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+        *(l->p_PRECISION.mumps_Is + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
 			p_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5) + 	0;
 	//	proc start		block row start						fast changing index	upper half
 
-        *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+        *(l->p_PRECISION.mumps_Js + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
 					num_site_var * op->neighbor_table[index +1 + j] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
 	//		no p_start	find start of T- coupling 				slow changing index		right half
       }
@@ -931,15 +930,15 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 	// D
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //	skip to proc start	find correct block row				skip self coupl.	find pos of T+ coupl. 	find start of part D
-        *(vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j+1)*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+        *(l->p_PRECISION.mumps_vals + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j+1)*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
 			-1.0 * *(op->D + p_dt_start + 	num_4link_var*op->neighbor_table[index] + 	j*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k); 	//columwise in D
 //			    proc start		find correct block row				start of T coupling	start of part D
 
-        *(rowInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j +1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
+        *(l->p_PRECISION.mumps_Is + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j +1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
 			p_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
 	//	proc start		block row start						fast changing index	lower half
 
-        *(colInd  + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j + 1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
+        *(l->p_PRECISION.mumps_Js + p_start + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*j + 1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
 					num_site_var * op->neighbor_table[index +1 + j] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
 	//		no p_start	find start of T- coupling 				slow changing index		right half
       }
@@ -966,11 +965,454 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   }
 
 
+
+
+
+
+#ifdef MUMPS_ADDS
+//##############################################
+/*
+  printf("r: %d, \tend: %d\n", g.my_rank, core_end);
+  if (g.my_rank == 1){
+    int i;
+    for (i = 0; i < core_end; i++){
+      index = 5*i;
+      if (op->neighbor_table[index+1+T] > core_end) {	// check wether T neighbor is in halo
+        printf("i: %d, \tnode_nr: %d, \tnext node: %d\n", i, op->neighbor_table[index], op->neighbor_table[index+1+T]);
+      }
+    }
+  }
+  exit(0);
+*/
+
+
+  int comm_nr[4] = {0, 0, 0, 0}; 	//number elements to communicate in all directions
+  int dir;
+  int node;
+
+
+	//calculate the number of elements to communicate:
+  for (dir = T; dir <= X; dir++){
+    for (node = core_start; node < core_end; node++){
+      if (op->neighbor_table[5*node+1+dir] >= l->num_inner_lattice_sites){
+        comm_nr[dir]++;
+      }
+    }
+  }
+
+
+	//allocate memory for buffers:
+  int* buff_i = NULL;				// will contain node nr. in reciever processors domain
+  complex_PRECISION* buff_d = NULL;		// will contain mu- coupling
+  int buffer_i_pt, buffer_d_pt;
+  MPI_Request r;
+  MPI_Status s;
+//							l->num_inner_lattice_sites;
+  int i_start = g.my_rank * l->num_inner_lattice_sites * num_site_var, j_start = g.my_rank * l->num_inner_lattice_sites * num_site_var;
+//  i_start = 0, j_start = 0;
+//	offset rows for a given proccess	offset cols for a given process
+  int neighbors_j_start; //will be used after communication
+
+
+
+  printf("r: %d, \tT: %d, \tZ: %d, \tY: %d, \tX: %d\n", g.my_rank, comm_nr[T], comm_nr[Z], comm_nr[Y], comm_nr[X]);
+//  exit(0);
+
+
+
+  for (dir = T; dir <= X; dir++){
+
+    buffer_i_pt = 0;
+    if (comm_nr[dir] > 0){
+START_MASTER(threading)
+      MALLOC(buff_i, int, comm_nr[dir]);
+      MALLOC(buff_d, complex_PRECISION, comm_nr[dir] * SQUARE(num_site_var));
+END_MASTER(threading)
+    }
+
+    for (node = core_start; node < core_end; node ++){
+      index = 5 * node;
+
+
+		// make mu+ couplings as usual
+	// A
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+//	skip to proc start	find correct block row				skip self coupl.	find pos of T+ coupl. ("2* +1" due to structure of vals[self, T-, T+, Z-, Z+...]
+        *(l->p_PRECISION.mumps_vals + 	(9 * num_link_var)*op->neighbor_table[index] + num_link_var + 		(2*dir + 1)*num_link_var + k) = 
+			-1.0 * *(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + k);
+	//				    proc start		find correct block row				start of T- coupling
+
+        *(l->p_PRECISION.mumps_Is +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + k) = 
+			i_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index
+
+        *(l->p_PRECISION.mumps_Js +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + k) = 
+			j_start +	num_site_var * op->neighbor_table[index +1 + dir] +	k/(int)(num_site_var*0.5);
+	//		p_start		find start of T- coupling 		slow changing index
+      }
+
+	// C
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+//	skip to proc start	find correct block row				skip self coupl.	find pos of T+ coupl. 	find start of part C
+        *(l->p_PRECISION.mumps_vals +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir+1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			-1.0 * *(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k);
+//			    proc start		find correct block row				start of T coupling	start of part C
+
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir +1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index	lower half
+
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir +1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			j_start + 	num_site_var * op->neighbor_table[index +1 + dir] +	k/(int)(num_site_var*0.5) + 	0;
+	//		no p_start	find start of T- coupling 				slow changing index		left half
+      }
+
+	// B
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+//	skip to proc start	find correct block row				skip self coupl.	find pos of T+ coupl. 	find start of part B
+        *(l->p_PRECISION.mumps_vals + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+			-1.0 * *(op->D +	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k); 	//columwise in D
+//			    proc start		find correct block row				start of T coupling	start of part B
+
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5) + 	0;
+	//	proc start		block row start						fast changing index	upper half
+
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+			j_start +	num_site_var * op->neighbor_table[index +1 + dir] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+	//		no p_start	find start of T- coupling 				slow changing index		right half
+      }
+
+
+	// D
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+//	skip to proc start	find correct block row				skip self coupl.	find pos of T+ coupl. 	find start of part D
+        *(l->p_PRECISION.mumps_vals + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir+1)*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+			-1.0 * *(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k); 	//columwise in D
+//			    proc start		find correct block row				start of T coupling	start of part D
+
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir +1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index	lower half
+
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir + 1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
+			j_start +	num_site_var * op->neighbor_table[index +1 + dir] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+	//		no p_start	find start of T- coupling 				slow changing index		right half
+      }
+
+
+
+
+	// check whether dir neighbor is in halo
+
+      if (op->neighbor_table[index+1+dir] >= l->num_inner_lattice_sites) {
+	printf("i am node %d, sending to node %d\n", op->neighbor_table[index], op->neighbor_table[index+1+dir]);
+
+        // write mu- coupling to buffer
+	// also write global i to buffer
+	// send both buffers 
+
+
+	buffer_d_pt = buffer_i_pt * num_link_var;
+
+
+        //write mu- couplings:
+	//  A* #################################
+        for (k = 0; k < SQUARE(num_site_var/2); k ++){
+          buff_d[buffer_d_pt + k] = -1.0 * conj_PRECISION(*(op->D	+ num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	k)); 
+//          printf("el: %f, %f, k: %d\n", creal(buff_d[k]), cimag(buff_d[k]), k);
+        }
+// 	exit(0);
+	// -C* #################################
+        for (k = 0; k < SQUARE(num_site_var/2); k ++){
+          *(buff_d + buffer_d_pt + 1 * (int)SQUARE(num_site_var/2) +	k) = 
+				1.0 * conj_PRECISION(*(op->D 	+ num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	1*(int)SQUARE(num_site_var/2) + k));
+        }
+	// -B* #################################
+        for (k = 0; k < SQUARE(num_site_var/2); k ++){
+          *(buff_d + buffer_d_pt + 2 * (int)SQUARE(num_site_var/2) + 	k) = 
+				1.0 * conj_PRECISION(*(op->D 	+ num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k));
+        }
+	// D* #################################
+        for (k = 0; k < SQUARE(num_site_var/2); k ++){
+          *(buff_d + buffer_d_pt + 3 * (int)SQUARE(num_site_var/2) +	k) = 
+				-1.0 * conj_PRECISION(*(op->D	+ num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k));
+        }
+
+
+	//write i to buffer:
+        *(buff_i + buffer_i_pt) = op->neighbor_table[index + 1 + dir] % l->num_inner_lattice_sites;
+ 
+
+        buffer_i_pt++;
+      }
+
+    }	//loop over nodes
+
+	//send both buffers:
+/*
+      MPI_Isend(cont void *buf, int count, MPI_Datatype dt, int dest, int tag, MPI_Comm comm, MPI_Request *req);
+*/
+  
+    if (comm_nr[dir] > 0){
+      MPI_Isend(buff_d, comm_nr[dir] * num_link_var, MPI_COMPLEX_PRECISION, l->neighbor_rank[2*dir], 0, g.comm_cart, &r);
+      MPI_Isend(buff_i, comm_nr[dir], MPI_INT, l->neighbor_rank[2*dir], 0, g.comm_cart, &r);
+      printf("process %d send message in direction %d to process %d\n", g.my_rank, dir, l->neighbor_rank[2*dir]);
+/*
+	HOW TO FIND NEIGHBOR?
+	int l.neighbor_rank[8] contains ranks of neighbors
+	in the order [T+ T- Z+ Z- ...]
+*/
+
+      MPI_Barrier(MPI_COMM_WORLD);
+	//ensures buffer-sending order: T, Z, Y, X
+    
+START_MASTER(threading)
+      FREE(buff_i, int, comm_nr[dir]);
+      FREE(buff_d, complex_PRECISION, comm_nr[dir] * SQUARE(num_site_var));
+END_MASTER(threading)
+    }
+    
+  }	// loop over directions
+
+
+
+/*
+
+	// mu- couplings
+  for (dir = T; dir <= X; dir++){
+    if (comm_nr[dir] > 0){
+	//there is stuff to communicate in direction dir
+
+
+
+      MALLOC(buff_i, int, comm_nr[dir]);
+      MALLOC(buff_d, complex_PRECISION, comm_nr[dir] * num_link_var);
+  
+
+	// recieve Buffer
+
+//	MPI_Recv(void *buf, int count, MPI_Datatype dt, int source, int tag, MPI_Comm comm, MPI_Status *status);
+
+//			len					[T+, T-, Z+, Z-...]
+      MPI_Recv(buff_d, num_link_var * comm_nr[dir], MPI_COMPLEX_PRECISION, l->neighbor_rank[2*dir+1], 0, g.comm_cart, &s);
+      MPI_Recv(buff_i, comm_nr[dir], MPI_INT, l->neighbor_rank[2*dir+1], 0, g.comm_cart, &s);
+
+
+
+	// copy buffer content to mumps_vals
+      for (buffer_i_pt = 0; buffer_i_pt < comm_nr[dir]; buffer_i_pt++){
+        buffer_d_pt = num_link_var * buffer_i_pt;
+
+        for (k = 0; k < SQUARE(num_site_var); k++){
+          l->p_PRECISION.mumps_vals[	*(buff_i + buffer_i_pt) * 9 * num_link_var 	+ num_link_var +	2*dir*num_link_var] = 
+//					contains node nr	goes to Block Row	skip self coupl		go to dir- 
+		*(buff_d + buffer_d_pt + k);
+//		straight copy (orders are set before send)
+        }
+
+
+
+// message comes from process l->neighbor_rank[2*dir+1]
+// col nr. in sparse matrix:  	l->neighbor_rank[2*dir+1] * 
+//				l->num_inner_lattice_sites * 
+//				num_site_var
+
+		//compute I, J
+
+	index = 5 * *(buff_i + buffer_i_pt);
+        neighbors_j_start = l->neighbor_rank[2*dir+1] * l->num_inner_lattice_sites * num_site_var;
+
+	// A* ##################################
+        for (k = 0; k < SQUARE(num_site_var/2); k ++){
+//	  skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl.
+          *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index
+
+          *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + k) = 
+			neighbors_j_start +	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5);
+	//		no p_start	find start of T- coupling 				slow changing index	
+        }
+	// -C* ##################################
+        for (k = 0; k < SQUARE(num_site_var/2); k ++){
+          *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index
+
+          *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			neighbors_j_start + 	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+	//		no p_start	find start of T- coupling 				slow changing index	right half
+        }
+	// -B* #################################
+        for (k = 0; k < SQUARE(num_site_var/2); k ++){
+          *(l->p_PRECISION.mumps_Is +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5) + (int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index		lower half
+
+          *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 	2 *(int)SQUARE(num_site_var/2) + k) = 
+			neighbors_j_start +	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5)	+0;
+	//		no p_start	find start of T- coupling 				slow changing index	left half
+        }
+	// D* #################################
+        for (k = 0; k < SQUARE(num_site_var/2); k ++){
+          *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	2*dir*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index		lower half
+
+          *(l->p_PRECISION.mumps_Js + 	(9 *  num_link_var)*op->neighbor_table[index] + 	num_link_var + 	2*dir*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+			neighbors_j_start + 	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+	//		no p_start	find start of T- coupling 				slow changing index	right half
+        }
+      }
+
+    }	//end if (comm_nr[dir] > 0)
+
+
+//    MPI_Barrier(MPI_COMM_WORLD);
+//    exit(0);
+
+		//regular mu- coupling for all nodes except communicated ones
+    buffer_i_pt = 0;
+    for (i = core_start; i < core_end; i++){
+
+      if (comm_nr[dir] > 0){ 
+        if (i == *(buff_i + buffer_i_pt)){
+		//skip this node because it was already communicated
+          i++;
+          buffer_i_pt++;
+          if (i >= core_end) break;
+        }
+      }
+
+      index = 5 * i;
+
+
+
+		//regular mu- coupling
+	// A* ##################################
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl.
+        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	 	2*dir*num_link_var + k) = 
+			-1.0 * conj_PRECISION(*(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + k));
+	//				    proc start		find correct block row				start of T- coupling
+
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index
+
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + k) = 
+			j_start +	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5);
+	//		no p_start	find start of T- coupling 				slow changing index	
+      }
+	// -C* ##################################
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part C
+        *(l->p_PRECISION.mumps_vals +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 2*dir*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+				1.0 * conj_PRECISION(*(op->D + 		num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k)); 	//columwise in D
+//						    proc start		find correct block row				start of T- coupling	start of part C
+
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index
+
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			j_start + 	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+	//		no p_start	find start of T- coupling 				slow changing index	right half
+      }
+	// -B* #################################
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part B
+        *(l->p_PRECISION.mumps_vals +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	2*dir*num_link_var + 	2 *(int)SQUARE(num_site_var/2) + k) = 
+			1.0 * conj_PRECISION(*(op->D +	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k));
+//								find correct block row				start of T- coupling	start of part B
+
+        *(l->p_PRECISION.mumps_Is +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5) + (int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index		lower half
+
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 	2 *(int)SQUARE(num_site_var/2) + k) = 
+			j_start +	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5)	+0;
+	//		no p_start	find start of T- coupling 				slow changing index	left half
+      }
+	// D* #################################
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+//	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl. 	find start of part B
+        *(l->p_PRECISION.mumps_vals +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	2*dir*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+			-1.0 * conj_PRECISION(*(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k));
+//					    proc start		find correct block row 				 start of T- coupling	start of part D
+
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	2*dir*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+	//	proc start		block row start						fast changing index		lower half
+
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	2*dir*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+			j_start + 	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
+	//		no p_start	find start of T- coupling 				slow changing index	right half
+      }
+
+
+
+
+
+    }	//loop over nodes
+
+    if (comm_nr[dir] > 0){
+      FREE(buff_i, int, comm_nr[dir]);
+      FREE(buff_d, complex_PRECISION, comm_nr[dir] * SQUARE(num_site_var));
+    }
+
+  }	//loop over directions
+
+*/
+
+  //exit(0);
+
+
+
+
+
+
+
+//#####################   CHECKS    #################
+
+
+
+  if (g.my_rank == 0){
+  int j, dummy;
+  j = (int)(num_site_var * 0.5);
+
+  for (node = core_start; node < core_end; node++){
+    for (dir = 0; dir <= 3; dir += 2){
+      for (k = 0; k < 4; k++){ //submatrix index k=0->A ... k=3->D
+        for (dummy = 0; dummy < SQUARE(num_site_var * 0.5); dummy ++){//+= SQUARE(num_site_var)){
+          if (creal(l->p_PRECISION.mumps_vals[node * 9 * num_link_var + num_link_var + (2*dir +1) * num_link_var + k * SQUARE(j) + dummy]) == 0){
+            printf("found zero in node %d, dir %d, submatrix %d, element %d\n", node, dir, k, dummy);
+          }//if clause
+        }//loop over elements
+      }//loop over submatrices
+    }//loop over dirs
+  }//loop over nodes
+
+
+
+//  exit(0);
+  }//my_rank == 0
+  MPI_Barrier(MPI_COMM_WORLD);
+
+
+
+#endif
+
+
+
+
+
   START_LOCKED_MASTER(threading)
   if ( op->c.comm ) {
     for ( mu=0; mu<4; mu++ ) {
       // wait for +mu direction
-      ghost_wait_PRECISION( out, mu, +1, &(op->c), plus_dir_param, l );
+//      ghost_wait_PRECISION( out, mu, +1, &(op->c), plus_dir_param, l );
     }
   }
   END_LOCKED_MASTER(threading)

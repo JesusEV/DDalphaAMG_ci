@@ -681,12 +681,13 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
-
+/*
 #ifndef OPTIMIZED_COARSE_SELF_COUPLING_PRECISION
   coarse_self_couplings_PRECISION( eta, phi, op, start, end, l);
 #else
   coarse_self_couplings_PRECISION_vectorized( eta, phi, op, start, end, l );
 #endif
+*/
 
 
 
@@ -707,125 +708,53 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
 
 
-
-
-
 #ifdef MUMPS_ADDS
-  // first: communicate Vals
-  START_MASTER(threading)
-
-  if (g.num_processes > 1) {
-
-//	ALLGATHER WORKS FOR SELF COUPLING BUT NOT FOR HOPPING TERM
-//	USE ALLREDUCE + MPI_SUM INSTEAD
-
-    int nr_nodes = l->num_inner_lattice_sites;  
-    int site_var = l->num_lattice_site_var;
-    printf("\nsite_var: %d\n", site_var);
-    printf("nr_nodes: %d\n", nr_nodes);
-    int p_els = nr_nodes * 9 * SQUARE(site_var);	//start offset per process = amount of elements on each process
-    int p_start = p_els * g.my_rank;
-    printf("rank: %d, \tp_start: %d\n", g.my_rank, p_start);
-
-    //MPI_Allgather
-    //MPI_Allgather(void* send_data, int send_count, MPI_Datatype dt, void* recv_data, int recv_count, MPI_Datatype dt, MPI_Comm comm);
-//    MPI_Allgather((l->p_PRECISION.mumps_vals + p_start), 	p_els,	MPI_COMPLEX_PRECISION,	(l->p_PRECISION.mumps_vals),	p_els,	MPI_COMPLEX_PRECISION, g.comm_cart);
-//			send data,			    send_count	MPI_datatype		recieve data			recv_count	Recv datatype,	communicator
-
-    //MPI_ALLreduce
-    int send_len = nr_nodes*g.num_processes * 9 * SQUARE(site_var);
-    vector_PRECISION send_data=NULL;
-    MALLOC(send_data, complex_PRECISION, send_len);
-    int i;
-    for (i = 0; i < send_len; i++){
-      send_data[i] = l->p_PRECISION.mumps_vals[i];
-    }
-
-    printf("nr_nodes %d, \tnum_processes: %d, \tsite_var: %d\n", nr_nodes, g.num_processes, site_var);
-    printf("send_len: %d\n", send_len);
-    //MPI_ALLreduce(void* send_data, void* recv_data, int count, MPI_DATATYPE dt, MPI_op op, MPI_Comm comm)
-    MPI_Allreduce(send_data, l->p_PRECISION.mumps_vals, send_len, MPI_COMPLEX_PRECISION, MPI_SUM, g.comm_cart);
-//		
-    if (g.my_rank == 0){
-      // check self coupl elements != 0
-      int j, k;
 
 
-/*	check self coupling
-      for (i = 0, k = 0; i < 1; i++){
-        for (j = 0; j < SQUARE(site_var); j++, k++){
-          printf("i: %d, \tj: %d, \tIs: %d, \tJs: %d\n", i, j, l->p_PRECISION.mumps_Is[k], l->p_PRECISION.mumps_Js[k]);
-        }
-        k += 8 * SQUARE(site_var);
-      }
-      exit(0);
-*/
-
-
-      for (i = 0, k = 0; i < 256; i++){
-        for (j = 0; j < SQUARE(site_var); j++, k++){
-          if (l->p_PRECISION.mumps_vals[k] == 0){
-            printf("vals = 0 in blockrow %d, \telement %d\n", i, j);
-          }
-/*          if (l->p_PRECISION.mumps_Is[k] == 0){
-            printf("Is   = 0 in blockrow %d, \telement %d\n", i, j);
-          }
-          if (l->p_PRECISION.mumps_Js[k] == 0){
-            printf("Js   = 0 in blockrow %d, \telement %d\n", i, j);
-          }
-*/      }
-//        k += 8 * SQUARE(site_var);
-      }
-    }
-//    exit(0);
-  }
-  printf("Allreduce done!\n");
-  END_MASTER(threading)
-  
-//Sync?
-
-
+//	no communication needed
 
 
   // ---------
   // check through "sparse BLAS" that the self-coupling is correct
 
   vector_PRECISION etax=NULL;
+START_MASTER(threading)
   MALLOC(etax, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
+END_MASTER(threading)
+
   // up to the self coupling -- n=SQUARE(site_var)*nr_nodes
 
   // no need to multiply against number of processes
   int nx = (SQUARE(l->num_lattice_site_var)*9) * l->num_inner_lattice_sites;
+//  nx = l->num_lattice_site_var * 9 * l->num_lattice_site_var * l->num_inner_lattice_sites;
+//  nx = l->num_inner_lattice_sites * 9 * SQUARE(l->num_lattice_site_var);
 //  int nx = SQUARE(l->num_lattice_site_var); //*l->num_inner_lattice_sites;
 
+
+  memset(etax, 0, l->p_PRECISION.v_end - l->p_PRECISION.v_start * sizeof(complex_PRECISION));
+
   printf("calling spmv...\n");
-  spmv_PRECISION( etax, phi, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js,
-                  nx, &(l->p_PRECISION), l, threading );
-
-
-
+  spmv_PRECISION(etax, phi, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js,                  nx, &(l->p_PRECISION), l, threading );
 
 
   // TODO #2 : compare <eta> against <etax>
   int len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
-
-  len = 1*l->num_lattice_site_var;	// first block row
+//l->num_inner_lattice_sites
+ // len = 1*l->num_lattice_site_var;	// first block row
   if (g.my_rank == 0){
     int i;
   // CHECK DIFF BETWEEN SPARSE BLAS RES. (etax) AND OLD DDalphaAMG RES. (eta)
-    for (i = 0; i < len; i ++){
-      printf("i: %d, etax - eta: %f, %f\n", i, cimag(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
+    for (i = 0; i < len; i ++){ //+= l->num_lattice_site_var){
+      printf("i: %d, etax - eta: %f, %f\n", i, creal(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
 //      printf("i: %d, etax: %f, %f\n", i, cimag(*(etax+i)), cimag(*(etax+i)));
 //      printf("i: %d, etax - eta: %f, %f\n", i, cimag(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
     }
+    exit(0);
   }
-  exit(0);
-
+START_MASTER(threading)
   FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
-
+END_MASTER(threading)
   // ---------
-
-
 
 
 #endif
