@@ -689,7 +689,7 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 #endif
 */
 
-
+  memset(eta, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
 
 
   PROF_PRECISION_STOP( _SC, 1, threading );
@@ -704,7 +704,6 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 #else
   coarse_hopping_term_PRECISION_vectorized( eta, phi, op, _FULL_SYSTEM, l, threading ); 
 #endif
-
 
 
 
@@ -731,10 +730,12 @@ END_MASTER(threading)
 //  int nx = SQUARE(l->num_lattice_site_var); //*l->num_inner_lattice_sites;
 
 
-  memset(etax, 0, l->p_PRECISION.v_end - l->p_PRECISION.v_start * sizeof(complex_PRECISION));
+  memset(etax, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
+
 
   printf("calling spmv...\n");
-  spmv_PRECISION(etax, phi, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js,                  nx, &(l->p_PRECISION), l, threading );
+  spmv_PRECISION(etax, phi, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js, nx, &(l->p_PRECISION), l, threading );
+
 
 
   // TODO #2 : compare <eta> against <etax>
@@ -745,12 +746,21 @@ END_MASTER(threading)
     int i;
   // CHECK DIFF BETWEEN SPARSE BLAS RES. (etax) AND OLD DDalphaAMG RES. (eta)
     for (i = 0; i < len; i ++){ //+= l->num_lattice_site_var){
-      printf("i: %d, etax - eta: %f, %f\n", i, creal(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
+      printf("i: %d, etax - eta: %f, %f\n", i, CSPLIT(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
 //      printf("i: %d, etax: %f, %f\n", i, cimag(*(etax+i)), cimag(*(etax+i)));
 //      printf("i: %d, etax - eta: %f, %f\n", i, cimag(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
     }
-    exit(0);
   }
+
+
+
+  MPI_Barrier( MPI_COMM_WORLD );
+  printf("(proc=%d) stop ... \n", g.my_rank);
+  exit(0);
+
+
+
+
 START_MASTER(threading)
   FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
 END_MASTER(threading)

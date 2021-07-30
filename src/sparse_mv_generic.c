@@ -40,6 +40,7 @@ void spmv_PRECISION( vector_PRECISION out, vector_PRECISION in, vector_PRECISION
       ins[i] = NULL;
       MALLOC( ins[i],complex_PRECISION,vl );
       // hardcoded the <5> as a tag, as MPI_ANY_TAG was (weirdly) throwing an error
+      //printf("proc=%d, neigh=%d\n", g.my_rank, proc_neighbors[i]);
       MPI_Isend( in, vl, MPI_COMPLEX_PRECISION, proc_neighbors[i], 5, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &(reqs[i]) );
       MPI_Irecv( ins[i], vl, MPI_COMPLEX_PRECISION, proc_neighbors[i], 5, (l->depth==0)?g.comm_cart:l->gs_PRECISION.level_comm, &(reqr[i]) );
     }
@@ -54,9 +55,51 @@ void spmv_PRECISION( vector_PRECISION out, vector_PRECISION in, vector_PRECISION
 
   vector_PRECISION_define( out,0,p->v_start,p->v_end,l );
 
+  //printf("%d\n", vl);
+  //printf("%d\n", n);
+  //printf("%d\n", n/48/g.num_processes);
+
+
+
+
+  /*
+  if( g.my_rank==0 ){
+    int offst = 2;
+    vector_PRECISION Ax = A + (48*48)*offst;
+    int* Isx = Is + (48*48)*offst;
+    int* Jsx = Js + (48*48)*offst;
+  
+    for( i=0;i<48*48;i++ ){
+      printf("%d,%d\t", Isx[i], Jsx[i]);
+      if( i%48==0 ){ printf("\n"); }
+    }
+
+    for( i=0;i<48*48;i++ ){
+      printf("%f+i%ft", CSPLIT(Ax[i]));
+      if( i%48==0 ){ printf("\n"); }
+    }
+  }
+  */
+
+
+
+
+  //MPI_Barrier( MPI_COMM_WORLD );
+  //exit(0);
+
+
+  //int* bfr = Is;
+  //Is = Js;
+  //Js = bfr;
+
+
   for( w=0;w<n;w++ ){
-    i = Is[w];
+    i = Is[w]%vl;
     jx = Js[w];
+    //if(g.my_rank==1 && Is[w]!=0) printf("%d\n", l->num_inner_lattice_sites * g.num_processes * l->num_lattice_site_var);
+    //if(g.my_rank==1 && Is[w]!=0) printf("%d\n", Is[w]);
+    //if(g.my_rank==1 && Is[w]!=0) printf("%d\n\n", Js[w]);
+    //continue;
     px = jx/(vl*l->num_lattice_site_var);
     if( px==g.my_rank ) inx = in;
     else{
@@ -72,6 +115,10 @@ void spmv_PRECISION( vector_PRECISION out, vector_PRECISION in, vector_PRECISION
     rval = inx[j];
     out[i] += A[w]*rval;
   }
+
+
+  //exit(0);
+
 
   END_MASTER(threading)
 

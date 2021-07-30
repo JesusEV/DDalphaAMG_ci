@@ -841,7 +841,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   if ( op->c.comm ) {
     for ( mu=0; mu<4; mu++ ) {
       // communicate in +mu direction
-      ghost_sendrecv_PRECISION( out, mu, +1, &(op->c), plus_dir_param, l );    
+      //ghost_sendrecv_PRECISION( out, mu, +1, &(op->c), plus_dir_param, l );    
     }
     for ( mu=0; mu<4; mu++ ) {
       // wait for -mu direction
@@ -876,6 +876,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 //		[ C	D]
 //storage order A C B D
     for (j = 0; j < 4; j++) {
+      //if( j!=0 ){ continue; }
 	// LOOP FOR T = 0, Z = 1, Y = 2, X = 3
 
 	// A
@@ -950,18 +951,26 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     index++;
     in_pt = in + num_site_var*op->neighbor_table[index+T];	// block col
     coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l);
-    
+
+    // FIXME : re-enable directions other than T    
     D_pt += num_link_var;	// D_pt = op->D + num_4link_var*op->neighbor_table[index-1] + Z*num_link_var;
+    //if(g.my_rank==1) printf("%d\n", );
+    //if(g.my_rank==1) printf("%d\n", op->neighbor_table[index+Z]);
+    //if(g.my_rank==1) printf("%d\n\n", l->num_inner_lattice_sites);
+    //if(g.my_rank==1) {
+    //  if( op->neighbor_table[index+Z]>l->num_inner_lattice_sites )
+    //    printf("%d\n\n", op->neighbor_table[index+Z]);
+    //}
     in_pt = in + num_site_var*op->neighbor_table[index+Z];
-    coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
+    //coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
     
     D_pt += num_link_var;	// D_pt = op->D + num_4link_var*op->neighbor_table[index-1] + Y*num_link_var;
     in_pt = in + num_site_var*op->neighbor_table[index+Y];
-    coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
+    //coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
     
     D_pt += num_link_var;	// D_pt = op->D + num_4link_var*op->neighbor_table[index-1] + X*num_link_var;
     in_pt = in + num_site_var*op->neighbor_table[index+X];
-    coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
+    //coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
 
@@ -1007,11 +1016,28 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   int buffer_i_pt, buffer_d_pt;
   MPI_Request r;
   MPI_Status s;
+
+
+
+
+
+
 //							l->num_inner_lattice_sites;
-  int i_start = g.my_rank * l->num_inner_lattice_sites * num_site_var, j_start = g.my_rank * l->num_inner_lattice_sites * num_site_var;
+  int i_start = g.my_rank * l->num_inner_lattice_sites * num_site_var; //, j_start = g.my_rank * l->num_inner_lattice_sites * num_site_var;
+  int j_start = 0;
 //  i_start = 0, j_start = 0;
 //	offset rows for a given proccess	offset cols for a given process
   int neighbors_j_start; //will be used after communication
+
+
+
+
+  //printf("%d\n", l->num_parent_eig_vect);
+  //printf("%d\n", SQUARE(l->num_lattice_site_var));
+  //printf("%d\n", SQUARE(num_site_var));
+  //printf("%d\n", num_link_var);
+  //exit(0);
+
 
 
 
@@ -1021,6 +1047,9 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
 
   for (dir = T; dir <= X; dir++){
+
+    // FIXME : remove
+    if( dir!=T ){ continue; }
 
     buffer_i_pt = 0;
     if (comm_nr[dir] > 0){
@@ -1034,6 +1063,11 @@ END_MASTER(threading)
       index = 5 * node;
 
 
+
+
+  // FIXME : use c->boundary_table[2*mu+1] instead of op->neighbor_table[index +1 + dir]
+  //         see : line 262 in file ghost_generic.c
+
 		// make mu+ couplings as usual
 	// A
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
@@ -1043,14 +1077,16 @@ END_MASTER(threading)
 	//				    proc start		find correct block row				start of T- coupling
 
         *(l->p_PRECISION.mumps_Is +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + k) = 
-			i_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5);
+			i_start +	num_site_var * op->neighbor_table[index] + 		k%((int)(num_site_var*0.5));
 	//	proc start		block row start						fast changing index
 
         *(l->p_PRECISION.mumps_Js +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + k) = 
-			j_start +	num_site_var * op->neighbor_table[index +1 + dir] +	k/(int)(num_site_var*0.5);
+			j_start +	num_site_var * op->neighbor_table[index +1 + dir] +	k/((int)(num_site_var*0.5));
 	//		p_start		find start of T- coupling 		slow changing index
       }
 
+
+      /*
 	// C
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //	skip to proc start	find correct block row				skip self coupl.	find pos of T+ coupl. 	find start of part C
@@ -1099,6 +1135,7 @@ END_MASTER(threading)
 			j_start +	num_site_var * op->neighbor_table[index +1 + dir] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
 	//		no p_start	find start of T- coupling 				slow changing index		right half
       }
+      */
 
 
 
@@ -1106,7 +1143,7 @@ END_MASTER(threading)
 	// check whether dir neighbor is in halo
 
       if (op->neighbor_table[index+1+dir] >= l->num_inner_lattice_sites) {
-	printf("i am node %d, sending to node %d\n", op->neighbor_table[index], op->neighbor_table[index+1+dir]);
+	printf("(proc=%d) i am node %d, sending to node %d\n", g.my_rank, op->neighbor_table[index], op->neighbor_table[index+1+dir]);
 
         // write mu- coupling to buffer
 	// also write global i to buffer
@@ -1153,16 +1190,18 @@ END_MASTER(threading)
 /*
       MPI_Isend(cont void *buf, int count, MPI_Datatype dt, int dest, int tag, MPI_Comm comm, MPI_Request *req);
 */
-  
+
+    /*  
     if (comm_nr[dir] > 0){
       MPI_Isend(buff_d, comm_nr[dir] * num_link_var, MPI_COMPLEX_PRECISION, l->neighbor_rank[2*dir], 0, g.comm_cart, &r);
       MPI_Isend(buff_i, comm_nr[dir], MPI_INT, l->neighbor_rank[2*dir], 0, g.comm_cart, &r);
       printf("process %d send message in direction %d to process %d\n", g.my_rank, dir, l->neighbor_rank[2*dir]);
-/*
-	HOW TO FIND NEIGHBOR?
-	int l.neighbor_rank[8] contains ranks of neighbors
-	in the order [T+ T- Z+ Z- ...]
-*/
+
+
+	//HOW TO FIND NEIGHBOR?
+	//int l.neighbor_rank[8] contains ranks of neighbors
+	//in the order [T+ T- Z+ Z- ...]
+
 
       MPI_Barrier(MPI_COMM_WORLD);
 	//ensures buffer-sending order: T, Z, Y, X
@@ -1172,6 +1211,7 @@ START_MASTER(threading)
       FREE(buff_d, complex_PRECISION, comm_nr[dir] * SQUARE(num_site_var));
 END_MASTER(threading)
     }
+    */
     
   }	// loop over directions
 
@@ -1377,8 +1417,7 @@ END_MASTER(threading)
 //#####################   CHECKS    #################
 
 
-
-  if (g.my_rank == 0){
+  if (g.my_rank == 1){
   int j, dummy;
   j = (int)(num_site_var * 0.5);
 
@@ -1387,7 +1426,7 @@ END_MASTER(threading)
       for (k = 0; k < 4; k++){ //submatrix index k=0->A ... k=3->D
         for (dummy = 0; dummy < SQUARE(num_site_var * 0.5); dummy ++){//+= SQUARE(num_site_var)){
           if (creal(l->p_PRECISION.mumps_vals[node * 9 * num_link_var + num_link_var + (2*dir +1) * num_link_var + k * SQUARE(j) + dummy]) == 0){
-            printf("found zero in node %d, dir %d, submatrix %d, element %d\n", node, dir, k, dummy);
+            //printf("found zero in node %d, dir %d, submatrix %d, element %d\n", node, dir, k, dummy);
           }//if clause
         }//loop over elements
       }//loop over submatrices
@@ -1403,7 +1442,6 @@ END_MASTER(threading)
 
 
 #endif
-
 
 
 
