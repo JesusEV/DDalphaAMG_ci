@@ -170,6 +170,12 @@
     vector_PRECISION xtmp;
     local_gmres_PRECISION_struct local_p;
 
+    // for direct solves
+    OPERATOR_TYPE_PRECISION* bj_op_inv_vectorized;
+    OPERATOR_TYPE_PRECISION* bj_op_vectorized;
+    OPERATOR_TYPE_PRECISION* bj_doublet_op_inv_vectorized;
+    OPERATOR_TYPE_PRECISION* bj_doublet_op_vectorized;
+
     //vector_PRECISION xxxtmp[4];
 
   } block_jacobi_PRECISION_struct;

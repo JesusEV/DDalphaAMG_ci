@@ -646,7 +646,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
   } else{ error0("Invalid value for p->gcrodr_PRECISION.CU_usable \n"); }
 
+#ifdef BLOCK_JACOBI
   PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
+#endif
 
   for ( ol=0; ol < p->num_restart; ol++ )  {
 

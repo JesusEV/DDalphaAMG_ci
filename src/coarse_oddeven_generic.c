@@ -409,6 +409,7 @@ void coarse_oddeven_PRECISION_set_self_couplings( level_struct *l, struct Thread
                                                             op->num_even_sites+i, l );
 #endif
 
+// this else is for vectorized
 #else
 
   int column_offset = SIMD_LENGTH_PRECISION*((2*nv+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
@@ -417,14 +418,62 @@ void coarse_oddeven_PRECISION_set_self_couplings( level_struct *l, struct Thread
     cgem_inverse( 2*nv, op->clover_oo_inv_vectorized + i*size_v, 
                   op->clover_vectorized + (op->num_even_sites+i)*size_v, column_offset );
 
+#ifdef BLOCK_JACOBI
+  // preparation for direct solves in Block Jacobi
+  {
+    // l->p_PRECISION.block_jacobi_PRECISION.bj_op_inv_vectorized
+    // l->p_PRECISION.block_jacobi_PRECISION.bj_op_vectorized
+
+    // 1. prepare the operator : B = D_{ee} - I_{eo}*D_{oo}^{-1}*I_{oe}
+    OPERATOR_TYPE_PRECISION* Dee = op->clover_vectorized;
+    OPERATOR_TYPE_PRECISION* Dooinv = op->clover_oo_inv_vectorized;
+    int startx,endx;
+    compute_core_start_end_custom( 0, op->num_even_sites, &startx, &endx, l, threading, 1);
+    // size of bj_op_vectorized : 2*2*nv*column_offset*op->num_even_sites
+    for( int i=startx; i<(endx*size_v); i++ ){
+      l->p_PRECISION.block_jacobi_PRECISION.bj_op_vectorized[i] = Dee[i] - Dooinv[i];
+    }
+
+    // 2. invert B
+    for( int i=startx; i<endx; i++ ){
+      cgem_inverse( 2*nv, l->p_PRECISION.block_jacobi_PRECISION.bj_op_inv_vectorized + i*size_v, 
+                    l->p_PRECISION.block_jacobi_PRECISION.bj_op_vectorized + i*size_v, column_offset );
+    }
+  }
+#endif
+
 #ifdef HAVE_TM1p1
   int column_doublet_offset = SIMD_LENGTH_PRECISION*((4*nv+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
   int size_doublet_v = 2*4*nv*column_doublet_offset;
   for( int i=start; i<end; i++ )
     cgem_inverse( 4*nv, op->clover_doublet_oo_inv_vectorized + i*size_doublet_v, 
                   op->clover_doublet_vectorized + (op->num_even_sites+i)*size_doublet_v, column_doublet_offset );
+
+#ifdef BLOCK_JACOBI
+  // preparation for direct solves in Block Jacobi
+  {
+    // l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_inv_vectorized
+    // l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_vectorized
+
+    // 1. prepare the operator : B = D_{ee} - I_{eo}*D_{oo}^{-1}*I_{oe}
+    OPERATOR_TYPE_PRECISION* Dee = op->clover_doublet_vectorized;
+    OPERATOR_TYPE_PRECISION* Dooinv = op->clover_doublet_oo_inv_vectorized;
+    int startx,endx;
+    compute_core_start_end_custom( 0, op->num_even_sites, &startx, &endx, l, threading, 1);
+    // size of bj_op_vectorized : 2*2*nv*column_offset*op->num_even_sites
+    for( int i=startx; i<(endx*size_doublet_v); i++ ){
+      l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_vectorized[i] = Dee[i] - Dooinv[i];
+    }
+
+    // 2. invert B
+    for( int i=startx; i<endx; i++ ){
+      cgem_inverse( 4*nv, l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_inv_vectorized + i*size_doublet_v, 
+                    l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_vectorized + i*size_doublet_v, column_doublet_offset );
+    }
+  }
 #endif
 
+#endif
 #endif
 }
 
@@ -489,9 +538,21 @@ void coarse_oddeven_alloc_PRECISION( level_struct *l ) {
 #else
   int column_offset = SIMD_LENGTH_PRECISION*((2*nv+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
   MALLOC_HUGEPAGES( op->clover_oo_inv_vectorized, PRECISION, 2*2*nv*column_offset*op->num_odd_sites, 4*SIMD_LENGTH_PRECISION );
+#ifdef BLOCK_JACOBI
+  l->p_PRECISION.block_jacobi_PRECISION.bj_op_inv_vectorized = NULL;
+  MALLOC_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_op_inv_vectorized, PRECISION, 2*2*nv*column_offset*op->num_even_sites, 4*SIMD_LENGTH_PRECISION );
+  l->p_PRECISION.block_jacobi_PRECISION.bj_op_vectorized = NULL;
+  MALLOC_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_op_vectorized, PRECISION, 2*2*nv*column_offset*op->num_even_sites, 4*SIMD_LENGTH_PRECISION );
+#endif
 #ifdef HAVE_TM1p1
   int column_doublet_offset = SIMD_LENGTH_PRECISION*((4*nv+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
   MALLOC_HUGEPAGES( op->clover_doublet_oo_inv_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_odd_sites, 4*SIMD_LENGTH_PRECISION );
+#ifdef BLOCK_JACOBI
+  l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_inv_vectorized = NULL;
+  MALLOC_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_inv_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_even_sites, 4*SIMD_LENGTH_PRECISION );
+  l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_vectorized = NULL;
+  MALLOC_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_even_sites, 4*SIMD_LENGTH_PRECISION );
+#endif
 #endif
 
 #endif
@@ -625,9 +686,17 @@ void coarse_oddeven_free_PRECISION( level_struct *l ) {
 #else
   int column_offset = SIMD_LENGTH_PRECISION*((2*nv+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
   FREE_HUGEPAGES( op->clover_oo_inv_vectorized, PRECISION, 2*2*nv*column_offset*op->num_odd_sites );
+#ifdef BLOCK_JACOBI
+  FREE_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_op_inv_vectorized, PRECISION, 2*2*nv*column_offset*op->num_even_sites );
+  FREE_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_op_vectorized, PRECISION, 2*2*nv*column_offset*op->num_even_sites );
+#endif
 #ifdef HAVE_TM1p1
   int column_doublet_offset = SIMD_LENGTH_PRECISION*((4*nv+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
   FREE_HUGEPAGES( op->clover_doublet_oo_inv_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_odd_sites );
+#ifdef BLOCK_JACOBI
+  FREE_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_inv_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_even_sites );
+  FREE_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_even_sites );
+#endif
 #endif
 
 #endif
