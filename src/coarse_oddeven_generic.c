@@ -430,8 +430,9 @@ void coarse_oddeven_PRECISION_set_self_couplings( level_struct *l, struct Thread
     int startx,endx;
     compute_core_start_end_custom( 0, op->num_even_sites, &startx, &endx, l, threading, 1);
     // size of bj_op_vectorized : 2*2*nv*column_offset*op->num_even_sites
+    PRECISION sc_fctr = 0.0;
     for( int i=startx; i<(endx*size_v); i++ ){
-      l->p_PRECISION.block_jacobi_PRECISION.bj_op_vectorized[i] = Dee[i] - Dooinv[i];
+      l->p_PRECISION.block_jacobi_PRECISION.bj_op_vectorized[i] = Dee[i] - sc_fctr*Dooinv[i];
     }
 
     // 2. invert B
@@ -461,8 +462,9 @@ void coarse_oddeven_PRECISION_set_self_couplings( level_struct *l, struct Thread
     int startx,endx;
     compute_core_start_end_custom( 0, op->num_even_sites, &startx, &endx, l, threading, 1);
     // size of bj_op_vectorized : 2*2*nv*column_offset*op->num_even_sites
+    PRECISION sc_fctr = 0.0;
     for( int i=startx; i<(endx*size_doublet_v); i++ ){
-      l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_vectorized[i] = Dee[i] - Dooinv[i];
+      l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_vectorized[i] = Dee[i] - sc_fctr*Dooinv[i];
     }
 
     // 2. invert B
