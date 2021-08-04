@@ -188,7 +188,7 @@ void ghost_sendrecv_init_PRECISION( const int type, comm_PRECISION_struct *c, le
 void ghost_sendrecv_PRECISION( vector_PRECISION phi, const int mu, const int dir,
                                comm_PRECISION_struct *c, const int amount, level_struct *l ) {
 
-  gmres_PRECISION_struct *p = &(l->p_PRECISION);
+  //gmres_PRECISION_struct *p = &(l->p_PRECISION);
 
   // does not allow sending in both directions at the same time
   if( l->global_splitting[mu] > 1 ) {
@@ -600,37 +600,12 @@ void pers_comms_open_PRECISION( level_struct *l ){
   // FIXME : remove the factor of 4 in the next MALLOCs?
 
   int mx = p->restart_length;
-  int nrZxs;
+  // pp_nr is the number of vector associated to POLYPREC
+  int nrZxs,pp_nr;
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
-#ifdef GCRODR
-  int kx = g.gcrodr_k;
-  // the first m are the Vs or Zs, and the last k are the recycling ones
-  if( p->preconditioner==NULL ){
-
-    //printf0("NULL !\n");
-
-    // only p->V
-    nrZxs = 0;
-    MALLOC( p->pers_comms_ins,vector_PRECISION,mx+kx );
-    MALLOC( p->pers_comms_outs,vector_PRECISION,mx+kx );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_plus[ix],MPI_Request,(mx+kx)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_plus[ix],MPI_Request,(mx+kx)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_minus[ix],MPI_Request,(mx+kx)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_minus[ix],MPI_Request,(mx+kx)*4 );
-  } else {
-    // both p->V and p->Za
-    nrZxs = g.pers_comms_nrZas;
-    //printf0("NON NULL ! %d\n", nrZxs);
-    MALLOC( p->pers_comms_ins,vector_PRECISION,mx+nrZxs+kx );
-    MALLOC( p->pers_comms_outs,vector_PRECISION,mx+nrZxs+kx );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_plus[ix],MPI_Request,(mx+nrZxs+kx*2)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_plus[ix],MPI_Request,(mx+nrZxs+kx*2)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_minus[ix],MPI_Request,(mx+nrZxs+kx*2)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_minus[ix],MPI_Request,(mx+nrZxs+kx*2)*4 );
-  }
-#else
   if( p->preconditioner==NULL ){
     nrZxs = 0;
+    pp_nr = 0;
     MALLOC( p->pers_comms_ins,vector_PRECISION,mx );
     MALLOC( p->pers_comms_outs,vector_PRECISION,mx );
     for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_plus[ix],MPI_Request,mx*4 );
@@ -640,17 +615,18 @@ void pers_comms_open_PRECISION( level_struct *l ){
   } else {
     // both p->V and p->Za
     nrZxs = g.pers_comms_nrZas;
-    MALLOC( p->pers_comms_ins,vector_PRECISION,mx+nrZxs );
-    MALLOC( p->pers_comms_outs,vector_PRECISION,mx+nrZxs );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_plus[ix],MPI_Request,(mx+nrZxs)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_plus[ix],MPI_Request,(mx+nrZxs)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_minus[ix],MPI_Request,(mx+nrZxs)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_minus[ix],MPI_Request,(mx+nrZxs)*4 );
+    pp_nr = 1;
+    MALLOC( p->pers_comms_ins,vector_PRECISION,mx+nrZxs+pp_nr );
+    MALLOC( p->pers_comms_outs,vector_PRECISION,mx+nrZxs+pp_nr );
+    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_plus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_plus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_minus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_minus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
   }
-#endif
 #else
   if( p->preconditioner==NULL ){
     nrZxs = 0;
+    pp_nr = 0;
     MALLOC( p->pers_comms_ins,vector_PRECISION,mx );
     MALLOC( p->pers_comms_outs,vector_PRECISION,mx );
     for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_plus[ix],MPI_Request,mx*4 );
@@ -660,12 +636,13 @@ void pers_comms_open_PRECISION( level_struct *l ){
   } else {
     // both p->V and p->Z
     nrZxs = g.pers_comms_nrZs;
-    MALLOC( p->pers_comms_ins,vector_PRECISION,mx+nrZxs );
-    MALLOC( p->pers_comms_outs,vector_PRECISION,mx+nrZxs );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_plus[ix],MPI_Request,(mx+nrZxs)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_plus[ix],MPI_Request,(mx+nrZxs)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_minus[ix],MPI_Request,(mx+nrZxs)*4 );
-    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_minus[ix],MPI_Request,(mx+nrZxs)*4 );
+    pp_nr = 1;
+    MALLOC( p->pers_comms_ins,vector_PRECISION,mx+nrZxs+pp_nr );
+    MALLOC( p->pers_comms_outs,vector_PRECISION,mx+nrZxs+pp_nr );
+    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_plus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_plus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_recvrs_minus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) MALLOC( g.pers_comms_sendrs_minus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
   }
 #endif
 
@@ -682,6 +659,8 @@ void pers_comms_open_PRECISION( level_struct *l ){
     for( int ix=0;ix<mx;ix++ ) p->pers_comms_outs[ix] = p->block_jacobi_PRECISION.xtmp;
     for( int ix=0;ix<nrZxs;ix++ ) p->pers_comms_ins[mx+ix] = p->Za[ix];
     for( int ix=0;ix<nrZxs;ix++ ) p->pers_comms_outs[mx+ix] = p->block_jacobi_PRECISION.xtmp;
+    for( int ix=0;ix<pp_nr;ix++ ) p->pers_comms_ins[mx+nrZxs+ix] = l->p_PRECISION.polyprec_PRECISION.product;
+    for( int ix=0;ix<pp_nr;ix++ ) p->pers_comms_outs[mx+nrZxs+ix] = p->block_jacobi_PRECISION.xtmp;
   }
 #else
   if( p->preconditioner==NULL ){
@@ -694,6 +673,8 @@ void pers_comms_open_PRECISION( level_struct *l ){
     for( int ix=0;ix<mx;ix++ ) p->pers_comms_outs[ix] = p->block_jacobi_PRECISION.xtmp;
     for( int ix=0;ix<nrZxs;ix++ ) p->pers_comms_ins[mx+ix] = p->Z[ix];
     for( int ix=0;ix<nrZxs;ix++ ) p->pers_comms_outs[mx+ix] = p->block_jacobi_PRECISION.xtmp;
+    for( int ix=0;ix<pp_nr;ix++ ) p->pers_comms_ins[mx+nrZxs+ix] = l->p_PRECISION.polyprec_PRECISION.product;
+    for( int ix=0;ix<pp_nr;ix++ ) p->pers_comms_outs[mx+nrZxs+ix] = p->block_jacobi_PRECISION.xtmp;
   }
 #endif
 
@@ -706,12 +687,12 @@ void pers_comms_open_PRECISION( level_struct *l ){
     dir=1;
     minus_dir_param = _EVEN_SITES;
     plus_dir_param = _ODD_SITES;
-    for(int ix=0;ix<mx+nrZxs;ix++) {
+    for(int ix=0;ix<mx+nrZxs+pp_nr;ix++) {
       pers_comms_init_PRECISION( p->op->buffer[0], mu, dir, 0, ix, &(p->op->c), plus_dir_param, l );
     }
     //-1
     dir=-1;
-    for(int ix=0;ix<mx+nrZxs;ix++) {
+    for(int ix=0;ix<mx+nrZxs+pp_nr;ix++) {
       pers_comms_init_PRECISION( p->pers_comms_ins[ix], mu, dir, 0, ix, &(p->op->c), minus_dir_param, l );
     }
   }
@@ -723,18 +704,19 @@ void pers_comms_open_PRECISION( level_struct *l ){
     dir=1;
     minus_dir_param = _ODD_SITES;
     plus_dir_param = _EVEN_SITES;
-    for(int ix=0;ix<mx+nrZxs;ix++) {
+    for(int ix=0;ix<mx+nrZxs+pp_nr;ix++) {
       pers_comms_init_PRECISION( p->pers_comms_outs[ix], mu, dir, 1, ix, &(p->op->c), plus_dir_param, l );
     }
     //-1
     dir=-1;
-    for(int ix=0;ix<mx+nrZxs;ix++) {
+    for(int ix=0;ix<mx+nrZxs+pp_nr;ix++) {
       pers_comms_init_PRECISION( p->op->buffer[1], mu, dir, 1, ix, &(p->op->c), minus_dir_param, l );
     }
   }
 
   //printf0("\n");
 
+/*
 #ifdef GCRODR
   //int mx = p->restart_length;
   //int kx = p->gcrodr_PRECISION.k;
@@ -793,7 +775,14 @@ void pers_comms_open_PRECISION( level_struct *l ){
     //  for( int ix=0;ix<mx;ix++ ) g.pers_comms_ins[ix] = p->Z[ix];
     //}
 #endif
+
+#else
+
+    //vector_PRECISION product = l->p_PRECISION.polyprec_PRECISION.product;
+    //vector_PRECISION temp = l->p_PRECISION.polyprec_PRECISION.temp;
+
 #endif
+*/
 
 }
 

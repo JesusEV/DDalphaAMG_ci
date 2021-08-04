@@ -265,7 +265,15 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
   SYNC_CORES(threading)
   for (i = 1; i < d_poly; i++)
   {
+#ifdef PERS_COMMS
+    g.pers_comms_id2 = l->p_PRECISION.restart_length + g.pers_comms_nrZxs;
+    g.use_pers_comms1 = 1;
+#endif
     apply_operator_PRECISION(temp, product, &l->p_PRECISION, l, threading);
+#ifdef PERS_COMMS
+    g.pers_comms_id2 = -1;
+    g.use_pers_comms1 = 0;
+#endif
 
     vector_PRECISION_saxpy(product, product, temp, -1./lejas[i-1], start, end, l);
     vector_PRECISION_saxpy(accum_prod, accum_prod, product, 1./lejas[i], start, end, l);
