@@ -40,4 +40,10 @@
   void ghost_update_PRECISION( vector_PRECISION phi, const int mu, const int dir, comm_PRECISION_struct *c, level_struct *l );
   void ghost_update_wait_PRECISION( vector_PRECISION phi, const int mu, const int dir, comm_PRECISION_struct *c, level_struct *l );
 
+#ifdef PERS_COMMS
+  void pers_comms_init_PRECISION( vector_PRECISION phi, const int mu, const int dir, const int pers_comms_id1, const int pers_comms_id2,
+                                  comm_PRECISION_struct *c, const int amount, level_struct *l );
+  void pers_comms_open_PRECISION( level_struct *l );
+#endif
+
 #endif

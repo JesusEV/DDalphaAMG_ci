@@ -446,6 +446,19 @@
     double avg_b2;
     double avg_crst;
 
+#ifdef PERS_COMMS
+    // use persistent communications at the coarsest level
+    int use_pers_comms1,use_pers_comms2;
+    int pers_comms_id1,pers_comms_id2;
+
+    // for plus hopping (plus doesn't mean +mu here)
+    MPI_Request* pers_comms_recvrs_plus[8];
+    MPI_Request* pers_comms_sendrs_plus[8];
+    // for minus hopping
+    MPI_Request* pers_comms_recvrs_minus[8];
+    MPI_Request* pers_comms_sendrs_minus[8];
+#endif
+
   } global_struct;
 
   extern global_struct g;

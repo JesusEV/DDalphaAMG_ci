@@ -338,6 +338,18 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
 #ifdef DEBUG
   test_routine( l, threading );
 #endif
+
+#ifdef PERS_COMMS
+  START_MASTER(threading)
+  level_struct *lx = l;
+  while( lx->level>0 ){
+    lx = lx->next_level;
+  }
+  pers_comms_open_float( lx );
+  END_MASTER(threading)
+  SYNC_MASTER_TO_ALL(threading)
+#endif
+
 }
 
 

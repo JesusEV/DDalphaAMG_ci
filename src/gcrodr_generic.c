@@ -268,6 +268,7 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
     p->gcrodr_PRECISION.recompute_DPCk_plain = 0;
 #endif
   }
+
 }
 
 
@@ -804,6 +805,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   SYNC_MASTER_TO_ALL(threading);
   SYNC_CORES(threading)
 
+  exit(0);
+
   return fgmresx_iter;
 }
 
@@ -981,9 +984,9 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
       SYNC_CORES(threading)
       gamma_jp1 = cabs( p->gamma[j+1] );
 
-      //START_MASTER(threading)
-      //printf0("g (proc=%d,j=%d) rel residual (gcro-dr) = %f\n", g.my_rank, j, gamma_jp1/norm_r0);
-      //END_MASTER(threading)
+      START_MASTER(threading)
+      printf0("g (proc=%d,j=%d) rel residual (gcro-dr) = %f\n", g.my_rank, j, gamma_jp1/norm_r0);
+      END_MASTER(threading)
 
       if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
 
@@ -1016,6 +1019,12 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
+
+  START_MASTER(threading)
+  printf0("\n\nexiting (%d)\n\n\n", iter);
+  MPI_Barrier( MPI_COMM_WORLD );
+  exit(0);
+  END_MASTER(threading)
 
   return iter;
 }

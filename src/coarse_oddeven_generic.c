@@ -1539,6 +1539,9 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
   SYNC_CORES(threading)
   vector_PRECISION_define( tmp[0], 0, start, end, l );
 
+#ifdef PERS_COMMS
+  g.use_pers_comms2 = 1;
+#endif
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
@@ -1548,11 +1551,17 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
+#ifdef PERS_COMMS
+  g.use_pers_comms2 = 0;
+#endif
 
   PROF_PRECISION_START( _SC, threading );
   coarse_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l, threading );
   PROF_PRECISION_STOP( _SC, 1, threading );
 
+#ifdef PERS_COMMS
+  g.use_pers_comms2 = 1;
+#endif
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
@@ -1562,6 +1571,9 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
+#ifdef PERS_COMMS
+  g.use_pers_comms2 = 0;
+#endif
 
 }
 

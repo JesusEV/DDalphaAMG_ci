@@ -206,6 +206,11 @@
     int syst_size;
     vector_PRECISION *Va, *Za;
 #endif
+
+#ifdef PERS_COMMS
+    vector_PRECISION* pers_comms_ins;
+    vector_PRECISION* pers_comms_outs;
+#endif
   } gmres_PRECISION_struct;
 
   typedef struct {
