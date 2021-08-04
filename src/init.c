@@ -354,7 +354,15 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
 
 
 void method_free( level_struct *l ) {
-  
+
+#ifdef PERS_COMMS
+  level_struct *lx = l;
+  while( lx->level>0 ){
+    lx = lx->next_level;
+  }
+  pers_comms_close_float( lx );
+#endif
+
   if ( g.method>=0 ) {
     if ( g.mixed_precision ) {
       if ( g.method >= 4 && g.odd_even )

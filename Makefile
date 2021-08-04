@@ -40,9 +40,9 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-LIMEDIR = /home/ramirez/installs/qio/bin
+LIMEDIR = /home/ramirez/installs/qio/dir
 LIMEFLAGS = -DHAVE_LIME -I$(LIMEDIR)/include
-LIMELIB = $(LIMEDIR)/lib64/liblime.a
+LIMELIB = $(LIMEDIR)/lib/liblime.a
 
 # Available flags:
 # -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING

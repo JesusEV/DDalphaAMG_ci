@@ -879,4 +879,190 @@ void pers_comms_init_PRECISION( vector_PRECISION phi, const int mu, const int di
 }
 
 
+void pers_comms_close_PRECISION( level_struct *l ){
+
+  g.use_pers_comms1=0;
+  g.use_pers_comms2=0;
+
+  gmres_PRECISION_struct *p = &(l->p_PRECISION);
+
+  int mx = p->restart_length;
+  // pp_nr is the number of vector associated to POLYPREC
+  int nrZxs,pp_nr;
+#if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
+  if( p->preconditioner==NULL ){
+    nrZxs = 0;
+    pp_nr = 0;
+  } else {
+    // both p->V and p->Za
+    nrZxs = g.pers_comms_nrZas;
+    pp_nr = 1;
+  }
+#else
+  if( p->preconditioner==NULL ){
+    nrZxs = 0;
+    pp_nr = 0;
+  } else {
+    // both p->V and p->Z
+    nrZxs = g.pers_comms_nrZs;
+    pp_nr = 1;
+  }
+#endif
+
+  g.pers_comms_nrZxs = nrZxs;
+
+  int minus_dir_param,plus_dir_param;
+
+  // 0 : plus (odd!) hopping, send and recv
+  for( int mu=0;mu<4;mu++ ){
+    int dir;
+    //+1
+    dir=1;
+    minus_dir_param = _EVEN_SITES;
+    plus_dir_param = _ODD_SITES;
+    for(int ix=0;ix<mx+nrZxs+pp_nr;ix++) {
+      pers_comms_free_PRECISION( p->op->buffer[0], mu, dir, 0, ix, &(p->op->c), plus_dir_param, l );
+    }
+    //-1
+    dir=-1;
+    for(int ix=0;ix<mx+nrZxs+pp_nr;ix++) {
+      pers_comms_free_PRECISION( p->pers_comms_ins[ix], mu, dir, 0, ix, &(p->op->c), minus_dir_param, l );
+    }
+  }
+
+  // 1 : minus (even!) hopping, send and recv
+  for( int mu=0;mu<4;mu++ ){
+    int dir;
+    //+1
+    dir=1;
+    minus_dir_param = _ODD_SITES;
+    plus_dir_param = _EVEN_SITES;
+    for(int ix=0;ix<mx+nrZxs+pp_nr;ix++) {
+      pers_comms_free_PRECISION( p->pers_comms_outs[ix], mu, dir, 1, ix, &(p->op->c), plus_dir_param, l );
+    }
+    //-1
+    dir=-1;
+    for(int ix=0;ix<mx+nrZxs+pp_nr;ix++) {
+      pers_comms_free_PRECISION( p->op->buffer[1], mu, dir, 1, ix, &(p->op->c), minus_dir_param, l );
+    }
+  }
+
+#if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
+  if( p->preconditioner==NULL ){
+    nrZxs = 0;
+    pp_nr = 0;
+    FREE( p->pers_comms_ins,vector_PRECISION,mx );
+    FREE( p->pers_comms_outs,vector_PRECISION,mx );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_recvrs_plus[ix],MPI_Request,mx*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_sendrs_plus[ix],MPI_Request,mx*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_recvrs_minus[ix],MPI_Request,mx*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_sendrs_minus[ix],MPI_Request,mx*4 );
+  } else {
+    // both p->V and p->Za
+    nrZxs = g.pers_comms_nrZas;
+    pp_nr = 1;
+    FREE( p->pers_comms_ins,vector_PRECISION,mx+nrZxs+pp_nr );
+    FREE( p->pers_comms_outs,vector_PRECISION,mx+nrZxs+pp_nr );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_recvrs_plus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_sendrs_plus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_recvrs_minus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_sendrs_minus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+  }
+#else
+  if( p->preconditioner==NULL ){
+    nrZxs = 0;
+    pp_nr = 0;
+    FREE( p->pers_comms_ins,vector_PRECISION,mx );
+    FREE( p->pers_comms_outs,vector_PRECISION,mx );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_recvrs_plus[ix],MPI_Request,mx*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_sendrs_plus[ix],MPI_Request,mx*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_recvrs_minus[ix],MPI_Request,mx*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_sendrs_minus[ix],MPI_Request,mx*4 );
+  } else {
+    // both p->V and p->Z
+    nrZxs = g.pers_comms_nrZs;
+    pp_nr = 1;
+    FREE( p->pers_comms_ins,vector_PRECISION,mx+nrZxs+pp_nr );
+    FREE( p->pers_comms_outs,vector_PRECISION,mx+nrZxs+pp_nr );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_recvrs_plus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_sendrs_plus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_recvrs_minus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+    for(int ix=0;ix<8;ix++) FREE( g.pers_comms_sendrs_minus[ix],MPI_Request,(mx+nrZxs+pp_nr)*4 );
+  }
+#endif
+}
+
+
+void pers_comms_free_PRECISION( vector_PRECISION phi, const int mu, const int dir, const int pers_comms_id1, const int pers_comms_id2,
+                                comm_PRECISION_struct *c, const int amount, level_struct *l ) {
+  // does not allow sending in both directions at the same time
+  if( l->global_splitting[mu] > 1 ) {
+
+    int mu_dir = 2*mu-MIN(dir,0), offset = c->offset,
+        length[2] = {0,0}, comm_start = 0;
+    
+    if ( amount == _FULL_SYSTEM ) {
+      length[0] = (c->num_boundary_sites[2*mu])*offset;
+      length[1] = (c->num_boundary_sites[2*mu+1])*offset;
+      comm_start = c->comm_start[mu_dir];
+    } else if ( amount == _EVEN_SITES ) {
+      length[0] = c->num_even_boundary_sites[2*mu]*offset;
+      length[1] = c->num_even_boundary_sites[2*mu+1]*offset;
+      comm_start = c->comm_start[mu_dir];
+    } else if ( amount == _ODD_SITES ) {
+      length[0] = c->num_odd_boundary_sites[2*mu]*offset;
+      length[1] = c->num_odd_boundary_sites[2*mu+1]*offset;
+      comm_start = c->comm_start[mu_dir]+c->num_even_boundary_sites[mu_dir]*offset;
+    }
+    
+#ifdef HAVE_TM1p1
+    if ( g.n_flavours == 2 ) {
+      length[0] *= 2;
+      length[1] *= 2;
+      comm_start *= 2;
+      offset *= 2;
+    }
+#endif
+    
+    // dir = senddir
+    if ( dir == 1 ) {
+      if ( length[1] > 0 ) {
+        // 0 is plus hopping, 1 is minus hopping
+        if( pers_comms_id1==0 ){
+          MPI_Request_free( &(g.pers_comms_recvrs_plus[2*mu][pers_comms_id2]) );
+        } else {
+          MPI_Request_free( &(g.pers_comms_recvrs_minus[2*mu][pers_comms_id2]) );
+        }
+      }
+      if ( length[0] > 0 ) {
+        // 0 is plus hopping, 1 is minus hopping
+        if( pers_comms_id1==0 ){
+          MPI_Request_free( &(g.pers_comms_sendrs_plus[2*mu][pers_comms_id2]) );
+        } else {
+          MPI_Request_free( &(g.pers_comms_sendrs_minus[2*mu][pers_comms_id2]) );
+        }
+      }
+    } else if ( dir == -1 ) {
+      if ( length[0] > 0 ) {
+        // 0 is plus hopping, 1 is minus hopping
+        if( pers_comms_id1==0 ){
+          MPI_Request_free( &(g.pers_comms_recvrs_plus[2*mu+1][pers_comms_id2]) );
+        } else {
+          MPI_Request_free( &(g.pers_comms_recvrs_minus[2*mu+1][pers_comms_id2]) );
+        }
+      }
+      if ( length[1] > 0 ) {
+        // 0 is plus hopping, 1 is minus hopping
+        if( pers_comms_id1==0 ){
+          MPI_Request_free( &(g.pers_comms_sendrs_plus[2*mu+1][pers_comms_id2]) );
+        } else {
+          MPI_Request_free( &(g.pers_comms_sendrs_minus[2*mu+1][pers_comms_id2]) );
+        }
+      }
+
+    } else ASSERT( dir == 1 || dir == -1 );
+
+  }
+}
+
 #endif
