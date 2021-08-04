@@ -814,13 +814,13 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     SYNC_MASTER_TO_ALL(threading);
     SYNC_CORES(threading)
 
-    START_MASTER(threading)
-    if( ol==3 ){
-      //printf0("\n\nexiting (%d)\n\n\n", iter);
-      MPI_Barrier( MPI_COMM_WORLD );
-      exit(0);
-    }
-    END_MASTER(threading)
+    //START_MASTER(threading)
+    //if( ol==3 ){
+    //  //printf0("\n\nexiting (%d)\n\n\n", iter);
+    //  MPI_Barrier( MPI_COMM_WORLD );
+    //  exit(0);
+    //}
+    //END_MASTER(threading)
 
   }
 
