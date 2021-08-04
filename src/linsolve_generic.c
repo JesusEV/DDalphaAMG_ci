@@ -196,6 +196,10 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 #endif
   }
 
+#ifdef PERS_COMMS
+  g.pers_comms_nrZs = k;
+#endif
+
   total += 4*(m+1); // y, gamma, c, s
   
   p->H[0] = NULL; // allocate connected memory
@@ -378,6 +382,10 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     p->Va[i] = p->Va[0] + i*vl;
     p->Za[i] = p->Za[0] + i*vl;
   }
+
+#ifdef PERS_COMMS
+  g.pers_comms_nrZas = m+2;
+#endif
 #endif
 
 #ifdef BLOCK_JACOBI
@@ -1074,13 +1082,14 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
             for( i=0; i<p->gcrodr_PRECISION.k; i++ ) {
 
 #ifdef PERS_COMMS
-              g.pers_comms_id2 = p->restart_length + i;
-              g.use_pers_comms1 = 1;
+              // g.pers_comms_nrZxs should be zero here anyways
+              //g.pers_comms_id2 = p->restart_length + g.pers_comms_nrZxs + i;
+              //g.use_pers_comms1 = 1;
 #endif
               apply_operator_PRECISION( DPCk[i], Ck[i], p, l, threading );
 #ifdef PERS_COMMS
-              g.pers_comms_id2 = -1;
-              g.use_pers_comms1 = 0;
+              //g.pers_comms_id2 = -1;
+              //g.use_pers_comms1 = 0;
 #endif
             }
             p->gcrodr_PRECISION.recompute_DPCk_plain = 0;
@@ -1164,8 +1173,8 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
 #endif
 
 #ifdef PERS_COMMS
-        g.pers_comms_id2 = j;
-        g.use_pers_comms1 = 1;
+      g.pers_comms_id2 = j;
+      g.use_pers_comms1 = 1;
 #endif
       apply_operator_PRECISION( Z[j], V[j], p, l, threading );
 #ifdef PERS_COMMS
@@ -1304,13 +1313,13 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         if (prec == NULL) vector_PRECISION_copy( Z[0], V[0], start, end, l );
         else prec( Z[0], NULL, V[0], _NO_RES, l, threading );
 #ifdef PERS_COMMS
-        g.pers_comms_id2 = 0;
-        g.use_pers_comms1 = 1;
+        //g.pers_comms_id2 = p->restart_length + 0;
+        //g.use_pers_comms1 = 1;
 #endif
         apply_operator_PRECISION( Va[0], Z[0], p, l, threading );
 #ifdef PERS_COMMS
-        g.pers_comms_id2 = -1;
-        g.use_pers_comms1 = 0;
+        //g.pers_comms_id2 = -1;
+        //g.use_pers_comms1 = 0;
 #endif
         if ( sigma ) vector_PRECISION_saxpy( Va[j], Va[j], Va[j], -sigma, start, end, l );
 
@@ -1321,13 +1330,13 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
               if (prec == NULL) vector_PRECISION_copy( PCk[i], Ck[i], start, end, l );
               else prec( PCk[i], NULL, Ck[i], _NO_RES, l, threading );
 #ifdef PERS_COMMS
-              g.pers_comms_id2 = p->restart_length + i;
-              g.use_pers_comms1 = 1;
+              //g.pers_comms_id2 = p->restart_length + g.pers_comms_nrZxs + g.gcrodr_k + i;
+              //g.use_pers_comms1 = 1;
 #endif
               apply_operator_PRECISION( DPCk[i], PCk[i], p, l, threading );
 #ifdef PERS_COMMS
-              g.pers_comms_id2 = -1;
-              g.use_pers_comms1 = 0;
+              //g.pers_comms_id2 = -1;
+              //g.use_pers_comms1 = 0;
 #endif
             }
             p->gcrodr_PRECISION.recompute_DPCk_poly = 0;
@@ -1414,7 +1423,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       else prec( Za[j-1], NULL, Va[j-1], _NO_RES, l, threading );
 
 #ifdef PERS_COMMS
-      g.pers_comms_id2 = j-1;
+      g.pers_comms_id2 = p->restart_length + j-1;
       g.use_pers_comms1 = 1;
 #endif
       apply_operator_PRECISION( Va[j], Za[j-1], p, l, threading );
@@ -1559,13 +1568,13 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   if ( prec != NULL ) {
     if ( p->kind == _LEFT ) {
 #ifdef PERS_COMMS
-        g.pers_comms_id2 = j;
-        g.use_pers_comms1 = 1;
+      //g.pers_comms_id2 = j;
+      //g.use_pers_comms1 = 1;
 #endif
       apply_operator_PRECISION( Z[0], V[j], p, l, threading );
 #ifdef PERS_COMMS
-      g.pers_comms_id2 = -1;
-      g.use_pers_comms1 = 0;
+      //g.pers_comms_id2 = -1;
+      //g.use_pers_comms1 = 0;
 #endif
 
       //MPI_Barrier(MPI_COMM_WORLD);
@@ -1581,13 +1590,13 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       if ( l->level == 0 ) {
         prec( Z[j], NULL, V[j], _NO_RES, l, threading );
 #ifdef PERS_COMMS
-        g.pers_comms_id2 = j;
-        g.use_pers_comms1 = 1;
+        //g.pers_comms_id2 = p->restart_length + j;
+        //g.use_pers_comms1 = 1;
 #endif
         apply_operator_PRECISION( w, Z[j], p, l, threading );
 #ifdef PERS_COMMS
-        g.pers_comms_id2 = -1;
-        g.use_pers_comms1 = 0;
+        //g.pers_comms_id2 = -1;
+        //g.use_pers_comms1 = 0;
 #endif
       } else {
         if ( g.mixed_precision == 2 && (g.method >= 1 && g.method <= 2 ) ) {
@@ -1596,26 +1605,26 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
         } else {
           prec( Z[j], NULL, V[j], _NO_RES, l, threading );
 #ifdef PERS_COMMS
-          g.pers_comms_id2 = j;
-          g.use_pers_comms1 = 1;
+          //g.pers_comms_id2 = p->restart_length + j;
+          //g.use_pers_comms1 = 1;
 #endif
           apply_operator_PRECISION( w, Z[j], p, l, threading ); // w = D*Z[j]
 #ifdef PERS_COMMS
-          g.pers_comms_id2 = -1;
-          g.use_pers_comms1 = 0;
+          //g.pers_comms_id2 = -1;
+          //g.use_pers_comms1 = 0;
 #endif
         }
       }
     }
   } else {
 #ifdef PERS_COMMS
-    g.pers_comms_id2 = j;
-    g.use_pers_comms1 = 1;
+    //g.pers_comms_id2 = j;
+    //g.use_pers_comms1 = 1;
 #endif
     apply_operator_PRECISION( w, V[j], p, l, threading ); // w = D*V[j]
 #ifdef PERS_COMMS
-    g.pers_comms_id2 = -1;
-    g.use_pers_comms1 = 0;
+    //g.pers_comms_id2 = -1;
+    //g.use_pers_comms1 = 0;
 #endif
   }
 

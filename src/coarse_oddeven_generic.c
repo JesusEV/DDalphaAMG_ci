@@ -729,6 +729,10 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
   int core_start;
   int core_end;
+
+#ifdef PERS_COMMS
+  g.pers_comms_id1 = 0;
+#endif
   
   // assumptions (1) self coupling has already been performed
   //          OR (2) "out" is initialized with zeros
@@ -741,7 +745,11 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     minus_dir_param = _EVEN_SITES;
     plus_dir_param = _ODD_SITES;
   }
-  
+
+  //START_MASTER(threading)
+  //printf0("print 2 ...\n");
+  //END_MASTER(threading)
+
   START_MASTER(threading)
   if ( op->c.comm ) {
     for ( mu=0; mu<4; mu++ ) {
@@ -795,6 +803,10 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     out_pt = out + num_site_var*op->neighbor_table[index+X];
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
+
+  //START_MASTER(threading)
+  //printf0("print 3 ...\n");
+  //END_MASTER(threading)
 
   START_LOCKED_MASTER(threading)
   if ( op->c.comm ) {
@@ -853,6 +865,10 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
 void coarse_n_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, operator_PRECISION_struct *op,
                                       const int amount, level_struct *l, struct Thread *threading ) {
+
+#ifdef PERS_COMMS
+  g.pers_comms_id1 = 1;
+#endif
 
 #ifdef OPTIMIZED_COARSE_NEIGHBOR_COUPLING_PRECISION
 #ifndef COMM_HIDING_COARSEOP
@@ -1545,6 +1561,9 @@ void coarse_apply_schur_complement_PRECISION( vector_PRECISION out, vector_PRECI
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
+  //START_MASTER(threading)
+  //printf0("print 1 ...\n");
+  //END_MASTER(threading)
   PROF_PRECISION_START( _NC, threading );
   coarse_hopping_term_PRECISION( tmp[0], in, op, _ODD_SITES, l, threading );
   PROF_PRECISION_STOP( _NC, 0, threading );

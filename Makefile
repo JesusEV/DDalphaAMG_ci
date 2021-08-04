@@ -40,9 +40,9 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-LIMEDIR = /home/ramirez/installs/qio/bin
+LIMEDIR = /home/ramirez/installs/qio/dir
 LIMEFLAGS = -DHAVE_LIME -I$(LIMEDIR)/include
-LIMELIB = $(LIMEDIR)/lib64/liblime.a
+LIMELIB = $(LIMEDIR)/lib/liblime.a
 
 # Available flags:
 # -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING
@@ -62,7 +62,7 @@ DEVEL_VERSION_FLAGS += -DPOLYPREC
 DEVEL_VERSION_FLAGS += -DBLOCK_JACOBI -DPERS_COMMS
 
 #---------------------------------------------------
-LAPACK_DIR = /home/ramirez/projects/DDalphaAMG/DDalphaAMG_ci/dependencies/lapack-3.9.0
+LAPACK_DIR = dependencies/lapack-3.9.0
 LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
 LAPACKE_INCLUDE = $(LAPACKE_DIR)/include
 BLASLIB      = $(LAPACK_DIR)/librefblas.a

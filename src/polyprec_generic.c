@@ -243,6 +243,10 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
                                int res, level_struct *l, struct Thread *threading )
 {
 
+  START_MASTER(threading)
+  //printf0("entering polyprec ...\n");
+  END_MASTER(threading)
+
   int i, start, end;
 
   compute_core_start_end(l->p_PRECISION.v_start, l->p_PRECISION.v_end, &start, &end, l, threading);
@@ -271,6 +275,10 @@ void apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vect
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
+
+  START_MASTER(threading)
+  //printf0("exiting polyprec ...\n");
+  END_MASTER(threading)
 
 }
 

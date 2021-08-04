@@ -412,6 +412,11 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   SYNC_MASTER_TO_ALL(threading);
   SYNC_CORES(threading)
 
+  START_MASTER(threading)
+  //printf0("beginning of gcrodr ...\n");
+  END_MASTER(threading)
+
+
   if ( p->gcrodr_PRECISION.CU_usable==1 ) {
     vector_PRECISION *Uk;
 
@@ -435,11 +440,19 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       SYNC_MASTER_TO_ALL(threading);
 
       // ------ QR = A*Yk
-    
+
+      START_MASTER(threading)
+      //printf0("before ...\n");
+      END_MASTER(threading)
+
       // QR = A*Yk
       for ( i=0; i<k; i++ ) {
         apply_operator_PRECISION( p->gcrodr_PRECISION.C[i], p->gcrodr_PRECISION.Yk[i], p, l, threading );
       }
+
+      START_MASTER(threading)
+      //printf0("after ...\n");
+      END_MASTER(threading)
 
       int i_length = p->v_end - p->v_start;
       pqr_PRECISION( i_length, k, p->gcrodr_PRECISION.C, p->gcrodr_PRECISION.R, p, l, threading );
@@ -800,12 +813,19 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     SYNC_MASTER_TO_ALL(threading);
     SYNC_CORES(threading)
+
+    START_MASTER(threading)
+    if( ol==3 ){
+      //printf0("\n\nexiting (%d)\n\n\n", iter);
+      MPI_Barrier( MPI_COMM_WORLD );
+      exit(0);
+    }
+    END_MASTER(threading)
+
   }
 
   SYNC_MASTER_TO_ALL(threading);
   SYNC_CORES(threading)
-
-  exit(0);
 
   return fgmresx_iter;
 }
@@ -985,7 +1005,7 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
       gamma_jp1 = cabs( p->gamma[j+1] );
 
       START_MASTER(threading)
-      printf0("g (proc=%d,j=%d) rel residual (gcro-dr) = %f\n", g.my_rank, j, gamma_jp1/norm_r0);
+      //printf0("g (proc=%d,j=%d) rel residual (gcro-dr) = %f\n\n", g.my_rank, j, gamma_jp1/norm_r0);
       END_MASTER(threading)
 
       if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
@@ -1019,12 +1039,6 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
-
-  START_MASTER(threading)
-  printf0("\n\nexiting (%d)\n\n\n", iter);
-  MPI_Barrier( MPI_COMM_WORLD );
-  exit(0);
-  END_MASTER(threading)
 
   return iter;
 }

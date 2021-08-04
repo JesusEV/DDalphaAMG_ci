@@ -451,6 +451,8 @@
     int use_pers_comms1,use_pers_comms2;
     int pers_comms_id1,pers_comms_id2;
 
+    int pers_comms_nrZs,pers_comms_nrZas,pers_comms_nrZxs;
+
     // for plus hopping (plus doesn't mean +mu here)
     MPI_Request* pers_comms_recvrs_plus[8];
     MPI_Request* pers_comms_sendrs_plus[8];
@@ -610,7 +612,7 @@
 #ifdef HAVE_LIME
 #include <lime.h>
 #include <lime_config.h>
-#include <dcap-overload.h>
+//#include <dcap-overload.h>
 #include <lime_defs.h>
 #include <lime_header.h>
 #include <lime_writer.h>
