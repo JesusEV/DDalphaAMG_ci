@@ -233,7 +233,13 @@
 
 #else
 
+#ifdef BJ_DIR_SOLVS
     bj_direct_op_apply_PRECISION( out, in, l, threading );
+#else
+    if ( p->block_jacobi_PRECISION.BJ_usable==1 ) {
+      local_apply_polyprec_PRECISION( out, NULL, in, 0, l, threading );
+    }
+#endif
 
 #endif
 
