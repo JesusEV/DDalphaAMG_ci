@@ -257,10 +257,12 @@
       int nr_nodes = l->num_inner_lattice_sites;
       int i, j, k; // k = index in matrix
       int skip = 8 * SQUARE(site_var);	//skip number of elements in Blockrow in large matrix (for self coupl. only skip = 0, else 8 * SQUARE(site_var))
-      for (j = 0, k = 0; j < g.num_processes*nr_nodes; j++){
+      int j_start = nr_nodes * g.my_rank * site_var, i_start = nr_nodes * g.my_rank * site_var;
+
+      for (j = 0, k = 0; j < nr_nodes; j++){
         for (i = 0; i < SQUARE(site_var); i++, k++){
-          *(l->p_PRECISION.mumps_Is +k) = j * site_var + (int)(i/site_var);	// col indices
-          *(l->p_PRECISION.mumps_Js +k) = j * site_var + (i % site_var); 	// row indices
+          *(l->p_PRECISION.mumps_Is +k) = i_start + j * site_var + (int)(i/site_var);	// col indices
+          *(l->p_PRECISION.mumps_Js +k) = j_start + j * site_var + (i % site_var); 	// row indices
         }
         k += skip;
       }
@@ -280,7 +282,7 @@
       int c, r;	// col no., row no.
 //      nr_nodes * g.my_rank 			= nodes per process * p_id
 //	nr_nodes * (g.my_rank +1)		= first node of next process
-      for (j = nr_nodes * g.my_rank; j < nr_nodes * (g.my_rank + 1); j++){
+      for (j = 0; j < nr_nodes; j++){
 
 	// A store column-wise
         for (k = 0, r = 0; r < num_eig_vect; r++, k++){

@@ -91,6 +91,8 @@ void spmv_PRECISION( vector_PRECISION out, vector_PRECISION in, vector_PRECISION
   //int* bfr = Is;
   //Is = Js;
   //Js = bfr;
+//  printf("%d", vl);
+//  exit(0);
 
 
   for( w=0;w<n;w++ ){
@@ -100,7 +102,8 @@ void spmv_PRECISION( vector_PRECISION out, vector_PRECISION in, vector_PRECISION
     //if(g.my_rank==1 && Is[w]!=0) printf("%d\n", Is[w]);
     //if(g.my_rank==1 && Is[w]!=0) printf("%d\n\n", Js[w]);
     //continue;
-    px = jx/(vl*l->num_lattice_site_var);
+    px = jx / vl;
+//    px = jx/(vl*l->num_lattice_site_var);
     if( px==g.my_rank ) inx = in;
     else{
       for( wx=0;wx<8;wx++ ){

@@ -31,16 +31,16 @@ void negative_sendrecv_PRECISION( vector_PRECISION phi, const int mu, comm_PRECI
     vector_PRECISION buffer, tmp_pt, buffer_pt;
     
     boundary_start = l->num_inner_lattice_sites;
-    for ( i=0; i<mu; i++ )
-      boundary_start += c->num_boundary_sites[2*i];
+    for ( i=0; i<mu; i++ )	//enlarge b_start pointer for T, Z.... up to mu
+      boundary_start += c->num_boundary_sites[2*i];	//fits to start of mu  coupling
 
     buffer = l->vbuf_PRECISION[8]+n*(boundary_start-l->num_inner_lattice_sites);
     buffer_pt = buffer;
     
-    for ( i=0; i<num_boundary_sites; i++ ) {
-      tmp_pt = phi + n*boundary_table[i];
+    for ( i=0; i<num_boundary_sites; i++ ) {	//loop over boundary sites
+      tmp_pt = phi + n*boundary_table[i];	//tmp holds #site_var elements aka. to one chunk in phi corresponding to site i
       for ( j=0; j<n; j++, buffer_pt++, tmp_pt++ )
-        *buffer_pt = *tmp_pt;
+        *buffer_pt = *tmp_pt;			//copy chunk from tmp to buffer
     }
     
     MPI_Irecv( phi+n*boundary_start, n*num_boundary_sites, MPI_COMPLEX_PRECISION,

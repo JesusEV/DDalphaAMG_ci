@@ -681,15 +681,16 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
-/*
+
+//FIXME remove
+  memset(eta, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
+
+
 #ifndef OPTIMIZED_COARSE_SELF_COUPLING_PRECISION
   coarse_self_couplings_PRECISION( eta, phi, op, start, end, l);
 #else
   coarse_self_couplings_PRECISION_vectorized( eta, phi, op, start, end, l );
 #endif
-*/
-
-  memset(eta, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
 
 
   PROF_PRECISION_STOP( _SC, 1, threading );
@@ -705,8 +706,24 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   coarse_hopping_term_PRECISION_vectorized( eta, phi, op, _FULL_SYSTEM, l, threading ); 
 #endif
 
+/*
 
+//###############################
+  if (g.my_rank == 0){
+    int my_j, my_i = 0;
+    int max_node = l->num_inner_lattice_sites;
+    int num_site_var = l->num_lattice_site_var;
+    for (my_j = 0; my_j < max_node; my_j++){
+      printf("j: %d\n", my_j);
+      for (my_i = 0; my_i < 9; my_i++){
+	if (l->p_PRECISION.mumps_vals[my_j * SQUARE(num_site_var) * 9 + my_i * SQUARE(num_site_var)] == 0) printf("\t0 in dir: %d\n", my_i);
+      }
+    }
+	//exit(0);
+  }
+//###############################
 
+*/
 #ifdef MUMPS_ADDS
 
 
@@ -731,24 +748,23 @@ END_MASTER(threading)
 
 
   memset(etax, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
-
+  
 
   printf("calling spmv...\n");
   spmv_PRECISION(etax, phi, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js, nx, &(l->p_PRECISION), l, threading );
 
-
+ 
 
   // TODO #2 : compare <eta> against <etax>
   int len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
 //l->num_inner_lattice_sites
  // len = 1*l->num_lattice_site_var;	// first block row
-  if (g.my_rank == 0){
+  if (g.my_rank == 1){
     int i;
   // CHECK DIFF BETWEEN SPARSE BLAS RES. (etax) AND OLD DDalphaAMG RES. (eta)
-    for (i = 0; i < len; i ++){ //+= l->num_lattice_site_var){
+    for (i = 0; i < len; i+= 1){//(l->num_lattice_site_var/2)){ //+= l->num_lattice_site_var){
       printf("i: %d, etax - eta: %f, %f\n", i, CSPLIT(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
-//      printf("i: %d, etax: %f, %f\n", i, cimag(*(etax+i)), cimag(*(etax+i)));
-//      printf("i: %d, etax - eta: %f, %f\n", i, cimag(*(etax+i) - *(eta+i)), cimag(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
+//	if ((i + (l->num_lattice_site_var/2)) % (l->num_lattice_site_var) == 0) printf("\n");
     }
   }
 
