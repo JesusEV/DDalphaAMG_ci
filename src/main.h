@@ -109,11 +109,26 @@
 #endif
 
 #ifdef MUMPS_ADDS
+//Self written sparse matrix multiplication
   #define gemv_double zgemv_
   #define gemv_float cgemv_
   extern void zgemv_(char *transA, int *m, int *n, double complex *alpha, double complex *A, int *lda, double complex *X, int *incx, double complex *beta, double  complex *Y, int *incy);
   extern void cgemv_(char *transA, int *m, int *n, float complex *alpha, float complex *A, int *lda, float complex *X, int *incx, float complex *beta, float  complex *Y, int *incy);
 
+
+//MUMPS stuff
+
+  #include <stdio.h>
+  #include <string.h>
+  #include "mpi.h"
+
+//FIXME CHANGE THIS
+  #include "/home/leemhuis/installs/MUMPS_5.4.0/include/dmumps_c.h"
+
+
+  #define JOB_INIT -1
+  #define JOB_END -2
+  #define USE_COMM_WORLD -987654
 #endif
 
 

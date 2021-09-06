@@ -751,24 +751,77 @@ END_MASTER(threading)
   
 
   printf("calling spmv...\n");
+  
+  //TODO: Change from spmv to MUMPS
+
   spmv_PRECISION(etax, phi, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js, nx, &(l->p_PRECISION), l, threading );
+/**/
 
- 
 
-  // TODO #2 : compare <eta> against <etax>
+  //MUMPS
+  int chunklen = SQUARE(l->num_lattice_site_var) *l->num_inner_lattice_sites *9;
+  int* global_Is = NULL;
+  int* global_Js = NULL;
+  if (g.my_rank == 0){
+    MALLOC(global_Is, int, chunklen * g.num_processes);	//little block * no of node * 9 (self + 2*all_dirs) * no of processes
+    MALLOC(global_Js, int, chunklen * g.num_processes);
+    memset(global_Is, 0, chunklen * g.num_processes * sizeof(int));
+    memset(global_Js, 0, chunklen * g.num_processes * sizeof(int));
+  }
+//gather all Is and Js at process 0
+//  MPI_Gather(void* send_data, int send_count, MPI_Datatype send_datatype, void* recv_data, int recv_count, MPI_Datatype recv_datatype, int root, MPI_Comm communicator)
+  MPI_Gather(l->p_PRECISION.mumps_Is, chunklen, MPI_INT, global_Is, chunklen, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gather(l->p_PRECISION.mumps_Js, chunklen, MPI_INT, global_Js, chunklen, MPI_INT, 0, MPI_COMM_WORLD);
+
+
+
+
+
+
+
+
+  DMUMPS_STRUC_C id;
+
+  MUMPS_INT n = l->num_lattice_site_var * l->num_inner_lattice_sites * g.num_processes;	//order of Matrix
+  MUMPS_INT8 nnz = chunklen * g.num_processes;	//number of nonzero elements
+  MUMPS_INT nnz_loc = chunklen;
+
+  /*	not needed due to icntl 18 = 3 else -> use these two lines
+	in fact this means: no gather needed
+  MUMPS_INT irn[] = global_Is;
+  MUMPS_INT jcn[] = global_Js;
+  */
+  
+  MUMPS_INT* irn_loc = l->p_PRECISION.mumps_Is;
+  MUMPS_INT* jcn_loc = l->p_PRECISION.mumps_Is;
+
+  complex_PRECISION* A_loc = l->p_PRECISION.mumps_vals;
+//  double rhs[2];
+
+
+/* Initialize a MUMPS instance. Use MPI_COMM_WORLD */
+  id.comm_fortran=USE_COMM_WORLD;
+  id.par=1; id.sym=0;
+  id.job=JOB_INIT;
+  dmumps_c(&id);
+
+/*
+
+  id.ICNTL(5)=0;	//distributed assembled matrix
+  id.ICNTL(18)=3; 	//local triplets for analysis and factorization
+*/
+
+
+  //compare <eta> against <etax>
   int len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
-//l->num_inner_lattice_sites
- // len = 1*l->num_lattice_site_var;	// first block row
   if (g.my_rank == 1){
     int i;
-  // CHECK DIFF BETWEEN SPARSE BLAS RES. (etax) AND OLD DDalphaAMG RES. (eta)
+  // CHECK DIFF BETWEEN SPARSE BLAS/MUMPS RES. (etax) AND OLD DDalphaAMG RES. (eta)
     for (i = 0; i < len; i+= 1){//(l->num_lattice_site_var/2)){ //+= l->num_lattice_site_var){
       printf("i: %d, etax - eta: %f, %f\n", i, CSPLIT(*(etax+i) - *(eta+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
 //	if ((i + (l->num_lattice_site_var/2)) % (l->num_lattice_site_var) == 0) printf("\n");
     }
   }
-
-
 
   MPI_Barrier( MPI_COMM_WORLD );
   printf("(proc=%d) stop ... \n", g.my_rank);

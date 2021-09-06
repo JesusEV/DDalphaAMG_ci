@@ -54,12 +54,93 @@ OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES 
 #OPT_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
 #OPT_VERSION_FLAGS += -DPOLYPREC
 #OPT_VERSION_FLAGS += -DBLOCK_JACOBI
+#OPT_VERSION_FLAGS += $(LIBSMUMPS)
+
 
 DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DOPENMP -DMUMPS_ADDS
 #DEVEL_VERSION_FLAGS += -DGCRODR
 #DEVEL_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
 #DEVEL_VERSION_FLAGS += -DPOLYPREC
 #DEVEL_VERSION_FLAGS += -DBLOCK_JACOBI
+#DEVEL_VERSION_FLAGS += $(LIBSMUMPS)
+
+#---------------------------------------------------
+
+LIBBLAS = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+SCALAP=-lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+LIBPAR = $(SCALAP) $(LIBBLAS)
+#Preprocessor defs for calling Fortran from C (-DAdd_ or -DAdd__ or -DUPPER)
+CDEFS   = -DAdd_
+#Begin Optimized options
+OPTF    = -O -nofor_main -qopenmp -Dintel_ -DALLOW_NON_INIT
+OPTL    = -O -nofor_main -qopenmp
+OPTC    = -O -qopenmp
+#End Optimized options
+
+MUMPS_topdir = /home/leemhuis/installs/MUMPS_5.4.0/
+MUMPS_LIBS = $(MUMPS_topdir)/lib/
+
+SCOTCHDIR=/usr/lib/hpc/gnu7/openmpi3/ptscotch/6.0.6/lib64/
+LMETISDIR=/usr/lib/hpc/gnu7/openmpi3/ptscotch/6.0.6/lib64/
+#LMETISDIR=/usr/lib64/mpi/gcc/openmpi2/lib64/
+#/home/leemhuis/installs/metis
+LMETIS=-L$(LMETISDIR) -lptscotchparmetis #-lmetis
+LSCOTCH=-L$(SCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lesmumps -lscotch -lscotcherr
+LPORD=-L$(MUMPS_topdir) -lpord
+
+LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
+
+LORDERINGS=$(LMETIS) $(LPORD) $(LSCOTCH)
+
+LIBSMUMPS = -L$(MUMPS_LIBS) -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS)
+
+
+#LIBDMUMPS = -L$(MUMPS_LIBS) -ldmumps $(LIBMUMPS_COMMON)
+#c_example:    $$@.o
+#	$(FL) -o $@ $(OPTL) $@.o $(LIBDMUMPS) $(LORDERINGS) $(LIBPAR)
+
+MUMPS_INCLUDE = $(MUMPS_topdir)/include
+
+#.SUFFIXES: .c .F .o
+#.F.o:
+#	$(mpif77) $(OPTF) -I. -I$(MUMPS_INCLUDE) -c $*.F
+#.c.o:
+#	$(mpicc) $(OPTC) $(CDEFS) -I. -I$(MUMPS_INCLUDE) -c $*.c
+
+
+##########
+
+
+#LAPACK = -llapack
+#SCALAP  = -lscalapack-openmpi -lblacs-openmpi
+#SCALAP = /usr/local/sw/scalapack-2.0.1/lib/libscalapack.a /usr/local/sw/BLACS/libblacs_MPI-LINUX-0.a /usr/local/sw/BLACS/libblacsCinit_MPI-LINUX-0.a /usr/local/sw/BLACS/libblacsF77init_MPI-LINUX-0.a
+
+#LIBPAR = $(SCALAP) $(LAPACK) # not needed with mpif90/mpicc: -lmpi_mpifh -lmpi
+
+
+#LMETISDIR = /home/leemhuis/installs/metis/lib/	#/usr/lib
+#IMETIS    = -I/home/leemhuis/installs/metis/include/ #~/installs/metis
+#LMETIS    = -L$(LMETISDIR) -lmetis
+
+#LPORDDIR = /home/leemhuis/installs/MUMPS_5.4.0/PORD/lib/
+#IPORD    = -I/home/leemhuis/installs/MUMPS_5.4.0/PORD/include/
+#LPORD    = -L$(LPORDDIR) -lpord
+
+#LSCOTCHDIR = /usr/lib 
+#ISCOTCH   = -I/usr/include
+
+##LSCOTCH   = -L$(LSCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr
+#LSCOTCH   = -L$(LSCOTCHDIR) -lesmumps -lscotch -lscotcherr
+
+#LIBOTHERS = -lpthread
+
+# MUMPS STUFF
+#MUMPS_topdir = /home/leemhuis/installs/MUMPS_5.4.0
+
+#MUMPS_LORDERINGS = $(LMETIS) $(LPORD) $(LSCOTCH)
+
+#LIBMUMPS_COMMON = $(MUMPS_topdir)/lib/libmumps_common.a
+#MUMPS_LIBRARIES = $(MUMPS_topdir)/lib/libcmumps.a $(MUMPS_topdir)/lib/libdmumps.a $(MUMPS_topdir)/lib/libsmumps.a $(MUMPS_topdir)/lib/libzmumps.a $(LIBMUMPS_COMMON) $(MUMPS_LORDERINGS) $(LIBPAR) $(LIBOTHERS) -lblas -DAdd_ -O -fopenmp
 
 #---------------------------------------------------
 LAPACK_DIR = dependencies/lapack-3.9.0
@@ -85,7 +166,7 @@ SCALAPACK_LIBRARIES =
 
 
 all: execs library exec-tests
-execs: $(BINDIR)/DDalphaAMG $(BINDIR)/DDalphaAMG_devel
+execs: $(BINDIR)/DDalphaAMG #$(BINDIR)/DDalphaAMG_devel
 library: $(LIB)
 exec-tests: $(TSTS)
 documentation: $(DOCDIR)/user_doc.pdf
@@ -96,16 +177,18 @@ install: copy
 .SECONDARY:
 
 $(BINDIR)/DDalphaAMG : $(OBJ) 
-	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) $(SPBLAS_LIBRARIES) -lm -lgfortran
+	mpicc $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) $(SPBLAS_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
+#		$(MUMPS_LIBRARIES)
 
 DDalphaAMG : $(BINDIR)/DDalphaAMG
 	ln -sf $(BINDIR)/$@ $@
 
-DDalphaAMG_devel: $(BINDIR)/DDalphaAMG_devel
-	ln -sf $(BINDIR)/$@ $@
+#DDalphaAMG_devel: $(BINDIR)/DDalphaAMG_devel
+#	ln -sf $(BINDIR)/$@ $@
 
-$(BINDIR)/DDalphaAMG_devel : $(OBJDB)
-	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
+#$(BINDIR)/DDalphaAMG_devel : $(OBJDB)
+#	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES)  -lm -lgfortran
+#		$(MUMPS_LIBRARIES)
 
 $(LIBDIR)/libDDalphaAMG.a: $(OBJ)
 	ar rc $@ $(OBJ)
