@@ -67,7 +67,7 @@ DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -
 #---------------------------------------------------
 
 LIBBLAS = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
-SCALAP=-lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+SCALAP=-lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lblacs
 LIBPAR = $(SCALAP) $(LIBBLAS)
 #Preprocessor defs for calling Fortran from C (-DAdd_ or -DAdd__ or -DUPPER)
 CDEFS   = -DAdd_
@@ -77,20 +77,22 @@ OPTL    = -O -nofor_main -qopenmp
 OPTC    = -O -qopenmp
 #End Optimized options
 
-MUMPS_topdir = /home/leemhuis/installs/MUMPS_5.4.0/
-MUMPS_LIBS = $(MUMPS_topdir)/lib/
+#MUMPS_topdir = /home/leemhuis/installs/MUMPS_5.4.0/
+MUMPS_topdir = /usr/lib/hpc/gnu7/openmpi2/mumps/5.1.2/
+#MUMPS_topdir = /usr/lib64/mpi/gcc/openmpi2/
+MUMPS_LIBS = $(MUMPS_topdir)lib64
 
 SCOTCHDIR=/usr/lib/hpc/gnu7/openmpi3/ptscotch/6.0.6/lib64/
-LMETISDIR=/usr/lib/hpc/gnu7/openmpi3/ptscotch/6.0.6/lib64/
-#LMETISDIR=/usr/lib64/mpi/gcc/openmpi2/lib64/
+#LMETISDIR=/usr/lib/hpc/gnu7/openmpi3/ptscotch/6.0.6/lib64/
+LMETISDIR=/usr/lib64/mpi/gcc/openmpi2/lib64/
 #/home/leemhuis/installs/metis
-LMETIS=-L$(LMETISDIR) -lptscotchparmetis #-lmetis
+LMETIS=-L$(LMETISDIR) -lptscotchparmetis -lmetis
 LSCOTCH=-L$(SCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lesmumps -lscotch -lscotcherr
 LPORD=-L$(MUMPS_topdir) -lpord
 
 LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
 
-LORDERINGS=$(LMETIS) $(LPORD) $(LSCOTCH)
+LORDERINGS=$(LMETIS) $(LPORD) $(LSCOTCH) -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
 
 LIBSMUMPS = -L$(MUMPS_LIBS) -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS)
 
@@ -159,9 +161,12 @@ LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
 #SCALAPACK_INCLUDE = /usr/local/sw/intel/composer_xe_2013.0.079/mkl/include
 #SCALAPACK_LIBRARIES  =
 #SCALAPACK_LIBRARIES += -L/home/ramirez/Documents/DDalphaAMG_ci/dependencies/scalapack/lib -lscalapack
-SCALAPACK_DIR = 
-SCALAPACK_INCLUDE = 
-SCALAPACK_LIBRARIES =
+#SCALAPACK_DIR = 
+#SCALAPACK_INCLUDE =
+#SCALAPACK_LIBRARIES =
+SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi2/scalapack/2.0.2
+SCALAPACK_INCLUDE = -I$(SCALAPACK_DIR)/include/
+SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib64/ -lscalapack -lblacs
 #---------------------------------------------------
 
 
@@ -201,7 +206,7 @@ $(LIBDIR)/libDDalphaAMG_devel.a: $(OBJDB)
 	ranlib $@
 
 $(TSTDIR)/%: $(LIB) $(TSTDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) -I$(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
+	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) -I$(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
 
 $(DOCDIR)/user_doc.pdf: $(DOCDIR)/user_doc.tex $(DOCDIR)/user_doc.bib
 	( cd $(DOCDIR); pdflatex user_doc; bibtex user_doc; pdflatex user_doc; pdflatex user_doc; )
