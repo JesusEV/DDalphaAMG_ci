@@ -42,9 +42,9 @@ int main( int argc, char **argv ) {
 #endif
   level_struct l;
   config_double hopp = NULL;
-  
+
   MPI_Init( &argc, &argv );
-  
+
   predefine_rank( MPI_COMM_WORLD );
   if ( g.my_rank == 0 ) {
     printf("\n\n+----------------------------------------------------------+\n");
@@ -74,7 +74,7 @@ int main( int argc, char **argv ) {
 
   commonthreaddata = (struct common_thread_data *)malloc(sizeof(struct common_thread_data));
   init_common_thread_data(commonthreaddata);
-  
+
   THREADED(g.num_openmp_processes)
   {
     g.on_solve = 0;
