@@ -123,8 +123,8 @@
   #include "mpi.h"
 
 //FIXME CHANGE THIS
-  #include "/home/leemhuis/installs/MUMPS_5.4.0/include/dmumps_c.h"
-
+  #include "/home/leemhuis/installs/MUMPS_5.4.0/include/cmumps_c.h"
+//  #include "/usr/lib/hpc/gnu7/mvapich2/mumps/5.1.2/include/mumps/cmumps_c.h"
 
   #define JOB_INIT -1
   #define JOB_END -2

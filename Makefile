@@ -78,8 +78,10 @@ OPTL    = -O -nofor_main -qopenmp
 OPTC    = -O -qopenmp
 #End Optimized options
 
-MUMPS_topdir = /usr/lib/hpc/gnu7/openmpi2/mumps/5.1.2/
-MUMPS_LIBS = $(MUMPS_topdir)lib64
+#MUMPS_topdir = /usr/lib/hpc/gnu7/openmpi2/mumps/5.1.2/
+MUMPS_topdir = /home/leemhuis/installs/MUMPS_5.4.0
+#MUMPS_LIBS = $(MUMPS_topdir)lib64
+MUMPS_LIBS = $(MUMPS_topdir)lib
 
 SCOTCHDIR=/usr/lib/hpc/gnu7/openmpi3/ptscotch/6.0.6/lib64/
 LMETISDIR=/usr/lib64/mpi/gcc/openmpi2/lib64/
@@ -88,7 +90,8 @@ LSCOTCH=-L$(SCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lesmumps -lscotch -
 LPORD=-L$(MUMPS_topdir) -lpord
 LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
 LORDERINGS=$(LMETIS) $(LPORD) $(LSCOTCH) -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
-LIBSMUMPS = -L$(MUMPS_LIBS) -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS)
+#LIBSMUMPS = -L$(MUMPS_LIBS) -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS)
+LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps $(LIBMUMPS_COMMON) $(LORDERINGS)
 MUMPS_INCLUDE = $(MUMPS_topdir)/include
 
 #---------------------------------------------------

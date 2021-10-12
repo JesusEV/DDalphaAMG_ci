@@ -778,13 +778,29 @@ END_MASTER(threading)
 
 
 
+#define ICNTL(I) icntl[(I) -1]	//macro according to docu //bridges from fortran indices to c
 
+  CMUMPS_STRUC_C mumps_id;
 
-  DMUMPS_STRUC_C id;
+  int mumps_n = l->num_lattice_site_var * l->num_inner_lattice_sites * g.num_processes;	//order of Matrix
+  int nnz = chunklen * g.num_processes;	//number of nonzero elements
+  int nnz_loc = chunklen;
 
-  MUMPS_INT n = l->num_lattice_site_var * l->num_inner_lattice_sites * g.num_processes;	//order of Matrix
-  MUMPS_INT8 nnz = chunklen * g.num_processes;	//number of nonzero elements
-  MUMPS_INT nnz_loc = chunklen;
+  mumps_n = 1000;
+  nnz = 1000;
+  nnz_loc = 500;
+
+  int irn_loc[500];
+  int jcn_loc[500];
+  complex_PRECISION A_loc[500];
+  
+  int i;
+  for (i = 0; i < 500; i++){
+    irn_loc[i] = g.my_rank*500 + i+1;
+    jcn_loc[i] = ((g.my_rank*500 + i +1)%1000) +1;
+    A_loc[i] = 1;
+  }
+
 
   /*	not needed due to icntl 18 = 3 else -> use these two lines
 	in fact this means: no gather needed
@@ -792,24 +808,118 @@ END_MASTER(threading)
   MUMPS_INT jcn[] = global_Js;
   */
   
-  MUMPS_INT* irn_loc = l->p_PRECISION.mumps_Is;
-  MUMPS_INT* jcn_loc = l->p_PRECISION.mumps_Is;
 
-  complex_PRECISION* A_loc = l->p_PRECISION.mumps_vals;
-//  double rhs[2];
+/*
+  int* irn_loc = l->p_PRECISION.mumps_Is;
+  int* jcn_loc = l->p_PRECISION.mumps_Is;
+//FIXME remove this for loop
+  for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing
+    irn_loc[i]++;
+    jcn_loc[i]++;
+  }
+
+*/
+
+
+//  complex_PRECISION* A_loc = l->p_PRECISION.mumps_vals;
 
 
 /* Initialize a MUMPS instance. Use MPI_COMM_WORLD */
-  id.comm_fortran=USE_COMM_WORLD;
-  id.par=1; id.sym=0;
-  id.job=JOB_INIT;
-  dmumps_c(&id);
 
-/*
+  mumps_id.job = JOB_INIT;
+  mumps_id.par = 1;
+  mumps_id.sym = 0;
+  mumps_id.comm_fortran = USE_COMM_WORLD;
+  cmumps_c(&mumps_id);
 
-  id.ICNTL(5)=0;	//distributed assembled matrix
-  id.ICNTL(18)=3; 	//local triplets for analysis and factorization
-*/
+
+  mumps_id.ICNTL(5) = 0;	//distributed assembled matrix
+  mumps_id.ICNTL(18) = 3; 	//local triplets for analysis and factorization
+  mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
+//  mumps_id.ICNTL(14) = 50; 	//percentage increase of estimated working space	//default: 20 - 30
+
+
+    printf("\n\nsize of matrix: %d\n\n\n", mumps_n);
+    mumps_id.n = 1000;
+  mumps_id.nnz_loc = nnz_loc;
+  mumps_id.irn_loc = irn_loc;
+  mumps_id.jcn_loc = jcn_loc;
+  mumps_id.a_loc = A_loc;
+
+//outputs
+  mumps_id.ICNTL(1) = 6;
+  mumps_id.ICNTL(2) = -1;
+  mumps_id.ICNTL(3) = 6;
+  mumps_id.ICNTL(4) = 2;
+
+
+//  mumps_id.job = 6;	//analyze factorize solve
+  mumps_id.job = 4;	//analyze factorize
+//  mumps_id.job = 1; //analyze
+  cmumps_c(&mumps_id);
+
+
+  mumps_id.job = JOB_END;
+  cmumps_c(&mumps_id);	//stop mumps
+  MPI_Barrier( MPI_COMM_WORLD );
+  printf("(proc=%d) stop ... \n", g.my_rank);
+  exit(0);
+
+
+//  int rhs_len;
+//  rhs_len = l->num_lattice_site_var * l->num_inner_lattice_sites;
+//  rhs_len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
+  const int rhs_len = 500;
+//  complex_PRECISION* rhs_loc = eta;	//set values of rhs to eta
+  complex_PRECISION rhs_loc[rhs_len];
+  int* irhs_loc;		//row indices for each el in rhs_loc
+  MALLOC(irhs_loc, int, rhs_len);
+  int Nloc_RHS = rhs_len; 		//no of rows in local rhs
+  int LRHS_loc = rhs_len; 		//local leading dimension
+
+  for (i = 0; i < rhs_len; i++){	//set the rhs-indices to global values
+//	irhs_loc[i] = g.my_rank * rhs_len + i+1;		//+1 due to fortran indexing
+	
+	rhs_loc[i] = (complex_PRECISION)(g.my_rank * 500 + i);
+	irhs_loc[i] = g.my_rank * 500 + i+1;
+  }
+
+
+  mumps_id.nloc_rhs = Nloc_RHS;
+  mumps_id.rhs_loc = rhs_loc;
+  mumps_id.irhs_loc = irhs_loc;	
+  mumps_id.lrhs_loc = LRHS_loc; //leading dimension
+
+
+  mumps_id.ICNTL(21) = 1; //non-centralized solution, maybe change to centralized, if so definitely mention it!
+
+
+  complex_PRECISION* SOL_loc;
+  MALLOC(SOL_loc, complex_PRECISION, mumps_id.info[22]);	//info[22] not info[23] due to fortran indices. info23 holds len for sol-vec
+  int LSOL_loc = mumps_id.info[22];
+  int* ISOL_loc;
+  MALLOC(ISOL_loc, int, mumps_id.info[22]);
+
+
+
+  mumps_id.sol_loc = SOL_loc;
+  mumps_id.isol_loc = ISOL_loc;
+  mumps_id.lsol_loc = LSOL_loc;
+
+
+
+  mumps_id.job = 3;		// solve
+  cmumps_c(&mumps_id);
+
+
+
+
+  mumps_id.job = JOB_END;
+  cmumps_c(&mumps_id);	//stop mumps
+
+  MPI_Barrier( MPI_COMM_WORLD );
+  printf("(proc=%d) stop ... \n", g.my_rank);
+  exit(0);
 
 
   //compare <eta> against <etax>
