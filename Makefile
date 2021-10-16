@@ -1,6 +1,7 @@
 # --- COMPILER ----------------------------------------
 #CC = mpicc
-CC = /usr/lib64/mpi/gcc/openmpi2/bin/mpicc
+$CC = /usr/lib64/mpi/gcc/openmpi2/bin/mpicc
+CC = /usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/bin/mpicc
 
 # --- CFLAGS -----------------------------------------
 CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -lblas -llapack
@@ -79,19 +80,20 @@ OPTC    = -O -qopenmp
 #End Optimized options
 
 #MUMPS_topdir = /usr/lib/hpc/gnu7/openmpi2/mumps/5.1.2/
-MUMPS_topdir = /home/leemhuis/installs/MUMPS_5.4.0
+MUMPS_topdir = /home/leemhuis/installs/MUMPS_5.4.0/
 #MUMPS_LIBS = $(MUMPS_topdir)lib64
 MUMPS_LIBS = $(MUMPS_topdir)lib
 
 SCOTCHDIR=/usr/lib/hpc/gnu7/openmpi3/ptscotch/6.0.6/lib64/
-LMETISDIR=/usr/lib64/mpi/gcc/openmpi2/lib64/
+#LMETISDIR=/usr/lib64/mpi/gcc/openmpi2/lib64/
+LMETISDIR=/home/leemhuis/installs/metis/lib/
 LMETIS=-L$(LMETISDIR) -lptscotchparmetis -lmetis
 LSCOTCH=-L$(SCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lesmumps -lscotch -lscotcherr
 LPORD=-L$(MUMPS_topdir) -lpord
 LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
-LORDERINGS=$(LMETIS) $(LPORD) $(LSCOTCH) -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
+LORDERINGS=$(LMETIS) $(LPORD) $(LSCOTCH) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
 #LIBSMUMPS = -L$(MUMPS_LIBS) -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS)
-LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps $(LIBMUMPS_COMMON) $(LORDERINGS)
+LIBSMUMPS = -L$(MUMPS_LIBS) -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi
 MUMPS_INCLUDE = $(MUMPS_topdir)/include
 
 #---------------------------------------------------
@@ -108,7 +110,8 @@ LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
 #SPBLASLIB = $(SPBLAS_DIR)/libsparseblas.a
 #SPBLAS_LIBRARIES = $(SPBLASLIB)
 
-SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi2/scalapack/2.0.2
+#SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi2/scalapack/2.0.2
+SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi3/scalapack/2.0.2
 SCALAPACK_INCLUDE = -I$(SCALAPACK_DIR)/include/
 SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib64/ -lscalapack -lblacs
 
@@ -126,7 +129,7 @@ install: copy
 .SECONDARY:
 
 $(BINDIR)/DDalphaAMG : $(OBJ) 
-	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) $(SPBLAS_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
+	mpif90 $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) $(SPBLAS_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
 #		$(MUMPS_LIBRARIES)
 
 DDalphaAMG : $(BINDIR)/DDalphaAMG
@@ -150,7 +153,7 @@ $(LIBDIR)/libDDalphaAMG_devel.a: $(OBJDB)
 	ranlib $@
 
 $(TSTDIR)/%: $(LIB) $(TSTDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) -I$(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
+	$(CC) -DAdd_ $(CFLAGS) -o $@ $@.c -I$(INCDIR) -I$(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
 
 $(DOCDIR)/user_doc.pdf: $(DOCDIR)/user_doc.tex $(DOCDIR)/user_doc.bib
 	( cd $(DOCDIR); pdflatex user_doc; bibtex user_doc; pdflatex user_doc; pdflatex user_doc; )
@@ -159,10 +162,10 @@ $(INCDIR)/%: $(SRCDIR)/%
 	cp $(SRCDIR)/`basename $@` $@
 
 $(BUILDDIR)/%.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) $(OPT_VERSION_FLAGS) -I$(LAPACKE_INCLUDE) -c $< -o $@
+	$(CC) -DAdd_ $(OPT_VERSION_FLAGS) -I$(LAPACKE_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
 
 $(BUILDDIR)/%_devel.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) -g $(DEVEL_VERSION_FLAGS) -I$(LAPACKE_INCLUDE) -c $< -o $@
+	$(CC) -g -DAdd_ $(DEVEL_VERSION_FLAGS) -I$(LAPACKE_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
 
 $(GSRCDIR)/%.h: $(SRCDIR)/%.h $(firstword $(MAKEFILE_LIST))
 	cp $< $@

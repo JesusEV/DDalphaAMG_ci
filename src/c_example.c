@@ -1,5 +1,7 @@
+#include "main.h"
+
 #include <stdio.h>
-#include "mpi.h"
+//#include "mpi.h"
 #include "/home/leemhuis/installs/MUMPS_5.4.0/include/dmumps_c.h"
 
 #define JOB_INIT -1
@@ -11,7 +13,10 @@
 #define ICNTL(I) icntl[(I) -1]	//macro according to docu
 //#define INFO(I) info[(I) -1]	// does not work, use info(22) instead of info(23)
 
-int main(int argc, char ** argv){
+//int main(int argc, char ** argv){
+
+void mumps_dummy_test(  ){
+
 	DMUMPS_STRUC_C id;
 
 	int n = 1000;
@@ -23,7 +28,7 @@ int main(int argc, char ** argv){
 
 
 	int myid, ierr;
-	ierr = MPI_Init(&argc, &argv);
+	//ierr = MPI_Init(&argc, &argv);
 	ierr = MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 	
 
@@ -202,7 +207,7 @@ p1		  0 0 1
 
 
 	ierr = MPI_Finalize();
-	return 0;
+	exit(0);
 }
 
 

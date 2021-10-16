@@ -775,25 +775,34 @@ END_MASTER(threading)
 
 
 
+  mumps_dummy_test();
+
+
+  MPI_Barrier( MPI_COMM_WORLD );
+  MPI_Finalize();
+  exit(0);
+
+
 
 
 
 #define ICNTL(I) icntl[(I) -1]	//macro according to docu //bridges from fortran indices to c
 
-  CMUMPS_STRUC_C mumps_id;
+  DMUMPS_STRUC_C mumps_id;
 
   int mumps_n = l->num_lattice_site_var * l->num_inner_lattice_sites * g.num_processes;	//order of Matrix
   int nnz = chunklen * g.num_processes;	//number of nonzero elements
   int nnz_loc = chunklen;
 
-  mumps_n = 1000;
-  nnz = 1000;
-  nnz_loc = 500;
+  mumps_n = 100;
+  nnz = 100;
+  nnz_loc = 50;
 
   int irn_loc[500];
   int jcn_loc[500];
-  complex_PRECISION A_loc[500];
-  
+  //complex_PRECISION A_loc[500];
+  double A_loc[500];
+
   int i;
   for (i = 0; i < 500; i++){
     irn_loc[i] = g.my_rank*500 + i+1;
@@ -830,7 +839,7 @@ END_MASTER(threading)
   mumps_id.par = 1;
   mumps_id.sym = 0;
   mumps_id.comm_fortran = USE_COMM_WORLD;
-  cmumps_c(&mumps_id);
+  dmumps_c(&mumps_id);
 
 
   mumps_id.ICNTL(5) = 0;	//distributed assembled matrix
@@ -840,11 +849,21 @@ END_MASTER(threading)
 
 
     printf("\n\nsize of matrix: %d\n\n\n", mumps_n);
-    mumps_id.n = 1000;
+    mumps_id.n = mumps_n;
   mumps_id.nnz_loc = nnz_loc;
   mumps_id.irn_loc = irn_loc;
   mumps_id.jcn_loc = jcn_loc;
   mumps_id.a_loc = A_loc;
+
+
+
+  printf("n = %d\n", mumps_id.n);;
+
+  MPI_Barrier( MPI_COMM_WORLD );
+  //MPI_Finalize();
+  //exit(0);
+
+
 
 //outputs
   mumps_id.ICNTL(1) = 6;
@@ -854,9 +873,33 @@ END_MASTER(threading)
 
 
 //  mumps_id.job = 6;	//analyze factorize solve
-  mumps_id.job = 4;	//analyze factorize
-//  mumps_id.job = 1; //analyze
-  cmumps_c(&mumps_id);
+//  mumps_id.job = 4;	//analyze factorize
+  mumps_id.job = 1; //analyze
+
+
+
+
+  printf("n = %d\n", mumps_id.n);;
+
+  MPI_Barrier( MPI_COMM_WORLD );
+  //MPI_Finalize();
+  //exit(0);
+
+
+
+  dmumps_c(&mumps_id);
+
+
+
+  printf("n = %d\n", mumps_id.n);;
+
+  MPI_Barrier( MPI_COMM_WORLD );
+  MPI_Finalize();
+  exit(0);
+
+
+
+  /*
 
 
   mumps_id.job = JOB_END;
@@ -944,6 +987,9 @@ START_MASTER(threading)
   FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
 END_MASTER(threading)
   // ---------
+
+
+*/
 
 
 #endif
