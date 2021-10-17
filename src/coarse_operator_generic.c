@@ -775,12 +775,12 @@ END_MASTER(threading)
 
 
 
-  mumps_dummy_test();
+//  mumps_dummy_test();
 
 
-  MPI_Barrier( MPI_COMM_WORLD );
-  MPI_Finalize();
-  exit(0);
+//  MPI_Barrier( MPI_COMM_WORLD );
+//  MPI_Finalize();
+//  exit(0);
 
 
 
@@ -788,20 +788,20 @@ END_MASTER(threading)
 
 #define ICNTL(I) icntl[(I) -1]	//macro according to docu //bridges from fortran indices to c
 
-  DMUMPS_STRUC_C mumps_id;
+  CMUMPS_STRUC_C mumps_id;
 
   int mumps_n = l->num_lattice_site_var * l->num_inner_lattice_sites * g.num_processes;	//order of Matrix
   int nnz = chunklen * g.num_processes;	//number of nonzero elements
   int nnz_loc = chunklen;
 
-  mumps_n = 100;
-  nnz = 100;
-  nnz_loc = 50;
+  mumps_n = 1000;
+  nnz = 1000;
+  nnz_loc = 500;
 
   int irn_loc[500];
   int jcn_loc[500];
   //complex_PRECISION A_loc[500];
-  double A_loc[500];
+  complex_PRECISION A_loc[500];
 
   int i;
   for (i = 0; i < 500; i++){
@@ -839,7 +839,7 @@ END_MASTER(threading)
   mumps_id.par = 1;
   mumps_id.sym = 0;
   mumps_id.comm_fortran = USE_COMM_WORLD;
-  dmumps_c(&mumps_id);
+  cmumps_c(&mumps_id);
 
 
   mumps_id.ICNTL(5) = 0;	//distributed assembled matrix
@@ -856,15 +856,6 @@ END_MASTER(threading)
   mumps_id.a_loc = A_loc;
 
 
-
-  printf("n = %d\n", mumps_id.n);;
-
-  MPI_Barrier( MPI_COMM_WORLD );
-  //MPI_Finalize();
-  //exit(0);
-
-
-
 //outputs
   mumps_id.ICNTL(1) = 6;
   mumps_id.ICNTL(2) = -1;
@@ -873,40 +864,13 @@ END_MASTER(threading)
 
 
 //  mumps_id.job = 6;	//analyze factorize solve
-//  mumps_id.job = 4;	//analyze factorize
-  mumps_id.job = 1; //analyze
+  mumps_id.job = 4;	//analyze factorize
+//  mumps_id.job = 1; //analyze
+  cmumps_c(&mumps_id);
 
 
+  
 
-
-  printf("n = %d\n", mumps_id.n);;
-
-  MPI_Barrier( MPI_COMM_WORLD );
-  //MPI_Finalize();
-  //exit(0);
-
-
-
-  dmumps_c(&mumps_id);
-
-
-
-  printf("n = %d\n", mumps_id.n);;
-
-  MPI_Barrier( MPI_COMM_WORLD );
-  MPI_Finalize();
-  exit(0);
-
-
-
-  /*
-
-
-  mumps_id.job = JOB_END;
-  cmumps_c(&mumps_id);	//stop mumps
-  MPI_Barrier( MPI_COMM_WORLD );
-  printf("(proc=%d) stop ... \n", g.my_rank);
-  exit(0);
 
 
 //  int rhs_len;
@@ -954,12 +918,25 @@ END_MASTER(threading)
   mumps_id.job = 3;		// solve
   cmumps_c(&mumps_id);
 
+	if (g.my_rank == 0){
+			printf("p0 solution is:\n");
+			for (i = 0; i<mumps_id.info[22]; i++){
+				printf("%4d\t\t, sol: %8.2f + %8.2fi, isol: %5d\n", i, creal(SOL_loc[i]), cimag(SOL_loc[i]), ISOL_loc[i]);
+			}
+		}
 
+	MPI_Barrier(MPI_COMM_WORLD);
+	if (g.my_rank == 1){
+		printf("p1 solution is:\n");
+		for (i = 0; i<mumps_id.info[22]; i++){
+			printf("%4d\t\t, sol: %8.2f + %8.2fi, isol: %5d\n", i, creal(SOL_loc[i]), cimag(SOL_loc[i]), ISOL_loc[i]);
+		}
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
 
 
   mumps_id.job = JOB_END;
   cmumps_c(&mumps_id);	//stop mumps
-
   MPI_Barrier( MPI_COMM_WORLD );
   printf("(proc=%d) stop ... \n", g.my_rank);
   exit(0);
@@ -987,9 +964,6 @@ START_MASTER(threading)
   FREE( etax,complex_PRECISION,(l->p_PRECISION.v_end-l->p_PRECISION.v_start) );
 END_MASTER(threading)
   // ---------
-
-
-*/
 
 
 #endif
