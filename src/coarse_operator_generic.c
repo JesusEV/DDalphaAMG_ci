@@ -790,25 +790,10 @@ END_MASTER(threading)
 
   CMUMPS_STRUC_C mumps_id;
 
+  int i;
   int mumps_n = l->num_lattice_site_var * l->num_inner_lattice_sites * g.num_processes;	//order of Matrix
   int nnz = chunklen * g.num_processes;	//number of nonzero elements
   int nnz_loc = chunklen;
-
-  mumps_n = 1000;
-  nnz = 1000;
-  nnz_loc = 500;
-
-  int irn_loc[500];
-  int jcn_loc[500];
-  //complex_PRECISION A_loc[500];
-  complex_PRECISION A_loc[500];
-
-  int i;
-  for (i = 0; i < 500; i++){
-    irn_loc[i] = g.my_rank*500 + i+1;
-    jcn_loc[i] = ((g.my_rank*500 + i +1)%1000) +1;
-    A_loc[i] = 1;
-  }
 
 
   /*	not needed due to icntl 18 = 3 else -> use these two lines
@@ -818,20 +803,31 @@ END_MASTER(threading)
   */
   
 
-/*
   int* irn_loc = l->p_PRECISION.mumps_Is;
   int* jcn_loc = l->p_PRECISION.mumps_Is;
 //FIXME remove this for loop
   for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing
+    if (g.my_rank == 0){
+      if (irn_loc[i] == 0 || irn_loc[i] > mumps_id.n) printf("row_index out of range  on index %8d, val: %8d\n", i, irn_loc[i]);
+      if (jcn_loc[i] == 0 || jcn_loc[i] > mumps_id.n) printf("column_index out of range on index %8d, val: %8d\n", i, jcn_loc[i]);
+    }
     irn_loc[i]++;
     jcn_loc[i]++;
   }
+  if (g.my_rank == 0) printf("\nincreased!\n\n");
+  for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing
+    if (g.my_rank == 0){
+      if (irn_loc[i] == 0 || irn_loc[i] > mumps_id.n) printf("row_index out of range  on index %8d, val: %8d\n", i, irn_loc[i]);
+      if (jcn_loc[i] == 0 || jcn_loc[i] > mumps_id.n) printf("column_index out of range on index %8d, val: %8d\n", i, jcn_loc[i]);
+    }
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
 
-*/
 
-
-//  complex_PRECISION* A_loc = l->p_PRECISION.mumps_vals;
-
+  complex_PRECISION* A_loc = l->p_PRECISION.mumps_vals;
+  for (i = 0; i < nnz_loc; i++){
+      if (A_loc[i] == 0) printf("P%d: A_loc is 0 on index %8d, vals: %8.6f+%8.6fi\n", g.my_rank, i, creal(A_loc[i]), cimag(A_loc[i]));
+  }
 
 /* Initialize a MUMPS instance. Use MPI_COMM_WORLD */
 
@@ -873,22 +869,17 @@ END_MASTER(threading)
 
 
 
-//  int rhs_len;
+  int rhs_len;
 //  rhs_len = l->num_lattice_site_var * l->num_inner_lattice_sites;
-//  rhs_len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
-  const int rhs_len = 500;
-//  complex_PRECISION* rhs_loc = eta;	//set values of rhs to eta
-  complex_PRECISION rhs_loc[rhs_len];
+  rhs_len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
+  complex_PRECISION* rhs_loc = eta;	//set values of rhs to eta
   int* irhs_loc;		//row indices for each el in rhs_loc
   MALLOC(irhs_loc, int, rhs_len);
   int Nloc_RHS = rhs_len; 		//no of rows in local rhs
   int LRHS_loc = rhs_len; 		//local leading dimension
 
   for (i = 0; i < rhs_len; i++){	//set the rhs-indices to global values
-//	irhs_loc[i] = g.my_rank * rhs_len + i+1;		//+1 due to fortran indexing
-	
-	rhs_loc[i] = (complex_PRECISION)(g.my_rank * 500 + i);
-	irhs_loc[i] = g.my_rank * 500 + i+1;
+	irhs_loc[i] = g.my_rank * rhs_len + i+1;		//+1 due to fortran indexing
   }
 
 
@@ -919,17 +910,17 @@ END_MASTER(threading)
   cmumps_c(&mumps_id);
 
 	if (g.my_rank == 0){
-			printf("p0 solution is:\n");
-			for (i = 0; i<mumps_id.info[22]; i++){
-				printf("%4d\t\t, sol: %8.2f + %8.2fi, isol: %5d\n", i, creal(SOL_loc[i]), cimag(SOL_loc[i]), ISOL_loc[i]);
-			}
+		printf("p0 solution is:\n");
+		for (i = 0; i<mumps_id.info[22]; i++){
+		//	printf("%4d\t\t, sol: %8.2f + %8.2fi, isol: %5d\n", i, creal(SOL_loc[i]), cimag(SOL_loc[i]), ISOL_loc[i]);
 		}
+	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (g.my_rank == 1){
 		printf("p1 solution is:\n");
 		for (i = 0; i<mumps_id.info[22]; i++){
-			printf("%4d\t\t, sol: %8.2f + %8.2fi, isol: %5d\n", i, creal(SOL_loc[i]), cimag(SOL_loc[i]), ISOL_loc[i]);
+		//	printf("%4d\t\t, sol: %8.2f + %8.2fi, isol: %5d\n", i, creal(SOL_loc[i]), cimag(SOL_loc[i]), ISOL_loc[i]);
 		}
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
