@@ -766,7 +766,7 @@ END_MASTER(threading)
 //compared <eta> against <etax>, both fit to each other and are non-zero.
 //I will use eta as rhs input for MUMPS to find phi:
 // 	A * phi = eta
-
+	
 
 
 
@@ -776,13 +776,26 @@ END_MASTER(threading)
 
   //MUMPS
   int chunklen = SQUARE(l->num_lattice_site_var) *l->num_inner_lattice_sites *9;
-/*
+  int* global_Is = NULL;
+  int* global_Js = NULL;
+  complex_PRECISION* global_As = NULL;
+  if (g.my_rank == 0){
+    MALLOC(global_Is, int, chunklen * g.num_processes);	//little block * no of node * 9 (self + 2*all_dirs) * no of processes
+    MALLOC(global_Js, int, chunklen * g.num_processes);
+    MALLOC(global_As, complex_PRECISION, chunklen * g.num_processes);
+    
+    memset(global_Is, 0, chunklen * g.num_processes * sizeof(int));
+    memset(global_Js, 0, chunklen * g.num_processes * sizeof(int));
+    memset(global_As, 0, chunklen * g.num_processes * sizeof(complex_PRECISION));
+  }
+
 
 //gather all Is and Js at process 0
 //  MPI_Gather(void* send_data, int send_count, MPI_Datatype send_datatype, void* recv_data, int recv_count, MPI_Datatype recv_datatype, int root, MPI_Comm communicator)
   MPI_Gather(l->p_PRECISION.mumps_Is, chunklen, MPI_INT, global_Is, chunklen, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Gather(l->p_PRECISION.mumps_Js, chunklen, MPI_INT, global_Js, chunklen, MPI_INT, 0, MPI_COMM_WORLD);
-*/
+  MPI_Gather(l->p_PRECISION.mumps_vals, chunklen, MPI_COMPLEX_PRECISION, global_As, chunklen, MPI_COMPLEX_PRECISION, 0, MPI_COMM_WORLD);
+
 
 
 //  mumps_dummy_test();
@@ -809,10 +822,13 @@ END_MASTER(threading)
 
   /*	not needed due to icntl 18 = 3 else -> use these two lines
 	in fact this means: no gather needed
-  MUMPS_INT irn[] = global_Is;
-  MUMPS_INT jcn[] = global_Js;
-  */
-  
+*/
+  if (g.my_rank == 0){
+    for (i = 0; i < chunklen * g.num_processes; i++){
+      global_Is[i]++;
+      global_Js[i]++;
+    }
+  }
 
   int* irn_loc = l->p_PRECISION.mumps_Is;
   int* jcn_loc = l->p_PRECISION.mumps_Js;
@@ -855,22 +871,29 @@ END_MASTER(threading)
 
   mumps_id.ICNTL(5) = 0;	//assembled matrix
   mumps_id.ICNTL(18) = 3; 	//distributed local triplets for analysis and factorization
+//  mumps_id.ICNTL(18) = 0; 	//centralized triplets for analysis and factorization on host
+
   mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
 //  mumps_id.ICNTL(14) = 50; 	//percentage increase of estimated working space	//default: 20 - 30
 
 //  mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
-  mumps_id.ICNTL(35) = 3;	//BLR feature is activated during factorization, not used in solve
+//  mumps_id.ICNTL(35) = 3;	//BLR feature is activated during factorization, not used in solve
 //  mumps_id.cntl[8] = 0.01;	//dropping parameter ε	(absolute error)	//original 7 but in c 8
 
 
     printf("\n\nsize of matrix: %d\n\n\n", mumps_n);
     mumps_id.n = mumps_n;
+
   mumps_id.nnz_loc = nnz_loc;
   mumps_id.irn_loc = irn_loc;
   mumps_id.jcn_loc = jcn_loc;
   mumps_id.a_loc = A_loc;
-
-
+/*
+  mumps_id.nnz = nnz;
+  mumps_id.irn = global_Is;
+  mumps_id.jcn = global_Js;
+  mumps_id.a = global_As;
+*/
 //outputs
   mumps_id.ICNTL(1) = 6;
   mumps_id.ICNTL(2) = -1;

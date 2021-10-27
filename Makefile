@@ -1,10 +1,10 @@
 # --- COMPILER ----------------------------------------
 #CC = mpicc
-$CC = /usr/lib64/mpi/gcc/openmpi2/bin/mpicc
+#CC = /usr/lib64/mpi/gcc/openmpi2/bin/mpicc
 CC = /usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/bin/mpicc
 
 # --- CFLAGS -----------------------------------------
-CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -lblas -llapack
+CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -lblas -llapack 
 #CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
 #CFLAGS = $(CFLAGS_intel)
 CFLAGS = $(CFLAGS_gnu)
@@ -80,18 +80,24 @@ OPTC    = -O -qopenmp
 #End Optimized options
 
 #MUMPS_topdir = /usr/lib/hpc/gnu7/openmpi2/mumps/5.1.2/
-MUMPS_topdir = /home/leemhuis/installs/MUMPS_5.4.0/
+MUMPS_topdir = /home/leemhuis/installs/DDalphaAMG_ci/MUMPS_5.4.0.2/
 #MUMPS_LIBS = $(MUMPS_topdir)lib64
 MUMPS_LIBS = $(MUMPS_topdir)lib
 
-SCOTCHDIR=/usr/lib/hpc/gnu7/openmpi3/ptscotch/6.0.6/lib64/
+#SCOTCHDIR=/usr/lib/hpc/gnu7/openmpi3/ptscotch/6.0.6/lib64/
 #LMETISDIR=/usr/lib64/mpi/gcc/openmpi2/lib64/
 LMETISDIR=/home/leemhuis/installs/metis/lib/
-LMETIS=-L$(LMETISDIR) -lptscotchparmetis -lmetis
-LSCOTCH=-L$(SCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lesmumps -lscotch -lscotcherr
+
+#LMETIS=-L$(LMETISDIR) -lptscotchparmetis -lmetis
+LMETIS=-L$(LMETISDIR) -lmetis
+#LSCOTCH=-L$(SCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lesmumps -lscotch -lscotcherr
+
 LPORD=-L$(MUMPS_topdir) -lpord
 LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
-LORDERINGS=$(LMETIS) $(LPORD) $(LSCOTCH) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
+
+#LORDERINGS=$(LMETIS) $(LPORD) $(LSCOTCH) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
+LORDERINGS=$(LMETIS) $(LPORD) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
+
 #LIBSMUMPS = -L$(MUMPS_LIBS) -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS)
 LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi
 MUMPS_INCLUDE = $(MUMPS_topdir)/include
