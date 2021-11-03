@@ -907,7 +907,9 @@ END_MASTER(threading)
   cmumps_c(&mumps_id);
 
 
-  
+  MPI_Finalize();
+  exit(0);
+
 
 
 
