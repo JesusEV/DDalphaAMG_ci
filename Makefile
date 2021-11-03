@@ -99,7 +99,7 @@ LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
 LORDERINGS=$(LMETIS) $(LPORD) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
 
 #LIBSMUMPS = -L$(MUMPS_LIBS) -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS)
-LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi
+LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi
 MUMPS_INCLUDE = $(MUMPS_topdir)/include
 
 #---------------------------------------------------

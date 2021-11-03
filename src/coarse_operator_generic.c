@@ -870,30 +870,30 @@ END_MASTER(threading)
 
 
   mumps_id.ICNTL(5) = 0;	//assembled matrix
-  mumps_id.ICNTL(18) = 3; 	//distributed local triplets for analysis and factorization
-//  mumps_id.ICNTL(18) = 0; 	//centralized triplets for analysis and factorization on host
+//  mumps_id.ICNTL(18) = 3; 	//distributed local triplets for analysis and factorization
+  mumps_id.ICNTL(18) = 0; 	//centralized triplets for analysis and factorization on host
 
   mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
 //  mumps_id.ICNTL(14) = 50; 	//percentage increase of estimated working space	//default: 20 - 30
 
-//  mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
+  mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
 //  mumps_id.ICNTL(35) = 3;	//BLR feature is activated during factorization, not used in solve
-//  mumps_id.cntl[8] = 0.01;	//dropping parameter ε	(absolute error)	//original 7 but in c 8
+  mumps_id.cntl[8] = 0.01;	//dropping parameter ε	(absolute error)	//original 7 but in c 8
 
 
     printf("\n\nsize of matrix: %d\n\n\n", mumps_n);
     mumps_id.n = mumps_n;
 
+/*
   mumps_id.nnz_loc = nnz_loc;
   mumps_id.irn_loc = irn_loc;
   mumps_id.jcn_loc = jcn_loc;
   mumps_id.a_loc = A_loc;
-/*
+*/
   mumps_id.nnz = nnz;
   mumps_id.irn = global_Is;
   mumps_id.jcn = global_Js;
   mumps_id.a = global_As;
-*/
 //outputs
   mumps_id.ICNTL(1) = 6;
   mumps_id.ICNTL(2) = -1;
