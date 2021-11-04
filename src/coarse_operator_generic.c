@@ -766,11 +766,6 @@ END_MASTER(threading)
 //compared <eta> against <etax>, both fit to each other and are non-zero.
 //I will use eta as rhs input for MUMPS to find phi:
 // 	A * phi = eta
-	
-
-
-
-
 
 
 
@@ -870,30 +865,31 @@ END_MASTER(threading)
 
 
   mumps_id.ICNTL(5) = 0;	//assembled matrix
-  mumps_id.ICNTL(18) = 3; 	//distributed local triplets for analysis and factorization
-//  mumps_id.ICNTL(18) = 0; 	//centralized triplets for analysis and factorization on host
+//  mumps_id.ICNTL(18) = 3; 	//distributed local triplets for analysis and factorization
+  mumps_id.ICNTL(18) = 0; 	//centralized triplets for analysis and factorization on host
 
   mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
 //  mumps_id.ICNTL(14) = 50; 	//percentage increase of estimated working space	//default: 20 - 30
 
 //  mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
-//  mumps_id.ICNTL(35) = 3;	//BLR feature is activated during factorization, not used in solve
-//  mumps_id.cntl[8] = 0.01;	//dropping parameter ε	(absolute error)	//original 7 but in c 8
+  mumps_id.ICNTL(35) = 3;	//BLR feature is activated during factorization, not used in solve
+  mumps_id.cntl[8] = 0.01;	//dropping parameter ε	(absolute error)	//original 7 but in c 8
 
 
     printf("\n\nsize of matrix: %d\n\n\n", mumps_n);
     mumps_id.n = mumps_n;
 
+/*
   mumps_id.nnz_loc = nnz_loc;
   mumps_id.irn_loc = irn_loc;
   mumps_id.jcn_loc = jcn_loc;
   mumps_id.a_loc = A_loc;
-/*
+*/
   mumps_id.nnz = nnz;
   mumps_id.irn = global_Is;
   mumps_id.jcn = global_Js;
   mumps_id.a = global_As;
-*/
+
 //outputs
   mumps_id.ICNTL(1) = 6;
   mumps_id.ICNTL(2) = -1;
@@ -981,29 +977,58 @@ END_MASTER(threading)
 
 
 
-  //compare <phi> against <SOL>
-  if (g.my_rank == 0){
-    // CHECK DIFF BETWEEN MUMPS RES. (SOL) AND OLD DDalphaAMG RES. (PHI)
-    for (i = 0; i < mumps_n; i+= 1){//(l->num_lattice_site_var/2)){ //+= l->num_lattice_site_var){
-      printf("i: %d, SOL - phi: %f, %f, \t SOL: %f, %f\n", i, CSPLIT(*(SOL+i) - *(phi+i)),  CSPLIT(*(SOL+i)));//creal(*(etax + i) - *(eta+i)), cimag(*(etax + i) - *(eta+i)));
-//	if ((i + (l->num_lattice_site_var/2)) % (l->num_lattice_site_var) == 0) printf("\n");
-    }
-  }
 
-  MPI_Barrier( MPI_COMM_WORLD );
-
-  mumps_id.job = JOB_END;
-  cmumps_c(&mumps_id);	//stop mumps
-  MPI_Barrier( MPI_COMM_WORLD );
-  printf("(proc=%d) stop ... \n", g.my_rank);
-  exit(0);
-/**/
-
-/*	//TODO:
-	bring SOL_loc back to origin processes
-	-> MPI method? 
+/* TODO:
+1. find A * SOL
+2. compute vector_PRECISION_minus A*SOL - eta
+3. compute || A*SOL - eta || and || eta ||
+4. divide both for relative residual
 */
 
+//	###################### 1. ######################
+  vector_PRECISION SOL_dist=NULL;	//will contain distributed Solution
+START_MASTER(threading)
+  MALLOC(SOL_dist, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
+END_MASTER(threading)
+  memset(SOL_dist, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
+
+//			scatter SOL to SOL_dist on each process
+  int send_count = (l->p_PRECISION.v_end-l->p_PRECISION.v_start);
+//MPI_Scatter(void* send_data, int send_count, MPI_Datatype send_datatype, void* recv_data, int recv_count, MPI_Datatype recv_datatype, int root, MPI_Comm communicator)
+  MPI_Scatter(SOL, send_count, MPI_COMPLEX_PRECISION, SOL_dist, send_count, MPI_COMPLEX_PRECISION, 0, MPI_COMM_WORLD);
+
+//			allocate and set new "eta" vector
+  vector_PRECISION mumps_eta=NULL;	//will contain the product of A * Sol_dist
+START_MASTER(threading)
+  MALLOC(mumps_eta, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
+END_MASTER(threading)
+  memset(mumps_eta, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
+
+//			dont use DDalphaAMG because in there mumps_vals, Is, and Js are set. 
+//			spmv works fine!
+  spmv_PRECISION(mumps_eta, SOL_dist, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js, nx, &(l->p_PRECISION), l, threading );
+
+
+//	###################### 2. ######################
+//void vector_PRECISION_minus( vector_PRECISION z, vector_PRECISION x, vector_PRECISION y, int start, int end, level_struct *l ); // z := x - y
+  vector_PRECISION_minus(mumps_eta, mumps_eta, eta, 0, (l->p_PRECISION.v_end-l->p_PRECISION.v_start), l);
+
+
+//	###################### 3. ######################
+//PRECISION global_norm_PRECISION( vector_PRECISION phi, int start, int end, level_struct *l, struct Thread *threading );
+PRECISION mumps_norm = global_norm_PRECISION( mumps_eta, 0, (l->p_PRECISION.v_end-l->p_PRECISION.v_start), l, threading );
+PRECISION DD_norm = global_norm_PRECISION( eta, 0, (l->p_PRECISION.v_end-l->p_PRECISION.v_start), l, threading );
+
+//	###################### 4. ######################
+PRECISION rr = mumps_norm/DD_norm;
+if (g.my_rank == 0){
+  for (i = 0; i < (l->p_PRECISION.v_end-l->p_PRECISION.v_start); i++){
+    printf("eta: %6f+i%6f\n", *(eta+i));
+  }
+  printf("rr: %6f+i%6f,\tmumps_norm:%6f+i%6f,\tDDalphaAMG_norm:%6f+i%6f\n");
+}
+
+/*	
   //compare <eta> against <etax>
   int len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
   if (g.my_rank == 1){
@@ -1015,6 +1040,7 @@ END_MASTER(threading)
     }
   }
 
+*/
   MPI_Barrier( MPI_COMM_WORLD );
   printf("(proc=%d) stop ... \n", g.my_rank);
   exit(0);
