@@ -22,6 +22,22 @@
 #include "main.h"
 #include "vcycle_PRECISION.h"
 
+
+
+
+
+// ---
+
+// put here all MUMPS-related functions
+
+// ---
+
+
+
+
+
+
+
 void smoother_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
                          int n, const int res, level_struct *l, struct Thread *threading ) {
   
@@ -129,7 +145,36 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 
             }
           } else {
-            fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
+
+            // ---------------------------------------------------------------------------
+
+            printf0("stopping ...\n");
+
+            gmres_PRECISION_struct* px = &(l->next_level->p_PRECISION);
+            level_struct* lx = l->next_level;
+
+            // 1. prepare sparse matrix for MUMPS (take into account : matrix-vector mult receives : px->op)
+
+            // 2. analyze+factorize
+
+            vector_PRECISION_define_random( px->b, px->v_start, px->v_end, lx );
+
+            // 3. solve!
+
+            MPI_Finalize();
+            exit(0);
+
+            double t0,t1;
+            t0 = MPI_Wtime();
+            int nr_iters_gmres = fgmres_PRECISION( px, lx, threading );
+            t1 = MPI_Wtime();
+            printf0("fgmres time = %f\n", t1-t0);
+
+            MPI_Finalize();
+            exit(0);
+
+            // ---------------------------------------------------------------------------
+
           }
         }
         START_MASTER(threading)

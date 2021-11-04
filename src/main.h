@@ -123,10 +123,10 @@
   #include "mpi.h"
 
 //FIXME CHANGE THIS
-  #include "/home/leemhuis/installs/DDalphaAMG_ci/MUMPS_5.4.0.2/include/cmumps_c.h"
-  #include "/home/leemhuis/installs/DDalphaAMG_ci/MUMPS_5.4.0.2/include/dmumps_c.h"
-//  #include "/home/leemhuis/installs/MUMPS_5.4.0/include/cmumps_c.h"
-//  #include "/home/leemhuis/installs/MUMPS_5.4.0/include/dmumps_c.h"
+//  #include "/home/leemhuis/installs/DDalphaAMG_ci/MUMPS_5.4.0.2/include/cmumps_c.h"
+//  #include "/home/leemhuis/installs/DDalphaAMG_ci/MUMPS_5.4.0.2/include/dmumps_c.h"
+  #include "/home/leemhuis/installs/MUMPS_5.4.0/include/cmumps_c.h"
+  #include "/home/leemhuis/installs/MUMPS_5.4.0/include/dmumps_c.h"
 //  #include "/usr/lib/hpc/gnu7/mvapich2/mumps/5.1.2/include/mumps/cmumps_c.h"
 
   #define JOB_INIT -1
@@ -471,6 +471,21 @@
     double avg_b1;
     double avg_b2;
     double avg_crst;
+
+#ifdef PERS_COMMS
+    // use persistent communications at the coarsest level
+    int use_pers_comms1,use_pers_comms2;
+    int pers_comms_id1,pers_comms_id2;
+
+    int pers_comms_nrZs,pers_comms_nrZas,pers_comms_nrZxs;
+
+    // for plus hopping (plus doesn't mean +mu here)
+    MPI_Request* pers_comms_recvrs_plus[8];
+    MPI_Request* pers_comms_sendrs_plus[8];
+    // for minus hopping
+    MPI_Request* pers_comms_recvrs_minus[8];
+    MPI_Request* pers_comms_sendrs_minus[8];
+#endif
 
   } global_struct;
 
