@@ -66,43 +66,45 @@ DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -
 
 #---------------------------------------------------
 
-# The following are required by the recent integration with MUMPS :
+# clean integration of MUMPS within DDalphaAMG
 
-LIBBLAS = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
-SCALAP=-lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lblacs
-LIBPAR = $(SCALAP) $(LIBBLAS)
-#Preprocessor defs for calling Fortran from C (-DAdd_ or -DAdd__ or -DUPPER)
-CDEFS   = -DAdd_
-#Begin Optimized options
-OPTF    = -O -nofor_main -qopenmp -Dintel_ -DALLOW_NON_INIT
-OPTL    = -O -nofor_main -qopenmp
-OPTC    = -O -qopenmp
-#End Optimized options
+MUMPSDIR = /usr/local/sw/mumps-5.4.1/
+MUMPS_LIBS = $(MUMPSDIR)lib/
 
-#MUMPS_topdir = /usr/lib/hpc/gnu7/openmpi2/mumps/5.1.2/
-MUMPS_topdir = /home/leemhuis/installs/DDalphaAMG_ci/MUMPS_5.4.0.2/
-#MUMPS_LIBS = $(MUMPS_topdir)lib64
-MUMPS_LIBS = $(MUMPS_topdir)lib
-
-#SCOTCHDIR=/usr/lib/hpc/gnu7/openmpi3/ptscotch/6.0.6/lib64/
-#LMETISDIR=/usr/lib64/mpi/gcc/openmpi2/lib64/
-LMETISDIR=/home/leemhuis/installs/metis/lib/
-
-#LMETIS=-L$(LMETISDIR) -lptscotchparmetis -lmetis
+LMETISDIR = /usr/local/sw/metis-5.1.0/install/lib/
 LMETIS=-L$(LMETISDIR) -lmetis
-#LSCOTCH=-L$(SCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lesmumps -lscotch -lscotcherr
+LPMETISDIR = /usr/local/sw/parmetis-4.0.3/install/lib/
+LPMETIS=-L$(LPMETISDIR) -lparmetis
 
-LPORD=-L$(MUMPS_topdir) -lpord
+LSCOTCHDIR = /usr/local/sw/scotch-6.1.1/lib/
+LSCOTCH = -L$(LSCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lscotch -lscotcherr
+
+LPORD=-L$(MUMPS_LIBS) -lpord
 LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
 
-#LORDERINGS=$(LMETIS) $(LPORD) $(LSCOTCH) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
-LORDERINGS=$(LMETIS) $(LPORD) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
+LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
 
-#LIBSMUMPS = -L$(MUMPS_LIBS) -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS)
-LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi
-MUMPS_INCLUDE = $(MUMPS_topdir)/include
+LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
 
 #---------------------------------------------------
+
+# some old (unused) linkages
+
+#LIBBLAS = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+#SCALAP=-lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lblacs
+#LIBPAR = $(SCALAP) $(LIBBLAS)
+##Preprocessor defs for calling Fortran from C (-DAdd_ or -DAdd__ or -DUPPER)
+#CDEFS   = -DAdd_
+
+##Begin Optimized options
+#OPTF    = -O -nofor_main -qopenmp -Dintel_ -DALLOW_NON_INIT
+#OPTL    = -O -nofor_main -qopenmp
+#OPTC    = -O -qopenmp
+##End Optimized options
+
+#---------------------------------------------------
+
+# lapack and scalapack linkages
 
 LAPACK_DIR = dependencies/lapack-3.9.0
 LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
@@ -115,9 +117,9 @@ LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
 #SPBLAS_DIR = dependencies/spblas
 #SPBLASLIB = $(SPBLAS_DIR)/libsparseblas.a
 #SPBLAS_LIBRARIES = $(SPBLASLIB)
+SPBLAS_LIBRARIES = 
 
-#SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi2/scalapack/2.0.2
-SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi3/scalapack/2.0.2
+SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi3/scalapack/2.0.2/
 SCALAPACK_INCLUDE = -I$(SCALAPACK_DIR)/include/
 SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib64/ -lscalapack -lblacs
 

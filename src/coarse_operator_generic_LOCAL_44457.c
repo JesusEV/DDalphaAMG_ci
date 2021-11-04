@@ -871,25 +871,15 @@ END_MASTER(threading)
   mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
 //  mumps_id.ICNTL(14) = 50; 	//percentage increase of estimated working space	//default: 20 - 30
 
-<<<<<<< HEAD
 //  mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
   mumps_id.ICNTL(35) = 3;	//BLR feature is activated during factorization, not used in solve
   mumps_id.cntl[8] = 0.01;	//dropping parameter ε	(absolute error)	//original 7 but in c 8
-=======
-  mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
-//  mumps_id.ICNTL(35) = 3;	//BLR feature is activated during factorization, not used in solve
-  mumps_id.cntl[6] = 0.1;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
->>>>>>> 75a62dfa6e444e008c0374efc3733c06562c55d2
 
 
     printf("\n\nsize of matrix: %d\n\n\n", mumps_n);
     mumps_id.n = mumps_n;
 
-<<<<<<< HEAD
 /*
-=======
-
->>>>>>> 75a62dfa6e444e008c0374efc3733c06562c55d2
   mumps_id.nnz_loc = nnz_loc;
   mumps_id.irn_loc = irn_loc;
   mumps_id.jcn_loc = jcn_loc;
@@ -911,6 +901,10 @@ END_MASTER(threading)
   mumps_id.job = 4;	//analyze factorize
 //  mumps_id.job = 1; //analyze
   cmumps_c(&mumps_id);
+
+
+  
+
 
 
   int rhs_len;
@@ -991,20 +985,12 @@ END_MASTER(threading)
 4. divide both for relative residual
 */
 
-<<<<<<< HEAD
 //	###################### 1. ######################
   vector_PRECISION SOL_dist=NULL;	//will contain distributed Solution
 START_MASTER(threading)
   MALLOC(SOL_dist, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
 END_MASTER(threading)
   memset(SOL_dist, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
-=======
-  mumps_id.job = JOB_END;
-  cmumps_c(&mumps_id);	//stop mumps
-  MPI_Barrier( MPI_COMM_WORLD );
-  printf("(proc=%d) stop ... \n", g.my_rank);
-  exit(0);
->>>>>>> 75a62dfa6e444e008c0374efc3733c06562c55d2
 
 //			scatter SOL to SOL_dist on each process
   int send_count = (l->p_PRECISION.v_end-l->p_PRECISION.v_start);
