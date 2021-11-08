@@ -682,9 +682,6 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
-//FIXME remove
-  memset(eta, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
-
 
 #ifndef OPTIMIZED_COARSE_SELF_COUPLING_PRECISION
   coarse_self_couplings_PRECISION( eta, phi, op, start, end, l);
@@ -706,25 +703,10 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   coarse_hopping_term_PRECISION_vectorized( eta, phi, op, _FULL_SYSTEM, l, threading ); 
 #endif
 
-/*
 
-//###############################
-  if (g.my_rank == 0){
-    int my_j, my_i = 0;
-    int max_node = l->num_inner_lattice_sites;
-    int num_site_var = l->num_lattice_site_var;
-    for (my_j = 0; my_j < max_node; my_j++){
-      printf("j: %d\n", my_j);
-      for (my_i = 0; my_i < 9; my_i++){
-	if (l->p_PRECISION.mumps_vals[my_j * SQUARE(num_site_var) * 9 + my_i * SQUARE(num_site_var)] == 0) printf("\t0 in dir: %d\n", my_i);
-      }
-    }
-	//exit(0);
-  }
-//###############################
 
-*/
-#ifdef MUMPS_ADDS
+
+#ifdef MUMPS_ADDS_3
 
 
 //	no communication needed
@@ -823,8 +805,6 @@ END_MASTER(threading)
 
 
 
-#define ICNTL(I) icntl[(I) -1]	//macro according to docu //bridges from fortran indices to c
-//#define CNTL(I) cntl[(I) -1]	//same macro for cntl <-- does not work, messes up the line above.
 
   CMUMPS_STRUC_C mumps_id;
 
@@ -1054,8 +1034,6 @@ END_MASTER(threading)
     printf("rr: %6f,\tmumps_norm:%6f,\tDDalphaAMG_norm:%6f\n", (mumps_norm/DD_norm), mumps_norm, DD_norm);
   }
  
-  exit(0);
-
 //FIXME remove:
 /*
   if (g.my_rank == 0){
@@ -1088,10 +1066,11 @@ END_MASTER(threading)
   }
 
 */
+/*
   MPI_Barrier( MPI_COMM_WORLD );
   printf("(proc=%d) stop ... \n", g.my_rank);
   exit(0);
-
+*/
 
 
 

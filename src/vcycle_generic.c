@@ -577,11 +577,11 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
           } else {
 
             // ---------------------------------------------------------------------------
-
-            printf0("stopping ...\n");
-
             gmres_PRECISION_struct* px = &(l->next_level->p_PRECISION);
             level_struct* lx = l->next_level;
+
+            double t0,t1;	//timing
+            double mumps_setup_time, mumps_job4_time, mumps_job3_time, mumps_verify_time;
 
 
 
@@ -593,24 +593,207 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             int start, end;
             compute_core_start_end_custom(0, lx->num_inner_lattice_sites, &start, &end, lx, threading, 1);
             // 1. prepare sparse matrix for MUMPS (take into account : matrix-vector mult receives : px->op)
-	    mumps_prepare_PRECISION(px->op->clover+start*clover_size, (end-start)*vector_size,lx, threading ); //FIXME: remove phi & eta
 
 
-            // 2. analyze+factorize
+
 
             vector_PRECISION_define_random( px->b, px->v_start, px->v_end, lx );
 
-            // 3. solve!
 
+
+            t0 = MPI_Wtime();
+	    mumps_prepare_PRECISION(px->op->clover+start*clover_size, (end-start)*vector_size,lx, threading );
+//FIXME: Remove eta = 0;
+//            memset(eta, 0, (lx->p_PRECISION.v_end - lx->p_PRECISION.v_start) * sizeof(complex_PRECISION));
+
+            // 2. analyze+factorize
+//############################## MUMPS RELATED STUFF ###############################################
+
+#define ICNTL(I) icntl[(I) -1]	//macro according to docu //bridges from fortran indices to c
+//#define CNTL(I) cntl[(I) -1]	//same macro for cntl <-- does not work, messes up the line above.
+
+            CMUMPS_STRUC_C mumps_id;
+            int i;
+            int chunklen = SQUARE(lx->num_lattice_site_var) *lx->num_inner_lattice_sites *9;
+            int mumps_n = lx->num_lattice_site_var * lx->num_inner_lattice_sites * g.num_processes;	//order of Matrix
+            int nnz = chunklen * g.num_processes;	//number of nonzero elements
+            int nnz_loc = chunklen;
+
+            int* irn_loc = NULL;	//global rowindex local on each process
+            int* jcn_loc = NULL;
+            START_MASTER(threading)
+              MALLOC(irn_loc, int, nnz_loc);
+              MALLOC(jcn_loc, int, nnz_loc);
+            END_MASTER(threading)
+
+//  printf("nnz_loc: %6d\n", nnz_loc);
+            for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing
+              irn_loc[i] = lx->p_PRECISION.mumps_Is[i] + 1;	//save copies, otherwise SPMV won't work anymore!
+              jcn_loc[i] = lx->p_PRECISION.mumps_Js[i] + 1;	//increase indices by one to match fortran indexing
+            }
+            if (g.my_rank == 0){ 	//test whether c indices match to fortran
+              for (i = 0; i < nnz_loc; i++){	
+                if (irn_loc[i] == 0 || irn_loc[i] > mumps_n) printf("row_index out of range  on index %8d, val: %8d\n", i, irn_loc[i]);
+                if (jcn_loc[i] == 0 || jcn_loc[i] > mumps_n) printf("column_index out of range on index %8d, val: %8d\n", i, jcn_loc[i]);
+              }
+            }
+
+            complex_PRECISION* A_loc = NULL;
+            START_MASTER(threading)
+              MALLOC(A_loc, complex_PRECISION, nnz_loc);
+            END_MASTER(threading)
+            for (i = 0; i < nnz_loc; i++){
+              A_loc[i] = lx->p_PRECISION.mumps_vals[i];	//save copy, mumps changes A_loc
+		//this if statement was used for debugging -> not needed anymore 
+              if (A_loc[i] == 0) printf("P%d: A_loc is 0 on index %8d, vals: %8.6f+%8.6fi\n", g.my_rank, i, creal(A_loc[i]), cimag(A_loc[i]));
+            }
+
+		//confige MUMPS_struct
+            mumps_id.job = JOB_INIT;
+            mumps_id.par = 1;
+            mumps_id.sym = 0;
+            mumps_id.comm_fortran = USE_COMM_WORLD;
+            cmumps_c(&mumps_id);
+
+            mumps_id.ICNTL(5) = 0;	//assembled matrix
+            mumps_id.ICNTL(18) = 3; 	//distributed local triplets for analysis and factorization
+//          mumps_id.ICNTL(18) = 0; 	//centralized triplets for analysis and factorization on host
+
+            mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
+//          mumps_id.ICNTL(14) = 50; 	//percentage increase of estimated working space	//default: 20 - 30
+
+            mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
+//          mumps_id.ICNTL(35) = 3;	//BLR feature is activablrted during factorization, not used in solve
+            mumps_id.cntl[6] = 1e-1;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
+
+            mumps_id.n = mumps_n;	//needed at least on P0
+            mumps_id.nnz_loc = nnz_loc;
+            mumps_id.irn_loc = irn_loc;
+            mumps_id.jcn_loc = jcn_loc;
+            mumps_id.a_loc = A_loc;
+
+//outputs
+            mumps_id.ICNTL(1) = 6;	//error messages
+            mumps_id.ICNTL(2) = -1;	//diagnostic printing and statistics local to each MPI process
+            mumps_id.ICNTL(3) = 0;	//global information, collected on host (default 6)
+            mumps_id.ICNTL(4) = 0;	//level of printing for error, warning, and diagnostic messages (default 2)
+
+
+            mumps_setup_time = MPI_Wtime() - t0;
+
+            t0 = MPI_Wtime();
+//          mumps_id.job = 6;	//analyze factorize solve
+            mumps_id.job = 4;	//analyze factorize
+//          mumps_id.job = 1;	//analyze
+            cmumps_c(&mumps_id);
+            mumps_job4_time = MPI_Wtime() - t0;
+
+            t0 = MPI_Wtime();
+//######### SET UP RHS #############
+            int rhs_len = lx->p_PRECISION.v_end-lx->p_PRECISION.v_start;  //entire vector eta
+            complex_PRECISION* rhs_loc = eta;	//set pointer of rhs to eta
+						//FIXME: pointer rhs must be changed, mumps probably change rhs!
+            int* irhs_loc;		//row indices for each el in rhs_loc
+            START_MASTER(threading)
+              MALLOC(irhs_loc, int, rhs_len);
+            END_MASTER(threading)
+            int Nloc_RHS = rhs_len; 		//no of rows in local rhs
+            int LRHS_loc = rhs_len; 		//local leading dimension
+
+            for (i = 0; i < rhs_len; i++){	//set the rhs-indices to global values
+              irhs_loc[i] = g.my_rank * rhs_len + i+1;		//+1 due to fortran indexing
+            }
+
+            mumps_id.nloc_rhs = Nloc_RHS;
+            mumps_id.rhs_loc = rhs_loc;
+            mumps_id.irhs_loc = irhs_loc;	
+            mumps_id.lrhs_loc = LRHS_loc; //leading dimension
+
+
+ //centralized solution, definitely mention it!
+            complex_PRECISION* SOL;
+            if (g.my_rank == 0){
+              START_MASTER(threading)
+                MALLOC(SOL, complex_PRECISION, mumps_n);
+              END_MASTER(threading)
+              memset(SOL, 0, mumps_n * sizeof(complex_PRECISION));
+              mumps_id.rhs = SOL;
+            }
+            mumps_setup_time += MPI_Wtime() - t0;
+
+            // 3. solve!
+            t0 = MPI_Wtime();
+            mumps_id.job = 3;		// solve
+            cmumps_c(&mumps_id);
+            mumps_job3_time = MPI_Wtime() - t0;
 //            MPI_Finalize();
 //            exit(0);
+           
+//####################### CHECK RELATIVE RESIDUAL ##################################
+/*
+0. Scatter SOL to SOL_dist
+1. find A * SOL
+2. compute vector_PRECISION_minus A*SOL - eta
+3. compute || A*SOL - eta || and || eta ||
+4. divide both for relative residual
+*/
+            t0 = MPI_Wtime();
+            int nx = (SQUARE(lx->num_lattice_site_var)*9) * lx->num_inner_lattice_sites;
 
-            double t0,t1;
+//	###################### 0. ######################
+            vector_PRECISION SOL_dist=NULL;	//will contain distributed Solution
+            START_MASTER(threading)
+              MALLOC(SOL_dist, complex_PRECISION, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start));
+            END_MASTER(threading)
+            memset(SOL_dist, 0, (lx->p_PRECISION.v_end - lx->p_PRECISION.v_start) * sizeof(complex_PRECISION));
+//			scatter SOL to SOL_dist on each process
+            int send_count = (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start);
+//MPI_Scatter(void* send_data, int send_count, MPI_Datatype send_datatype, void* recv_data, int recv_count, MPI_Datatype recv_datatype, int root, MPI_Comm communicator)
+            MPI_Scatter(SOL, send_count, MPI_COMPLEX_PRECISION, SOL_dist, send_count, MPI_COMPLEX_PRECISION, 0, MPI_COMM_WORLD);
+
+//	###################### 1. ######################
+//			allocate and set new "eta" vector
+            vector_PRECISION mumps_eta=NULL;	//will contain the product of A * Sol_dist
+            START_MASTER(threading)
+              MALLOC(mumps_eta, complex_PRECISION, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start));
+            END_MASTER(threading)
+            memset(mumps_eta, 0, (lx->p_PRECISION.v_end - lx->p_PRECISION.v_start) * sizeof(complex_PRECISION));
+
+//			dont use DDalphaAMG because in there mumps_vals, Is, and Js are set. 
+//			spmv works fine!
+            spmv_PRECISION(mumps_eta, SOL_dist, lx->p_PRECISION.mumps_vals, lx->p_PRECISION.mumps_Is, lx->p_PRECISION.mumps_Js, nx, &(lx->p_PRECISION), lx, threading );
+
+//	###################### 2. ######################
+//void vector_PRECISION_minus( vector_PRECISION z, vector_PRECISION x, vector_PRECISION y, int start, int end, level_struct *l ); // z := x - y
+            vector_PRECISION_minus(mumps_eta, mumps_eta, eta, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx);
+
+//	###################### 3. ######################
+//PRECISION global_norm_PRECISION( vector_PRECISION phi, int start, int end, level_struct *l, struct Thread *threading );
+//  PRECISION mumps_norm;
+            PRECISION mumps_norm = global_norm_PRECISION( mumps_eta, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx, threading );
+//  PRECISION DD_norm;
+            PRECISION DD_norm = global_norm_PRECISION( eta, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx, threading );
+
+//	###################### 4. ######################
+  //PRECISION rr;
+            PRECISION rr = mumps_norm/DD_norm;
+            mumps_verify_time = MPI_Wtime() - t0;
+            if (g.my_rank == 0) printf("rr: %6f,\tmumps_norm:%6f,\tDDalphaAMG_norm:%6f\n", (mumps_norm/DD_norm), mumps_norm, DD_norm);
+
+
+// finish mumps
+            t0 = MPI_Wtime();
+            mumps_id.job = JOB_END;
+            cmumps_c(&mumps_id);
+            mumps_setup_time += MPI_Wtime() - t0;
+
             t0 = MPI_Wtime();
             int nr_iters_gmres = fgmres_PRECISION( px, lx, threading );
             t1 = MPI_Wtime();
             printf0("fgmres time = %f\n", t1-t0);
+            printf0("MUMPS times:\nset up: %f,\tanalyze+factorize: %f,\tsolve: %f, verify: %f\n", mumps_setup_time, mumps_job4_time, mumps_job3_time, mumps_verify_time);
 
+            printf0("stopping ...\n");
             MPI_Finalize();
             exit(0);
 

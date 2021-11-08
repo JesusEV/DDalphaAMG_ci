@@ -687,7 +687,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
 
 
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_3
  
     /*	vals = [[self_coupling of site 1][T-_coupling site 1][T+_coupling site 1][Z-_coupling site 1][Z+_coupling site 1] .... [X-_coupling site 1][X+_coupling site 1]
   [self_coup site 2][T-_coup site 2]....[X+_coup site N]]
