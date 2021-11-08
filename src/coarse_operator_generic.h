@@ -243,13 +243,10 @@
 #endif
 
 
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_3
 
   // TODO #1 : 
   // 		sparse vals and indices : l->p_PRECISION.mumps_vals , l->p_PRECISION.mumps_Is , l->p_PRECISION.mumps_Js
-
-
-
 
   //To-Dos: 
 // remove index k and use clover_pt ++ 
@@ -267,18 +264,6 @@
         k += skip;
       }
 
-//      printf("nr_nodes: %d, sitevar^2: %d\n", nr_nodes, SQUARE(site_var));
-/*      for (k = 0; k < nr_nodes * SQUARE(site_var); k++){
-        printf("I: %d, J: %d\n", *(l->p_PRECISION.mumps_Is + k), *(l->p_PRECISION.mumps_Js + k));
-      }
-
-      printf("len of Is, Js: %ld\n", nr_nodes * SQUARE(site_var));
-      for (k = 0; k < nr_nodes * SQUARE(site_var); k++){
-        if (*(l->p_PRECISION.mumps_Is + k) == 0) printf("found 0 in Is at k: %d\n", k);
-        if (*(l->p_PRECISION.mumps_Js + k) == 0) printf("found 0 in Js at k: %d\n", k);
-      }
-      exit(0);
-*/
       int c, r;	// col no., row no.
 //      nr_nodes * g.my_rank 			= nodes per process * p_id
 //	nr_nodes * (g.my_rank +1)		= first node of next process
@@ -377,22 +362,6 @@
         mv_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
         clover_pt += clover_step_size2; phi_pt += num_eig_vect; eta_pt += site_var;
       }
-
-
-
-
-
-#ifdef MUMPS_ADDS
-/* 
-	//	old comparison for dense blas call
-      for (i = 0; i < site_var; i++){
-        printf("I:\t%d,\tDiff:\t%+f %+fi\n", i, creal(*(eta_0 +i)) - creal(*(my_eta +i)), cimag(*(eta_0 +i)) - cimag(*(my_eta +i)));
-//        printf("I:\t%d,\tmy_eta:\t%+f %+fi\n", i, creal(*(my_eta +i)), cimag(*(my_eta +i)));
-      }
-      exit(0);
-*/
-#endif
-
 
 
 
@@ -659,27 +628,6 @@ k);
       eta += num_eig_vect;
       D += num_eig_vect2;
       nmv_PRECISION( eta, D, phi, num_eig_vect );
-
-
-#ifdef MUMPS_ADDS_2
-
-//###########################################################
-// 		END OF ORIGINAL DDalphaAMG
-//###########################################################
-
-/*
-      for (i = 0; i < 2 * num_eig_vect; i++){
-        printf("I:\t%d,\tDiff:\t%+4.2f %+4.2fi \n", i, creal(*(eta_0 
-+i)) - creal(my_eta[i]), cimag(*(eta_0 +i)) - cimag(my_eta[i]));
-      }
-      exit(0);
-    */
-
-
-#endif
-
-
-
 #ifdef HAVE_TM1p1
     }
 #endif

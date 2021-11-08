@@ -688,8 +688,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
 
 #ifdef MUMPS_ADDS
-
-  
+ 
     /*	vals = [[self_coupling of site 1][T-_coupling site 1][T+_coupling site 1][Z-_coupling site 1][Z+_coupling site 1] .... [X-_coupling site 1][X+_coupling site 1]
   [self_coup site 2][T-_coup site 2]....[X+_coup site N]]
   each of the inner [] contain num_link_var elements -> to store 1 block row in matrix (entire coupling of one site) we need 9 * num_link_var elements
@@ -883,21 +882,8 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
 
 
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_3
 //##############################################
-/*
-  printf("r: %d, \tend: %d\n", g.my_rank, core_end);
-  if (g.my_rank == 1){
-    int i;
-    for (i = 0; i < core_end; i++){
-      index = 5*i;
-      if (op->neighbor_table[index+1+T] > core_end) {	// check wether T neighbor is in halo
-        printf("i: %d, \tnode_nr: %d, \tnext node: %d\n", i, op->neighbor_table[index], op->neighbor_table[index+1+T]);
-      }
-    }
-  }
-  exit(0);
-*/
 
 
   int comm_nr[4] = {0, 0, 0, 0}; 	//number elements to communicate in all directions
@@ -928,7 +914,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
 
 
   int i_start = g.my_rank * l->num_inner_lattice_sites * num_site_var, j_start = g.my_rank * l->num_inner_lattice_sites * num_site_var;
-  int neighbors_j_start; //contains column start of neighboring process
+  int neighbors_j_start; //contains column start index of neighboring process
 
   printf("r: %d, \tT: %d, \tZ: %d, \tY: %d, \tX: %d\n", g.my_rank, comm_nr[T], comm_nr[Z], comm_nr[Y], comm_nr[X]);
 
