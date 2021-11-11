@@ -203,7 +203,7 @@
 
 #ifdef MUMPS_ADDS
     vector_PRECISION mumps_vals;
-    int *mumps_Is,*mumps_Js;
+    int *mumps_Is, *mumps_Js;
 #endif
 
   } gmres_PRECISION_struct;

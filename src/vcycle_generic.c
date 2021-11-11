@@ -31,10 +31,16 @@
 // put here all MUMPS-related functions
 
 void mumps_prepare_PRECISION(config_PRECISION clover, int length, level_struct *l, struct Thread *threading ) {
+  
 
-  config_PRECISION clover_pt = clover;
+
+//  config_PRECISION clover_pt = l->op_PRECISION.clover; //clover;
   gmres_PRECISION_struct* px = &(l->p_PRECISION);
-  operator_PRECISION_struct* op = px->op;
+  operator_PRECISION_struct* op = px->op; //&(l->op_PRECISION);//
+  config_PRECISION clover_pt = l->p_PRECISION.op->clover;
+
+
+// %p to print pointer
    // #########################################################################
    // #1 self-coupling:
    // #########################################################################
@@ -44,6 +50,14 @@ void mumps_prepare_PRECISION(config_PRECISION clover, int length, level_struct *
     clover_step_size1 = (num_eig_vect * (num_eig_vect+1))/2,
     clover_step_size2 = SQUARE(num_eig_vect);
 //    vector_PRECISION phi_pt=phi, eta_pt=eta, phi_end_pt=phi+length;
+  /*
+  int ix;
+  for (ix = 0; ix < (2*clover_step_size1 + clover_step_size2) * l->num_inner_lattice_sites; ix += 5){ // * l->num_inner_lattice_sites
+    printf0("%+-3f%+-3fi, %+-3f%+-3fi, %+-3f%+-3fi, %+-3f%+-3fi, %+-3f%+-3fi\n", CSPLIT(clover_pt[ix]), CSPLIT(clover_pt[ix +1]), CSPLIT(clover_pt[ix +2]), CSPLIT(clover_pt[ix +3]), CSPLIT(clover_pt[ix +4]), CSPLIT(clover_pt[ix +5]));
+  }
+  exit(0);
+  */
+
 
   int nr_nodes = l->num_inner_lattice_sites;
   int i, j, k; // k = index in matrix
@@ -95,6 +109,7 @@ void mumps_prepare_PRECISION(config_PRECISION clover, int length, level_struct *
       }
     }
 
+
   //no clover_pt correction / change this once k++ is removed
 	// B store column-wise / transposed from former storage
     for (r = 0, k = 0; r < num_eig_vect; r++){
@@ -106,7 +121,12 @@ void mumps_prepare_PRECISION(config_PRECISION clover, int length, level_struct *
 	// skipping num for hopping terms in mumps_vals
     k += skip;
   }  // end for loop over the blocks
-  
+
+
+
+
+
+
 
 
    // #########################################################################
@@ -143,7 +163,6 @@ START_NO_HYPERTHREADS(threading)
 // FIXME: USE c->num_boundary_sites[2*mu+1] instead
 	//calculate the number of elements to communicate:
   for (dir = T; dir <= X; dir++){
-//    comm_nr[dir] = op->c.num_boundary_sites[2*dir +1]; //This is not correct!
     for (node = core_start; node < core_end; node++){
       if (op->neighbor_table[5*node+1+dir] >= nr_nodes){
         comm_nr[dir]++;
@@ -166,6 +185,12 @@ START_NO_HYPERTHREADS(threading)
 
   int *boundary_table;// = op->c.boundary_table[...];
   int bt_index;
+
+
+  int num_site_var=site_var;
+
+
+
 
   for (dir = T; dir <= X; dir++){
     boundary_table = op->c.boundary_table[2*dir];
@@ -193,75 +218,84 @@ START_NO_HYPERTHREADS(threading)
     for (node = core_start; node < core_end; node ++){
       index = 5 * node;
 
-		// find mu+ couplings (Values + Row indices aka. Is)
+		// make mu+ couplings as usual (Values + Row indices aka. Is)
 // A
-      for (k = 0; k < SQUARE(site_var/2); k ++){
+/*
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+	printf0("k :%d, neighbor_table: %d, index: %d, n4link: %d, dir: %d, nlink: %d\n", k, op->neighbor_table[index], index, num_4link_var, dir, num_link_var);
+//	printf0("k :%4d, D: %+-f%+-fi\n", k, CSPLIT(-1.0 * *(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + k)));
+      }
+      exit(0);
+*/
+
+
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //						find correct block row		skip self coupl.		find pos of mu+ coupl. ("2*mu +1" due to structure of vals[self, T-, T+, Z-, Z+...]
-        *(px->mumps_vals + 	(9 * num_link_var)*op->neighbor_table[index] + num_link_var + 		(2*dir + 1)*num_link_var + k) = 
+//	l->p_PRECISION.mumps_vals[9 * num_link_var)*op->neighbor_table[index] + num_link_var + 		(2*dir + 1)*num_link_var + k]
+        *(l->p_PRECISION.mumps_vals + 	(9 * num_link_var)*op->neighbor_table[index] + num_link_var + 		(2*dir + 1)*num_link_var + k) = 
 			-1.0 * *(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + k);
 	//					find correct block row				start of mu- coupling
-        *(px->mumps_Is +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + k) = 
-			i_start +	site_var * op->neighbor_table[index] + 		k%((int)(site_var*0.5));
+        *(l->p_PRECISION.mumps_Is +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + k) = 
+			i_start +	num_site_var * op->neighbor_table[index] + 		k%((int)(num_site_var*0.5));
 		//	proc start		block row start						fast changing index
       }
 // C
-      for (k = 0; k < SQUARE(site_var/2); k ++){
-        *(px->mumps_vals +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir+1)*num_link_var + 	1 * (int)SQUARE(site_var/2) + k) = 
-			-1.0 * *(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	1 * (int)SQUARE(site_var/2) + k);
-        *(px->mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir +1)*num_link_var + 	1 * (int)SQUARE(site_var/2) + k) = 
-			i_start +	site_var * op->neighbor_table[index] + 		k%(int)(site_var*0.5) + 	(int)(site_var*0.5);
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+        *(l->p_PRECISION.mumps_vals +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir+1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			-1.0 * *(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k);
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir +1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
       }
 // B
-      for (k = 0; k < SQUARE(site_var/2); k ++){
-        *(px->mumps_vals + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir+1)*num_link_var + 	2 * (int)SQUARE(site_var/2) + k) = 
-			-1.0 * *(op->D +	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	2 * (int)SQUARE(site_var/2) + k); 	//columwise in D
-        *(px->mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir+1)*num_link_var + 	2 * (int)SQUARE(site_var/2) + k) = 
-			i_start +	site_var * op->neighbor_table[index] + 		k%(int)(site_var*0.5) + 	0;
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+        *(l->p_PRECISION.mumps_vals + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+			-1.0 * *(op->D +	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k); 	//columwise in D
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5) + 	0;
       }
 // D
-      for (k = 0; k < SQUARE(site_var/2); k ++){
-        *(px->mumps_vals + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir+1)*num_link_var + 	3 * (int)SQUARE(site_var/2) + k) = 
-			-1.0 * *(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	3 * (int)SQUARE(site_var/2) + k); 	//columwise in D
-        *(px->mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir +1)*num_link_var + 3 * (int)SQUARE(site_var/2) + k) = 
-			i_start +	site_var * op->neighbor_table[index] + 		k%(int)(site_var*0.5) + 	(int)(site_var*0.5);
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+        *(l->p_PRECISION.mumps_vals + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir+1)*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+			-1.0 * *(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k); 	//columwise in D
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir +1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
       }
 
 
 	// DO THE COL INDICES aka. Js
 	//FIXME: maybe remove comm_nr > 0 ?
       if (comm_nr[dir] > 0 && op->neighbor_table[index+1+dir] >= l->num_inner_lattice_sites){
-	//			if my neighbor is NOT on the same proc
-        for (k = 0; k < SQUARE(site_var/2); k ++){
+        for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //A
-          *(px->mumps_Js +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + k) = 
-			neighbors_j_start + 	site_var * boundary_table[bt_index] +	k/((int)(site_var*0.5));
+          *(l->p_PRECISION.mumps_Js +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + k) = 
+			neighbors_j_start + 	num_site_var * boundary_table[bt_index] +	k/((int)(num_site_var*0.5));
 //C
-	  *(px->mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + 	1 * (int)SQUARE(site_var/2) + k) = 
-			neighbors_j_start + 	site_var * boundary_table[bt_index] +	k/((int)(site_var*0.5));
+	  *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			neighbors_j_start + 	num_site_var * boundary_table[bt_index] +	k/((int)(num_site_var*0.5));
 //B
-          *(px->mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir+1)*num_link_var + 	2 * (int)SQUARE(site_var/2) + k) = 
-			neighbors_j_start + 	site_var * boundary_table[bt_index] +	k/((int)(site_var*0.5)) +	(int)(site_var*0.5);
+          *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+			neighbors_j_start + 	num_site_var * boundary_table[bt_index] +	k/((int)(num_site_var*0.5)) +	(int)(num_site_var*0.5);
 //D
-        *(px->mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir + 1)*num_link_var + 	3 * (int)SQUARE(site_var/2) + k) = 
-			neighbors_j_start + 	site_var * boundary_table[bt_index] +	k/((int)(site_var*0.5)) + 	(int)(site_var*0.5);
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir + 1)*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+			neighbors_j_start + 	num_site_var * boundary_table[bt_index] +	k/((int)(num_site_var*0.5)) + 	(int)(num_site_var*0.5);
 
 	}	//						boundary_table[op->neighbor_table[index +1 + dir] % l->num_inner_lattice_sites]
 
 	bt_index++;
       } else {	//my neighbor is on same processor
-        for (k = 0; k < SQUARE(site_var/2); k ++){
+        for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //A
-	  *(px->mumps_Js +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + k) = 
-          		j_start +	site_var * op->neighbor_table[index +1 + dir] +	k/((int)(site_var*0.5));
+	  *(l->p_PRECISION.mumps_Js +	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + k) = 
+          		j_start +	num_site_var * op->neighbor_table[index +1 + dir] +	k/((int)(num_site_var*0.5));
 //C 
-	  *(px->mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + 	1 * (int)SQUARE(site_var/2) + k) = 
-			j_start + 	site_var * op->neighbor_table[index +1 + dir] +	k/(int)(site_var*0.5) + 	0;
+	  *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir +1)*num_link_var + 	1 * (int)SQUARE(num_site_var/2) + k) = 
+			j_start + 	num_site_var * op->neighbor_table[index +1 + dir] +	k/(int)(num_site_var*0.5) + 	0;
 //B
-          *(px->mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir+1)*num_link_var + 	2 * (int)SQUARE(site_var/2) + k) = 
-			j_start +	site_var * op->neighbor_table[index +1 + dir] +	k/(int)(site_var*0.5) + 	(int)(site_var*0.5);
+          *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir+1)*num_link_var + 	2 * (int)SQUARE(num_site_var/2) + k) = 
+			j_start +	num_site_var * op->neighbor_table[index +1 + dir] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
 //D
-          *(px->mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir+1)*num_link_var + 	3 * (int)SQUARE(site_var/2) + k) = 
-			j_start +	site_var * op->neighbor_table[index +1 + dir] +	k/(int)(site_var*0.5) + 	(int)(site_var*0.5);
+          *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		(2*dir+1)*num_link_var + 	3 * (int)SQUARE(num_site_var/2) + k) = 
+			j_start +	num_site_var * op->neighbor_table[index +1 + dir] +	k/(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
 	//		p_start		find start of T- coupling 		slow changing index
 
         }
@@ -348,41 +382,44 @@ START_NO_HYPERTHREADS(threading)
         buffer_d_pt = num_link_var * buffer_i_pt;
 
 	// A* #################################
-	for (k = 0; k < SQUARE(site_var / 2); k++ ){
-	  *(px->mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1]	+ num_link_var + 	2*dir*num_link_var + k) = 
+	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
+	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1]	+ num_link_var + 	2*dir*num_link_var + k) = 
 			*(buff_d_recv[dir] + buffer_d_pt + k);
 //		straight copy (orders are set before send)
-	  *(px->mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + k) = 
-			i_start +	site_var * buff_i_recv[dir][2 * buffer_i_pt] + 		k/(int)(site_var*0.5);
-	  *(px->mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + k) = 
-			neighbors_j_start +	site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +	k%(int)(site_var*0.5);
+	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + k) = 
+			i_start +	num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + 		k/(int)(num_site_var*0.5);
+	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + k) = 
+			neighbors_j_start +	num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +	k%(int)(num_site_var*0.5);
         }
 	// -C* #################################
-	for (k = 0; k < SQUARE(site_var / 2); k++ ){
-	  *(px->mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1]+ num_link_var + 	2*dir*num_link_var + 1 * SQUARE((int)(site_var*0.5)) + k) =
-			*(buff_d_recv[dir] + buffer_d_pt + 1 * SQUARE((int)(site_var*0.5)) + k);
-	  *(px->mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 1 * SQUARE((int)(site_var*0.5)) + k) = 
-			i_start +	site_var * buff_i_recv[dir][2 * buffer_i_pt] + 		k/(int)(site_var*0.5);
-	  *(px->mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 1 * SQUARE((int)(site_var*0.5)) + k) = 
-			neighbors_j_start +	site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +	k%(int)(site_var*0.5) + site_var*0.5;
+	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
+	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1]+ num_link_var + 	2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) =
+			*(buff_d_recv[dir] + buffer_d_pt + 1 * SQUARE((int)(num_site_var*0.5)) + k);
+//		straight copy (orders are set before send)
+	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			i_start +	num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + 		k/(int)(num_site_var*0.5);
+	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			neighbors_j_start +	num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +	k%(int)(num_site_var*0.5) + num_site_var*0.5;
         }
 	// -B* #################################
-	for (k = 0; k < SQUARE(site_var / 2); k++ ){
-	  *(px->mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1]+ num_link_var + 	2*dir*num_link_var + 2 * SQUARE((int)(site_var*0.5)) + k) =
-			*(buff_d_recv[dir] + buffer_d_pt + 2 * SQUARE((int)(site_var*0.5)) + k);
-	  *(px->mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 2 * SQUARE((int)(site_var*0.5)) + k) = 
-			i_start +	site_var * buff_i_recv[dir][2 * buffer_i_pt] + 		k/(int)(site_var*0.5) + site_var*0.5;
-	  *(px->mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 2 * SQUARE((int)(site_var*0.5)) + k) = 
-			neighbors_j_start +	site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +	k%(int)(site_var*0.5);
+	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
+	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1]+ num_link_var + 	2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) =
+			*(buff_d_recv[dir] + buffer_d_pt + 2 * SQUARE((int)(num_site_var*0.5)) + k);
+//		straight copy (orders are set before send)
+	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			i_start +	num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + 		k/(int)(num_site_var*0.5) + num_site_var*0.5;
+	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			neighbors_j_start +	num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +	k%(int)(num_site_var*0.5);
         } 
 	// D* #################################
-	for (k = 0; k < SQUARE(site_var / 2); k++ ){
-	  *(px->mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1]+ num_link_var + 	2*dir*num_link_var + 3 * SQUARE((int)(site_var*0.5)) + k) =
-			*(buff_d_recv[dir] + buffer_d_pt + 3 * SQUARE((int)(site_var*0.5)) + k);
-	  *(px->mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 3 * SQUARE((int)(site_var*0.5)) + k) = 
-			i_start +	site_var * buff_i_recv[dir][2 * buffer_i_pt] + 		k/(int)(site_var*0.5) + site_var*0.5;
-	  *(px->mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 3 * SQUARE((int)(site_var*0.5)) + k) = 
-			neighbors_j_start +	site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +	k%(int)(site_var*0.5) + site_var*0.5;
+	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
+	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1]+ num_link_var + 	2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) =
+			*(buff_d_recv[dir] + buffer_d_pt + 3 * SQUARE((int)(num_site_var*0.5)) + k);
+//		straight copy (orders are set before send)
+	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			i_start +	num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + 		k/(int)(num_site_var*0.5) + num_site_var*0.5;
+	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] 	+ num_link_var +	2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			neighbors_j_start +	num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +	k%(int)(num_site_var*0.5) + num_site_var*0.5;
         }
 
 // message comes from process l->neighbor_rank[2*dir+1]
@@ -408,46 +445,46 @@ START_NO_HYPERTHREADS(threading)
       index = 5 * i;
 		//regular mu- coupling
 	// A* ##################################
-      for (k = 0; k < SQUARE(site_var/2); k ++){
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //	skip to proc start	find correct block row				skip self coupl.	find pos of T- coupl.
-        *(px->mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	 	2*dir*num_link_var + k) = 
+        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	 	2*dir*num_link_var + k) = 
 			-1.0 * conj_PRECISION(*(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + k));
-	//			    proc start		find correct block row				start of T- coupling
+	//				    proc start		find correct block row				start of T- coupling
 
-        *(px->mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + k) = 
-			i_start +	site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(site_var*0.5);
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5);
 	//	proc start		block row start						fast changing index
 
-        *(px->mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + k) = 
-			j_start +	site_var * op->neighbor_table[index] +	k%(int)(site_var*0.5);
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + k) = 
+			j_start +	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5);
 	//		no p_start	find start of T- coupling 				slow changing index	
       }
 	// -C* ##################################
-      for (k = 0; k < SQUARE(site_var/2); k ++){
-        *(px->mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	 	2*dir*num_link_var + 1 * SQUARE((int)(site_var*0.5)) + k ) = 
-			1.0 * conj_PRECISION(*(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 1 * SQUARE((int)(site_var*0.5)) + k));
-        *(px->mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 1 * SQUARE((int)(site_var*0.5)) + k) = 
-			i_start +	site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(site_var*0.5);
-        *(px->mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 1 * SQUARE((int)(site_var*0.5)) + k) = 
-			j_start +	site_var * op->neighbor_table[index] +	k%(int)(site_var*0.5) + site_var*0.5;
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	 	2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k ) = 
+			1.0 * conj_PRECISION(*(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k));
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5);
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			j_start +	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5) + num_site_var*0.5;
       }
         // -B* #################################
-      for (k = 0; k < SQUARE(site_var/2); k ++){
-        *(px->mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	 	2*dir*num_link_var + 2 * SQUARE((int)(site_var*0.5)) + k ) = 
-			1.0 * conj_PRECISION(*(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 2 * SQUARE((int)(site_var*0.5)) + k));
-        *(px->mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 2 * SQUARE((int)(site_var*0.5)) + k) = 
-			i_start +	site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(site_var*0.5) + site_var*0.5;
-        *(px->mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 2 * SQUARE((int)(site_var*0.5)) + k) = 
-			j_start +	site_var * op->neighbor_table[index] +	k%(int)(site_var*0.5);
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	 	2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k ) = 
+			1.0 * conj_PRECISION(*(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k));
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5) + num_site_var*0.5;
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			j_start +	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5);
       }
 	// D* #################################
-      for (k = 0; k < SQUARE(site_var/2); k ++){
-        *(px->mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	 	2*dir*num_link_var + 3 * SQUARE((int)(site_var*0.5)) + k ) = 
-			-1.0 * conj_PRECISION(*(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 3 * SQUARE((int)(site_var*0.5)) + k));
-        *(px->mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 3 * SQUARE((int)(site_var*0.5)) + k) = 
-			i_start +	site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(site_var*0.5) + site_var*0.5;
-        *(px->mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 3 * SQUARE((int)(site_var*0.5)) + k) = 
-			j_start +	site_var * op->neighbor_table[index] +	k%(int)(site_var*0.5) + site_var*0.5;
+      for (k = 0; k < SQUARE(num_site_var/2); k ++){
+        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	 	2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k ) = 
+			-1.0 * conj_PRECISION(*(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k));
+        *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			i_start +	num_site_var * op->neighbor_table[index + 1 + dir] + 		k/(int)(num_site_var*0.5) + num_site_var*0.5;
+        *(l->p_PRECISION.mumps_Js + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 		2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			j_start +	num_site_var * op->neighbor_table[index] +	k%(int)(num_site_var*0.5) + num_site_var*0.5;
       }
 
     }	//loop over nodes
@@ -457,6 +494,37 @@ START_NO_HYPERTHREADS(threading)
 
 
   END_NO_HYPERTHREADS(threading)
+
+
+
+            vector_PRECISION test_vec=NULL;
+            vector_PRECISION test_vec2=NULL;	
+            vector_PRECISION test_vec3=NULL;	
+            START_MASTER(threading)
+              MALLOC(test_vec, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
+              MALLOC(test_vec2, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
+              MALLOC(test_vec3, complex_PRECISION, (l->p_PRECISION.v_end-l->p_PRECISION.v_start));
+            END_MASTER(threading)
+            memset(test_vec, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
+            memset(test_vec3, 0, (l->p_PRECISION.v_end - l->p_PRECISION.v_start) * sizeof(complex_PRECISION));
+            vector_PRECISION_define( test_vec2, 1.0, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
+	    MPI_Barrier(MPI_COMM_WORLD);
+            int nx = (SQUARE(l->num_lattice_site_var)*9) * l->num_inner_lattice_sites;
+
+            spmv_PRECISION(test_vec, px->b, l->p_PRECISION.mumps_vals, l->p_PRECISION.mumps_Is, l->p_PRECISION.mumps_Js, nx, &(l->p_PRECISION), l, threading );
+
+//            apply_operator_PRECISION(test_vec3, px->b, &(l->p_PRECISION), l, threading );
+//            apply_operator_PRECISION(test_vec3, px->b, px, l, threading );
+	apply_operator_PRECISION(test_vec3, px->b, px, l, threading );
+//	apply_coarse_operator_PRECISION(test_vec3, px->b, op, l, threading );
+//vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op, level_struct *l, struct Thread *threading
+            int ix;
+		
+            for (ix = 0; ix < l->p_PRECISION.v_end - l->p_PRECISION.v_start; ix++){
+              printf0("diff: %+-f%+-fi, spmv: %+-f%+-fi, dd: %+-f%+-fi, px->b[%4d]: %+-f%+-fi\n", CSPLIT(test_vec[ix] - test_vec3[ix]), CSPLIT(test_vec[ix]), CSPLIT(test_vec3[ix]), ix,  CSPLIT(px->b[ix]));
+            }
+            exit(0);
+
    
 }
 
@@ -603,8 +671,6 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 
             t0 = MPI_Wtime();
 	    mumps_prepare_PRECISION(px->op->clover+start*clover_size, (end-start)*vector_size,lx, threading );
-//FIXME: Remove eta = 0;
-//            memset(eta, 0, (lx->p_PRECISION.v_end - lx->p_PRECISION.v_start) * sizeof(complex_PRECISION));
 
             // 2. analyze+factorize
 //############################## MUMPS RELATED STUFF ###############################################
@@ -626,7 +692,6 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               MALLOC(jcn_loc, int, nnz_loc);
             END_MASTER(threading)
 
-//  printf("nnz_loc: %6d\n", nnz_loc);
             for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing
               irn_loc[i] = lx->p_PRECISION.mumps_Is[i] + 1;	//save copies, otherwise SPMV won't work anymore!
               jcn_loc[i] = lx->p_PRECISION.mumps_Js[i] + 1;	//increase indices by one to match fortran indexing
@@ -662,9 +727,9 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
 //          mumps_id.ICNTL(14) = 50; 	//percentage increase of estimated working space	//default: 20 - 30
 
-            mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
+//            mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
 //          mumps_id.ICNTL(35) = 3;	//BLR feature is activablrted during factorization, not used in solve
-            mumps_id.cntl[6] = 1e-1;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
+//            mumps_id.cntl[6] = 1e-1;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
 
             mumps_id.n = mumps_n;	//needed at least on P0
             mumps_id.nnz_loc = nnz_loc;
@@ -691,7 +756,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             t0 = MPI_Wtime();
 //######### SET UP RHS #############
             int rhs_len = lx->p_PRECISION.v_end-lx->p_PRECISION.v_start;  //entire vector eta
-            complex_PRECISION* rhs_loc = eta;	//set pointer of rhs to eta
+            complex_PRECISION* rhs_loc = (px->b);	//set pointer of rhs to eta
 						//FIXME: pointer rhs must be changed, mumps probably change rhs!
             int* irhs_loc;		//row indices for each el in rhs_loc
             START_MASTER(threading)
@@ -761,24 +826,37 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 
 //			dont use DDalphaAMG because in there mumps_vals, Is, and Js are set. 
 //			spmv works fine!
-            spmv_PRECISION(mumps_eta, SOL_dist, lx->p_PRECISION.mumps_vals, lx->p_PRECISION.mumps_Is, lx->p_PRECISION.mumps_Js, nx, &(lx->p_PRECISION), lx, threading );
+//            spmv_PRECISION(mumps_eta, SOL_dist, lx->p_PRECISION.mumps_vals, lx->p_PRECISION.mumps_Is, lx->p_PRECISION.mumps_Js, nx, &(lx->p_PRECISION), lx, threading );
+
+            int nr_iters_gmres_test = fgmres_PRECISION(px, lx, threading );
+//            apply_operator_PRECISION(mumps_eta, px->x, px, lx, threading );
+            apply_coarse_operator_PRECISION(mumps_eta, SOL_dist, px->op, lx, threading );
+/*
+for (i = 0; i < (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start); i++){
+//  printf0("SOL_dist - px->x: %+-f%+-fi, px->x:%+-f%+-fi\n", CSPLIT(SOL_dist[i] - px->x[i]), CSPLIT(px->x[i]));
+  printf0("i: %d, SOL_dist - px->x: %+-f%+-fi, px->x:%+-f%+-fi\n", i, CSPLIT(SOL_dist[i] - px->x[i]), CSPLIT(px->x[i]));
+}
+printf0("done!\n");
+exit(0);
+*/	
 
 //	###################### 2. ######################
 //void vector_PRECISION_minus( vector_PRECISION z, vector_PRECISION x, vector_PRECISION y, int start, int end, level_struct *l ); // z := x - y
-            vector_PRECISION_minus(mumps_eta, mumps_eta, eta, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx);
+            vector_PRECISION_minus(mumps_eta, mumps_eta, px->b, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx);
 
 //	###################### 3. ######################
 //PRECISION global_norm_PRECISION( vector_PRECISION phi, int start, int end, level_struct *l, struct Thread *threading );
 //  PRECISION mumps_norm;
             PRECISION mumps_norm = global_norm_PRECISION( mumps_eta, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx, threading );
 //  PRECISION DD_norm;
-            PRECISION DD_norm = global_norm_PRECISION( eta, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx, threading );
+            PRECISION DD_norm = global_norm_PRECISION(px->b, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx, threading );
 
 //	###################### 4. ######################
   //PRECISION rr;
             PRECISION rr = mumps_norm/DD_norm;
             mumps_verify_time = MPI_Wtime() - t0;
-            if (g.my_rank == 0) printf("rr: %6f,\tmumps_norm:%6f,\tDDalphaAMG_norm:%6f\n", (mumps_norm/DD_norm), mumps_norm, DD_norm);
+            printf0("rr: %6f,\tmumps_norm:%6f,\tDDalphaAMG_norm:%6f\n", (mumps_norm/DD_norm), mumps_norm, DD_norm);
+            exit(0);
 
 
 // finish mumps
@@ -787,8 +865,11 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             cmumps_c(&mumps_id);
             mumps_setup_time += MPI_Wtime() - t0;
 
+
+
             t0 = MPI_Wtime();
-            int nr_iters_gmres = fgmres_PRECISION( px, lx, threading );
+            int nr_iters_gmres = fgmres_PRECISION(px, lx, threading );
+				//solution will be in px->x
             t1 = MPI_Wtime();
             printf0("fgmres time = %f\n", t1-t0);
             printf0("MUMPS times:\nset up: %f,\tanalyze+factorize: %f,\tsolve: %f, verify: %f\n", mumps_setup_time, mumps_job4_time, mumps_job3_time, mumps_verify_time);
