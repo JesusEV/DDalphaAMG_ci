@@ -343,6 +343,15 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
     l->p_PRECISION.block_jacobi_PRECISION.BJ_usable = 0;
 #endif
+#ifdef MUMPS_ADDS
+//mumps stuff goes here
+
+    mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
+
+    g.mumps_id.job = 4;	//analyze factorize
+    cmumps_c(&(g.mumps_id));
+
+#endif
   }
 #endif
 }

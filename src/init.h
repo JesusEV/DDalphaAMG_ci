@@ -22,6 +22,10 @@
 #ifndef INIT_HEADER
   #define INIT_HEADER
 
+
+  #include "mumps_double.h"
+  #include "mumps_float.h"
+
   struct init;
 
   void method_init( int *argc, char ***argv, level_struct *l );

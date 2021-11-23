@@ -407,11 +407,46 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 #endif
 
 #ifdef MUMPS_ADDS
+
+  printf0("mumps_variables malloc\n");
+
   int site_var = l->num_lattice_site_var;
   int nr_nodes = l->num_inner_lattice_sites * g.num_processes;
   MALLOC( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes * 9);
   MALLOC( p->mumps_Is,int,SQUARE(site_var)*nr_nodes * 9); // nr. of el per node * nr. of nodes * 9 	//9 = self + T+ + T- + Z+ + Z- + Y+ ...
-  MALLOC( p->mumps_Js,int,SQUARE(site_var)*nr_nodes * 9);
+  MALLOC(p->mumps_Js,int,SQUARE(site_var)*nr_nodes * 9);
+  printf0("mumps_pointers: %p, %p, %p\n", p->mumps_vals, p->mumps_Is, p->mumps_Js);
+
+
+  int mumps_n = site_var * nr_nodes * g.num_processes;	//order of Matrix
+  int nnz = SQUARE(site_var) * nr_nodes *9 * g.num_processes;	//number of nonzero elements
+  int nnz_loc = SQUARE(site_var) * nr_nodes *9;
+
+	//confige MUMPS_struct
+  g.mumps_id.job = JOB_INIT;
+  g.mumps_id.par = 1;
+  g.mumps_id.sym = 0;
+  g.mumps_id.comm_fortran = USE_COMM_WORLD;
+  cmumps_c(&(g.mumps_id));
+
+  g.mumps_id.ICNTL(5) = 0;	//assembled matrix
+  g.mumps_id.ICNTL(18) = 3; 	//distributed local triplets for analysis and factorization
+  g.mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
+  g.mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
+//          mumps_id.ICNTL(35) = 3;	//BLR feature is activablrted during factorization, not used in solve
+  g.mumps_id.cntl[6] = 5e-3;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
+
+  g.mumps_id.n = mumps_n;	//needed at least on P0
+  g.mumps_id.nnz_loc = nnz_loc;
+  g.mumps_id.irn_loc = p->mumps_Is;
+  g.mumps_id.jcn_loc = p->mumps_Js;
+  g.mumps_id.a_loc = p->mumps_vals;
+
+//outputs
+  g.mumps_id.ICNTL(1) = 6;	//error messages
+  g.mumps_id.ICNTL(2) = -1;	//diagnostic printing and statistics local to each MPI process
+  g.mumps_id.ICNTL(3) = 0;	//global information, collected on host (default 6)
+  g.mumps_id.ICNTL(4) = 0;	//level of printing for error, warning, and diagnostic messages (default 2)
 #endif
 }
 
@@ -531,6 +566,9 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   FREE( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes );
   FREE( p->mumps_Is,int,SQUARE(site_var)*nr_nodes );
   FREE( p->mumps_Js,int,SQUARE(site_var)*nr_nodes );
+	//release MUMPS_struct
+  g.mumps_id.job = JOB_END;
+  cmumps_c(&(g.mumps_id));
 #endif
 }
 

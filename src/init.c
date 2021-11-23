@@ -338,6 +338,18 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
 #ifdef DEBUG
   test_routine( l, threading );
 #endif
+
+#ifdef MUMPS_ADDS
+//set up all values to mumps_Vals, mumps_Is, mumps_Js
+  if ( g.mixed_precision ) {
+    mumps_setup_float(l, threading);
+  } else {
+    mumps_setup_double(l, threading);
+  }
+
+  g.mumps_id.job = 4;	//analyze factorize
+  cmumps_c(&(g.mumps_id));
+#endif
 }
 
 
