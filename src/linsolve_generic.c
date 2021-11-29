@@ -127,6 +127,9 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
     p->mumps_vals = NULL;
     p->mumps_Is = NULL;
     p->mumps_Js = NULL;
+
+    p->mumps_rhs_loc = NULL;
+    p->mumps_irhs_loc = NULL;
 #endif
 }
 
@@ -422,6 +425,14 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     int nnz = SQUARE(site_var) * nr_nodes *9 * g.num_processes;	//number of nonzero elements
     int nnz_loc = SQUARE(site_var) * nr_nodes *9;
 
+
+//######### SET UP RHS #############
+    int rhs_len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
+    MALLOC(l->p_PRECISION.mumps_irhs_loc, int, rhs_len);
+    MALLOC(l->p_PRECISION.mumps_rhs_loc, complex_PRECISION, rhs_len);
+    memset(l->p_PRECISION.mumps_rhs_loc, 0, rhs_len * sizeof(complex_PRECISION));
+    memset(l->p_PRECISION.mumps_irhs_loc, 0, rhs_len * sizeof(int));
+
 	//confige MUMPS_struct
     g.mumps_id.job = JOB_INIT;
     g.mumps_id.par = 1;
@@ -434,13 +445,20 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     g.mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
     g.mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
 //          mumps_id.ICNTL(35) = 3;	//BLR feature is activablrted during factorization, not used in solve
-    g.mumps_id.cntl[6] = 1e-1;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
+    g.mumps_id.cntl[6] = 1e-2;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
 
+//LHS
     g.mumps_id.n = mumps_n;	//needed at least on P0
     g.mumps_id.nnz_loc = nnz_loc;
     g.mumps_id.irn_loc = p->mumps_Is;
     g.mumps_id.jcn_loc = p->mumps_Js;
     g.mumps_id.a_loc = p->mumps_vals;
+
+//RHS
+    g.mumps_id.nloc_rhs = rhs_len;
+    g.mumps_id.rhs_loc = p->mumps_rhs_loc;
+    g.mumps_id.irhs_loc = p->mumps_irhs_loc;	
+    g.mumps_id.lrhs_loc = rhs_len; //leading dimension
 
 //outputs
     g.mumps_id.ICNTL(1) = 0;//6;	//error messages

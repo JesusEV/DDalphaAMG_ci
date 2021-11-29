@@ -102,8 +102,8 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 	// A store column-wise
     for (k = 0, r = 0; r < num_eig_vect; r++, k++){
       for (c = 0; c < r; c++, k++){
-        px->mumps_vals[j*9*SQUARE(site_var) + c * site_var + r] += *(tm_block_pt + k);
-        px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + c] -= conj_PRECISION(*(tm_block_pt + k));
+        px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + c] += *(tm_block_pt + k);
+        px->mumps_vals[j*9*SQUARE(site_var) + c * site_var + r] -= conj_PRECISION(*(tm_block_pt + k));
       }
       px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + r] += *(tm_block_pt + k);
     }
@@ -115,14 +115,14 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 	// D store column-wise
     for (k = 0, r = num_eig_vect; r < 2*num_eig_vect; r++, k++){
       for (c = num_eig_vect; c < r; c++, k++){
-        px->mumps_vals[j*9*SQUARE(site_var) + c * site_var + r] += *(tm_block_pt + k);
-        px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + c] -= conj_PRECISION(*(tm_block_pt + k));
+        px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + c] += *(tm_block_pt + k);
+        px->mumps_vals[j*9*SQUARE(site_var) + c * site_var + r] -= conj_PRECISION(*(tm_block_pt + k));
       }
       px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + r] += *(tm_block_pt + k);
     }
 
   //remove this line as well, as soon k++ is removed
-    clover_pt += block_step_size;
+    tm_block_pt += block_step_size;
   }  // end for loop over the blocks
 #endif	//tm term
 
