@@ -39,7 +39,7 @@
   #define EPS_double 1E-14
 
   #define HAVE_TM      // flag for enable twisted mass
-  #define HAVE_TM1p1   // flag for enable doublet for twisted mass
+//  #define HAVE_TM1p1   // flag for enable doublet for twisted mass
 
   #undef INIT_ONE_PREC // flag undef for enabling additional features in the lib
   

@@ -89,8 +89,43 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     }
     clover_pt += clover_step_size2;
 	// skipping num for hopping terms in mumps_vals
-    k += skip;
   }  // end for loop over the blocks
+
+
+#ifdef HAVE_TM
+   // #########################################################################
+   // twisted mass-term:
+  int block_step_size = (num_eig_vect * (num_eig_vect+1))/2;
+  config_PRECISION tm_block_pt = op->tm_term;	//TODO add  + start * block_step_size *2
+
+  for (j = 0; j < nr_nodes; j++){
+	// A store column-wise
+    for (k = 0, r = 0; r < num_eig_vect; r++, k++){
+      for (c = 0; c < r; c++, k++){
+        px->mumps_vals[j*9*SQUARE(site_var) + c * site_var + r] += *(tm_block_pt + k);
+        px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + c] -= conj_PRECISION(*(tm_block_pt + k));
+      }
+      px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + r] += *(tm_block_pt + k);
+    }
+
+
+  //remove this line as well, as soon k++ is removed
+    tm_block_pt += block_step_size;
+
+	// D store column-wise
+    for (k = 0, r = num_eig_vect; r < 2*num_eig_vect; r++, k++){
+      for (c = num_eig_vect; c < r; c++, k++){
+        px->mumps_vals[j*9*SQUARE(site_var) + c * site_var + r] += *(tm_block_pt + k);
+        px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + c] -= conj_PRECISION(*(tm_block_pt + k));
+      }
+      px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + r] += *(tm_block_pt + k);
+    }
+
+  //remove this line as well, as soon k++ is removed
+    clover_pt += block_step_size;
+  }  // end for loop over the blocks
+#endif	//tm term
+
 
 
    // #########################################################################

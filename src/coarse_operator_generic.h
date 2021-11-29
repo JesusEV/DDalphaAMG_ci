@@ -257,10 +257,9 @@
         clover_pt += clover_step_size2; phi_pt += num_eig_vect; eta_pt += site_var;
       }
 
-
-
-
+#ifdef HAVE_TM1p1
     }
+#endif
   }
 
   static inline void coarse_add_block_diagonal_PRECISION( vector_PRECISION eta, vector_PRECISION phi,

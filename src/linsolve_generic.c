@@ -434,7 +434,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     g.mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
     g.mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
 //          mumps_id.ICNTL(35) = 3;	//BLR feature is activablrted during factorization, not used in solve
-    g.mumps_id.cntl[6] = 1e-3;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
+    g.mumps_id.cntl[6] = 1e-1;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
 
     g.mumps_id.n = mumps_n;	//needed at least on P0
     g.mumps_id.nnz_loc = nnz_loc;
@@ -562,14 +562,14 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
 #endif
 
 #ifdef MUMPS_ADDS
+	//release MUMPS_struct
+  g.mumps_id.job = JOB_END;
+  cmumps_c(&(g.mumps_id));
   int site_var = l->num_lattice_site_var;
   int nr_nodes = l->num_inner_lattice_sites * g.num_processes;
   FREE( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes );
   FREE( p->mumps_Is,int,SQUARE(site_var)*nr_nodes );
   FREE( p->mumps_Js,int,SQUARE(site_var)*nr_nodes );
-	//release MUMPS_struct
-  g.mumps_id.job = JOB_END;
-  cmumps_c(&(g.mumps_id));
 #endif
 }
 
