@@ -130,6 +130,7 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
 
     p->mumps_rhs_loc = NULL;
     p->mumps_irhs_loc = NULL;
+    p->mumps_SOL = NULL;
 #endif
 }
 
@@ -424,7 +425,11 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     int mumps_n = site_var * nr_nodes * g.num_processes;	//order of Matrix
     int nnz = SQUARE(site_var) * nr_nodes *9 * g.num_processes;	//number of nonzero elements
     int nnz_loc = SQUARE(site_var) * nr_nodes *9;
-
+//SOLUTION
+    if (g.my_rank == 0){
+      MALLOC(l->p_PRECISION.mumps_SOL, complex_PRECISION, mumps_n);
+      memset(l->p_PRECISION.mumps_SOL, 0, mumps_n * sizeof(complex_PRECISION));
+    }
 
 //######### SET UP RHS #############
     int rhs_len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
@@ -445,7 +450,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     g.mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
     g.mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
 //          mumps_id.ICNTL(35) = 3;	//BLR feature is activablrted during factorization, not used in solve
-    g.mumps_id.cntl[6] = 1e-2;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
+    g.mumps_id.cntl[6] = 1e-3;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
 
 //LHS
     g.mumps_id.n = mumps_n;	//needed at least on P0
@@ -457,8 +462,11 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 //RHS
     g.mumps_id.nloc_rhs = rhs_len;
     g.mumps_id.rhs_loc = p->mumps_rhs_loc;
-    g.mumps_id.irhs_loc = p->mumps_irhs_loc;	
+    g.mumps_id.irhs_loc = p->mumps_irhs_loc;
     g.mumps_id.lrhs_loc = rhs_len; //leading dimension
+    if (g.my_rank == 0){
+      g.mumps_id.rhs = p->mumps_SOL;
+    }
 
 //outputs
     g.mumps_id.ICNTL(1) = 0;//6;	//error messages
@@ -588,6 +596,9 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   FREE( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes );
   FREE( p->mumps_Is,int,SQUARE(site_var)*nr_nodes );
   FREE( p->mumps_Js,int,SQUARE(site_var)*nr_nodes );
+  FREE( p->mumps_irhs_loc, int, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
+  FREE( p->mumps_rhs_loc, complex_PRECISION, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
+  FREE( p->mumps_SOL, complex_PRECISION, site_var * nr_nodes * g.num_processes);	//order of Matrix
 #endif
 }
 

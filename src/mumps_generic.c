@@ -127,7 +127,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 #endif	//tm term
 
 
-
    // #########################################################################
    // #2 hopping-term:
    // #########################################################################
@@ -489,19 +488,9 @@ START_NO_HYPERTHREADS(threading)
 // increase global indices by 1 to match fortran indexing.
 // spmv doesn't work anymore!!!
 
-
   int nnz_loc = SQUARE(site_var) * nr_nodes *9;
   for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing
     *(l->p_PRECISION.mumps_Js + i ) = *(l->p_PRECISION.mumps_Js + i ) +1;
     *(l->p_PRECISION.mumps_Is + i ) = *(l->p_PRECISION.mumps_Is + i ) +1;
   }
-  printf0("increased!\n");
-
-  for (i = 0; i < nnz_loc; i++){
-//	if (*(l->p_PRECISION.mumps_Is + i) <= 0 || *(l->p_PRECISION.mumps_Is + i) > site_var * nr_nodes * g.num_processes) printf0("p: %d, at pos. %5d irn = %d\n", g.my_rank, i, *(l->p_PRECISION.mumps_Is + i));
-	//if (*(l->p_PRECISION.mumps_Js + i) <= 0 || *(l->p_PRECISION.mumps_Js + i) > site_var * nr_nodes * g.num_processes) printf0("p: %d, at pos. %5d jcn = %d\n", g.my_rank, i, *(l->p_PRECISION.mumps_Js + i));
-  }
-//  memset(l->p_PRECISION.mumps_Is, 0, nnz_loc * sizeof(complex_PRECISION));
-
-
 }

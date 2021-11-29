@@ -206,6 +206,7 @@
     int *mumps_Is, *mumps_Js;
     vector_PRECISION mumps_rhs_loc;
     int *mumps_irhs_loc;
+    vector_PRECISION mumps_SOL;
 #endif
 
   } gmres_PRECISION_struct;

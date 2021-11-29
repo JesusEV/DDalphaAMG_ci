@@ -410,9 +410,11 @@ void coarse_self_couplings_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
 
 #ifdef HAVE_TM // tm_term
-  if (op->mu + op->mu_odd_shift != 0.0 || op->mu + op->mu_even_shift != 0.0 )
+  if (op->mu + op->mu_odd_shift != 0.0 || op->mu + op->mu_even_shift != 0.0 ){
     coarse_add_anti_block_diagonal_PRECISION( eta+start*vector_size, phi+start*vector_size, 
                                               op->tm_term+start*block_size, (end-start)*vector_size, l );
+//    printf0("reached this pos.\n");
+  }
 #endif
 #ifdef HAVE_TM1p1 //eps_term
   if ( g.n_flavours == 2 &&
