@@ -339,16 +339,26 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   test_routine( l, threading );
 #endif
 
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_2	//will not be executed!!!
+  level_struct *lx = l;
+  while (lx->level > 0){
+    lx = lx->next_level;
+  }
+  
 //set up all values to mumps_Vals, mumps_Is, mumps_Js
   if ( g.mixed_precision ) {
-    mumps_setup_float(l, threading);
+    mumps_setup_float(lx, threading);
   } else {
-    mumps_setup_double(l, threading);
+    mumps_setup_double(lx, threading);
   }
+		int i;
+		int nnz_loc = SQUARE(lx->num_lattice_site_var) * lx->num_inner_lattice_sites * 9;
+		for (i = 0; i < nnz_loc/10; i+= 1){
+//		  printf0("i: %d, vals: %+-f%+-fi, I: %d, J:%d\n", i,	(g.mumps_id.a_loc+i)->r, (g.mumps_id.a_loc+i)->i,								*(g.mumps_id.irn_loc+i), *(g.mumps_id.jcn_loc+i));
+		}
 
-  g.mumps_id.job = 4;	//analyze factorize
-  cmumps_c(&(g.mumps_id));
+/*  g.mumps_id.job = 4;	//analyze factorize
+  cmumps_c(&(g.mumps_id));*/
 #endif
 }
 

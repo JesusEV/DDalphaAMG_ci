@@ -11,12 +11,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   operator_PRECISION_struct* op = px->op; //&(l->op_PRECISION);//
   config_PRECISION clover_pt = l->p_PRECISION.op->clover;
 
-  printf0("mumps_setup call\n");
-  printf0("pointer to mumps_Is: %p\n", px->mumps_Is);
-
-  exit(0);
-
-
 // %p to print pointer
    // #########################################################################
    // #1 self-coupling:
@@ -49,7 +43,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     }
     k += skip;
   }
-
 //      nr_nodes * g.my_rank 			= nodes per process * p_id
 //	nr_nodes * (g.my_rank +1)		= first node of next process
   for (j = 0; j < nr_nodes; j++){
@@ -100,12 +93,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   }  // end for loop over the blocks
 
 
-
-
-
-
-
-
    // #########################################################################
    // #2 hopping-term:
    // #########################################################################
@@ -123,8 +110,6 @@ START_NO_HYPERTHREADS(threading)
       num_4link_var=4*4*l->num_parent_eig_vect*l->num_parent_eig_vect,
       num_link_var=4*l->num_parent_eig_vect*l->num_parent_eig_vect,
       start=0;
-  vector_PRECISION in_pt, out_pt;
-  config_PRECISION D_pt;
 
   int core_start;
   int core_end;
@@ -165,10 +150,7 @@ START_NO_HYPERTHREADS(threading)
 
 
   int num_site_var=site_var;
-
-
-
-
+  
   for (dir = T; dir <= X; dir++){
     boundary_table = op->c.boundary_table[2*dir];
     buffer_i_pt = 0;
@@ -202,6 +184,7 @@ START_NO_HYPERTHREADS(threading)
 	printf0("k :%d, neighbor_table: %d, index: %d, n4link: %d, dir: %d, nlink: %d\n", k, op->neighbor_table[index], index, num_4link_var, dir, num_link_var);
 //	printf0("k :%4d, D: %+-f%+-fi\n", k, CSPLIT(-1.0 * *(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + k)));
       }
+      MPI_Finalize();
       exit(0);
 */
 
@@ -237,7 +220,6 @@ START_NO_HYPERTHREADS(threading)
         *(l->p_PRECISION.mumps_Is + 	(9 * num_link_var)*op->neighbor_table[index] + 	num_link_var + 	(2*dir +1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
 			i_start +	num_site_var * op->neighbor_table[index] + 		k%(int)(num_site_var*0.5) + 	(int)(num_site_var*0.5);
       }
-
 
 	// DO THE COL INDICES aka. Js
 	//FIXME: maybe remove comm_nr > 0 ?
@@ -278,7 +260,7 @@ START_NO_HYPERTHREADS(threading)
         }
       }
 
-      
+     
 	// check whether dir neighbor is in halo
 
       if (op->neighbor_table[index+1+dir] >= l->num_inner_lattice_sites) {
@@ -315,13 +297,12 @@ START_NO_HYPERTHREADS(threading)
         }
 
 	//write i to buffer:
-        *(buff_i_send[dir] + 2 * buffer_i_pt) = boundary_table[op->neighbor_table[index + 1 + dir] % l->num_inner_lattice_sites];
+        *(buff_i_send[dir] + 2 * buffer_i_pt) = boundary_table[op->neighbor_table[index + 1 + dir] % comm_nr[dir]];
         *(buff_i_send[dir] + 2 * buffer_i_pt + 1) = op->neighbor_table[index];
  	buffer_i_pt++;
       }
-
     }	//loop over nodes
-
+	
 	//send both buffers:
 /*
       MPI_Isend(cont void *buf, int count, MPI_Datatype dt, int dest, int tag, MPI_Comm comm, MPI_Request *req);
@@ -351,7 +332,6 @@ START_NO_HYPERTHREADS(threading)
       MPI_Recv((buff_i_recv[dir]), 2 * comm_nr[dir], MPI_INT, l->neighbor_rank[2*dir+1], dir, g.comm_cart, &s);
 										    // tag = dir
       printf("process %d recieved message from process %d\n", g.my_rank, l->neighbor_rank[2*dir+1]);
-	
 
       neighbors_j_start = l->neighbor_rank[2*dir+1] * l->num_inner_lattice_sites * site_var;	
 	// copy buffer content to mumps_vals
@@ -405,7 +385,6 @@ START_NO_HYPERTHREADS(threading)
 //				site_var
       }
     }	//end if (comm_nr[dir] > 0)
-
 
 		//regular mu- coupling for all nodes except communicated ones
     buffer_i_pt = 0;
@@ -472,15 +451,22 @@ START_NO_HYPERTHREADS(threading)
 
   END_NO_HYPERTHREADS(threading)
 
-
 // increase global indices by 1 to match fortran indexing.
 // spmv doesn't work anymore!!!
 
 
-  int nnz_loc = SQUARE(l->num_lattice_site_var) * l->num_inner_lattice_sites * g.num_processes *9;
-
+  int nnz_loc = SQUARE(site_var) * nr_nodes *9;
   for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing
     *(l->p_PRECISION.mumps_Js + i ) = *(l->p_PRECISION.mumps_Js + i ) +1;
     *(l->p_PRECISION.mumps_Is + i ) = *(l->p_PRECISION.mumps_Is + i ) +1;
   }
+  printf0("increased!\n");
+
+  for (i = 0; i < nnz_loc; i++){
+//	if (*(l->p_PRECISION.mumps_Is + i) <= 0 || *(l->p_PRECISION.mumps_Is + i) > site_var * nr_nodes * g.num_processes) printf0("p: %d, at pos. %5d irn = %d\n", g.my_rank, i, *(l->p_PRECISION.mumps_Is + i));
+	//if (*(l->p_PRECISION.mumps_Js + i) <= 0 || *(l->p_PRECISION.mumps_Js + i) > site_var * nr_nodes * g.num_processes) printf0("p: %d, at pos. %5d jcn = %d\n", g.my_rank, i, *(l->p_PRECISION.mumps_Js + i));
+  }
+//  memset(l->p_PRECISION.mumps_Is, 0, nnz_loc * sizeof(complex_PRECISION));
+
+
 }
