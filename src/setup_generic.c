@@ -328,7 +328,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
       re_setup_PRECISION( l->next_level, threading );
     }
   }
-#if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI)
+#if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI) || defined(MUMPS_ADDS)
   else {
     // this runs on level 0 only
 #ifdef POLYPREC
@@ -348,7 +348,9 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 
     mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
 
-    g.mumps_id.job = 4;	//analyze factorize
+//    g.mumps_id.job = 4;	//analyze factorize
+    g.mumps_id.job = 2;	//factorize
+
     cmumps_c(&(g.mumps_id));
 
 #endif

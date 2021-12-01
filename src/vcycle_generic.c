@@ -148,7 +148,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             compute_core_start_end_custom(0, lx->num_inner_lattice_sites, &start, &end, lx, threading, 1);
 
             t0 = MPI_Wtime();
-	    mumps_setup_PRECISION(lx, threading);
+//	    mumps_setup_PRECISION(lx, threading);
 
                
 
@@ -171,13 +171,13 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             }
             mumps_setup_time = MPI_Wtime() - t0;
 
-	
+	/*
             t0 = MPI_Wtime();
             g.mumps_id.job = 4;	//analyze factorize
             cmumps_c(&(g.mumps_id));
             mumps_job4_time = MPI_Wtime() - t0;
-
-
+	*/
+            mumps_job4_time = -1;
             // 3. solve!
             t0 = MPI_Wtime();
             g.mumps_id.job = 3;		// solve
@@ -241,10 +241,11 @@ MPI_Barrier(MPI_COMM_WORLD);
 
             MPI_Scatter(px->mumps_SOL, send_count, MPI_COMPLEX_PRECISION, px->x, send_count, MPI_COMPLEX_PRECISION, 0, MPI_COMM_WORLD);	//scatter again to have px->x filled with mumps' solution
             // ---------------------------------------------------------------------------
+/*
 printf0("stopping....\n");
 MPI_Finalize();
 exit(0);
-
+*/
           }
         }
         START_MASTER(threading)
