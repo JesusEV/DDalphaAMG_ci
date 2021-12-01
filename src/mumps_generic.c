@@ -1,6 +1,28 @@
-
+/*
+ * Copyright (C) 2016, Matthias Rottmann, Artur Strebel, Simon Heybrock, Simone Bacchio, Bjoern Leder.
+ * 
+ * This file is part of the DDalphaAMG solver library.
+ * 
+ * The DDalphaAMG solver library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * The DDalphaAMG solver library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with the DDalphaAMG solver library. If not, see http://www.gnu.org/licenses/.
+ * 
+ */
 
 #include "main.h"
+
+#ifdef MUMPS_ADDS
+
 #include "mumps_PRECISION.h"
 
 
@@ -501,13 +523,8 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
 
   gmres_PRECISION_struct* px = &(lx->p_PRECISION);
 
-  //double t0,t1;	//timing
-  //double mumps_setup_time, mumps_job4_time, mumps_job3_time, mumps_verify_time;
-
   int start, end, i;
   compute_core_start_end_custom(0, lx->num_inner_lattice_sites, &start, &end, lx, threading, 1);
-
-  //t0 = MPI_Wtime();
 
   // ######### SET UP RHS #############
   int rhs_len = lx->p_PRECISION.v_end-lx->p_PRECISION.v_start;
@@ -515,7 +532,6 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
     *(px->mumps_irhs_loc + i) = g.my_rank * rhs_len + i+1;		//+1 due to fortran indexing
   }
 
-  //vector_PRECISION_copy(px->mumps_rhs_loc, px->b, px->v_start, px->v_end, lx ); //save copy since mumps may change content
   vector_PRECISION_copy(px->mumps_rhs_loc, eta, px->v_start, px->v_end, lx );
 
   // centralized solution, definitely mention it!
@@ -523,71 +539,12 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
     // FIXME : do some sort of casting here, to avoid warnings at compile-time
     g.mumps_id.rhs = px->mumps_SOL;
   }
-  //mumps_setup_time = MPI_Wtime() - t0;
 
-  //mumps_job4_time = -1;
-  // 3. solve!
-  //t0 = MPI_Wtime();
   g.mumps_id.job = 3;		// solve
   cmumps_c(&(g.mumps_id));
-  //mumps_job3_time = MPI_Wtime() - t0;
-
-  // ####################### CHECK RELATIVE RESIDUAL ##################################
-  /*
-  0. Scatter SOL to SOL_dist
-  1. find A * SOL
-  2. compute vector_PRECISION_minus A*SOL - eta
-  3. compute || A*SOL - eta || and || eta ||
-  4. divide both for relative residual
-  */
-  //t0 = MPI_Wtime();
-
-  //int send_count = (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start);
-  ////MPI_Scatter(px->mumps_SOL, send_count, MPI_COMPLEX_PRECISION, px->x, send_count, MPI_COMPLEX_PRECISION, 0, MPI_COMM_WORLD);
-  //MPI_Scatter(px->mumps_SOL, send_count, MPI_COMPLEX_PRECISION, phi, send_count, MPI_COMPLEX_PRECISION, 0, MPI_COMM_WORLD);
-
-  //vector_PRECISION mumps_eta=NULL;	//will contain the product of A * Sol_dist
-  //START_MASTER(threading)
-  //MALLOC(mumps_eta, complex_PRECISION, lx->vector_size);
-  //END_MASTER(threading)
-  //memset(mumps_eta, 0, (lx->p_PRECISION.v_end - lx->p_PRECISION.v_start) * sizeof(complex_PRECISION));
-
-  //apply_coarse_operator_PRECISION(mumps_eta, phi, px->op, lx, threading );
-  //vector_PRECISION_minus(mumps_eta, mumps_eta, eta, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx);
-  //PRECISION mumps_norm = global_norm_PRECISION( mumps_eta, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx, threading );
-  //PRECISION b_norm = global_norm_PRECISION(eta, 0, (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start), lx, threading );
-  //mumps_verify_time = MPI_Wtime() - t0;
-
-  //// finish mumps
-  //t0 = MPI_Wtime();
-  //mumps_setup_time += MPI_Wtime() - t0;
-
-  //t0 = MPI_Wtime();
-  ////solution will be in px->x -- BUT : don't call this here anymore .. due to recursiveness
-  ////int nr_iters_gmres = fgmres_PRECISION(px, lx, threading );
-  //int nr_iters_gmres = 0;
-  //t1 = MPI_Wtime();
-
-  //if (g.my_rank == 0){
-  //  FILE *outfile;
-  //  outfile = fopen("timing_3.txt", "a");
-  //  //fprintf(outfile, "Msetup: %f, Ma+f: %f, Msolve: %f, Mverify: %f, FGMRES: %f, FGMRES_iter: %i, BLR: %e, rr: %6f, no_processes:
-  //  //%i\n", mumps_setup_time, mumps_job4_time, mumps_job3_time, mumps_verify_time, t1- t0, nr_iters_gmres, g.mumps_id.cntl[6] ,
-  //  //(mumps_norm/b_norm), g.num_processes);
-  //  printf0("Msetup: %f, Ma+f: %f, Msolve: %f, Mverify: %f, FGMRES: %f, FGMRES_iter: %i, BLR: %e, rr: %6f, no_processes: %i\n", \
-  //          mumps_setup_time, mumps_job4_time, mumps_job3_time, mumps_verify_time, t1- t0, nr_iters_gmres, g.mumps_id.cntl[6] ,(mumps_norm/b_norm),\
-  //          g.num_processes);
-  //  fclose(outfile);
-  //}
-  //MPI_Barrier(MPI_COMM_WORLD);
-  // ####################### END OF CHECK RELATIVE RESIDUAL ##################################
 
   int send_count = (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start);
   MPI_Scatter(px->mumps_SOL, send_count, MPI_COMPLEX_PRECISION, phi, send_count, MPI_COMPLEX_PRECISION, 0, MPI_COMM_WORLD);	//scatter again to have px->x filled with mumps' solution
-
-  printf0("inside MUMPS solver! (as a preconditioner)\n");
-  //MPI_Barrier(MPI_COMM_WORLD);
-  //MPI_Finalize();
-  //exit(0);
-
 }
+
+#endif
