@@ -636,9 +636,9 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
   // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
-  START_MASTER(threading)
-  if (l->level==0) printf0( "g ---> start=%d, end=%d, diff=%d, m0=%f, op=%p\n", p->v_start, p->v_end, p->v_end-p->v_start, p->op->m0, p->op );
-  END_MASTER(threading)
+  //START_MASTER(threading)
+  //if (l->level==0) printf0( "g ---> start=%d, end=%d, diff=%d, m0=%f, op=%p\n", p->v_start, p->v_end, p->v_end-p->v_start, p->op->m0, p->op );
+  //END_MASTER(threading)
 
   for( ol=0; ol<p->num_restart && finish==0; ol++ )  {
   
@@ -1611,7 +1611,7 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
       prec( w, NULL, Z[0], _NO_RES, l, threading );
     } else {
       if ( l->level == 0 ) {
-        prec( Z[j], NULL, V[j], _NO_RES, l, threading );       
+        prec( Z[j], NULL, V[j], _NO_RES, l, threading );
         apply_operator_PRECISION( w, Z[j], p, l, threading );
       } else {
         if ( g.mixed_precision == 2 && (g.method >= 1 && g.method <= 2 ) ) {
