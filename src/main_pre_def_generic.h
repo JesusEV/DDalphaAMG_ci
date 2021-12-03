@@ -125,7 +125,7 @@
   } gcrodr_PRECISION_struct;
 #endif
 
-#ifdef POLYPREC
+#if defined(POLYPREC) || defined(LOC_POLYPREC)
   typedef struct
   {
     int update_lejas;

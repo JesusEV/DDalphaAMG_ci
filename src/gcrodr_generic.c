@@ -472,6 +472,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       p->gcrodr_PRECISION.update_CU = 0;
 
+      START_MASTER(threading)
+      printf0("Recycling subspace updated!\n");
+      END_MASTER(threading)
+
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
       p->gcrodr_PRECISION.recompute_DPCk_poly = 1;
       p->gcrodr_PRECISION.recompute_DPCk_plain = 1;
@@ -625,6 +629,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       build_CU_PRECISION( p->gcrodr_PRECISION.eigslvr.Hc, p->V, p->Z, p, l, threading, m );
     }
 
+    START_MASTER(threading)
+    printf0("Recycling subspace created!\n");
+    END_MASTER(threading)
+
     // FIXME : issue when disabling this ...
     START_MASTER(threading)
     p->gcrodr_PRECISION.CU_usable=1;
@@ -646,7 +654,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
   } else{ error0("Invalid value for p->gcrodr_PRECISION.CU_usable \n"); }
 
+#ifdef BLOCK_JACOBI
   PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
+#endif
 
   for ( ol=0; ol < p->num_restart; ol++ )  {
 
@@ -784,6 +794,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       START_MASTER(threading)
       p->gcrodr_PRECISION.upd_ctr++;
+      END_MASTER(threading)
+
+      START_MASTER(threading)
+      printf0("Recycling subspace updated!\n");
       END_MASTER(threading)
     }
 

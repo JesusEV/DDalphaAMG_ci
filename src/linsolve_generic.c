@@ -405,7 +405,11 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 
     local_fgmres_PRECISION_struct_alloc( g.local_polyprec_d, 1, vl, g.coarse_tol, 
                                          _COARSE_GMRES, _NOTHING, NULL,
-                                         coarse_local_apply_schur_complement_PRECISION,
+#ifdef MUMPS_ADDS
+                                         local_apply_coarse_operator_PRECISION,
+#else
+                                         g.odd_even?coarse_local_apply_schur_complement_PRECISION:local_apply_coarse_operator_PRECISION,
+#endif
                                          &(p->block_jacobi_PRECISION.local_p), l );
   }
 #endif
@@ -449,8 +453,8 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     g.mumps_id.ICNTL(18) = 3; 	//distributed local triplets for analysis and factorization
     g.mumps_id.ICNTL(20) = 10;	//distributed RHS. compare to inctl(20) = 11
     g.mumps_id.ICNTL(35) = 2;	//BLR feature is activated during factorization and solution phase
-//          mumps_id.ICNTL(35) = 3;	//BLR feature is activablrted during factorization, not used in solve
-    g.mumps_id.cntl[6] = 1e-3;	//dropping parameter ε	(absolute error)	//original 7 but in c 6
+//          mumps_id.ICNTL(35) = 3;   //BLR feature is activablrted during factorization, not used in solve
+    g.mumps_id.cntl[6] = g.mumps_drop_tol;    //dropping parameter ε	(absolute error)	//original 7 but in c 6
 
 //LHS
     g.mumps_id.n = mumps_n;	//needed at least on P0

@@ -112,6 +112,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
           else
             vcycle_PRECISION( l->next_level->p_PRECISION.x, NULL, l->next_level->p_PRECISION.b, _NO_RES, l->next_level, threading );
         } else {
+#ifndef MUMPS_ADDS
           if ( g.odd_even ) {
             if ( g.method == 6 ) {
               g5D_coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
@@ -129,12 +130,62 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 
             }
           } else {
+#endif
             gmres_PRECISION_struct* px = &(l->next_level->p_PRECISION);
             level_struct* lx = l->next_level;
 
-            int nr_iters_gmres = fgmres_PRECISION(px, lx, threading );
-            printf0("gmres iters = %d\n", nr_iters_gmres);
+            int start, end;
+            compute_core_start_end(px->v_start, px->v_end, &start, &end, lx, threading);
+
+#ifdef BLOCK_JACOBI
+            if ( lx->level==0 && lx->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas == 1 ) {
+              // re-construct Lejas
+              local_re_construct_lejas_PRECISION( lx, threading );
+            }
+#endif
+
+#ifdef POLYPREC
+            px->preconditioner = px->polyprec_PRECISION.preconditioner;
+#endif
+
+#ifdef BLOCK_JACOBI
+            // if Block Jacobi is enabled, solve the problem : M^{-1}Ax = M^{-1}b
+              if ( px->block_jacobi_PRECISION.BJ_usable == 1 ) {
+                // create a backup of b
+                vector_PRECISION_copy( px->block_jacobi_PRECISION.b_backup, px->b, start, end, l );
+                block_jacobi_apply_PRECISION( px->b, px->block_jacobi_PRECISION.b_backup, px, lx, threading );
+              }
+#endif
+
+            int fgmres_iters;
+#ifdef GCRODR
+            fgmres_iters = flgcrodr_PRECISION( px, lx, threading );
+#else
+            fgmres_iters = fgmres_PRECISION( px, lx, threading );
+#endif
+            START_MASTER(threading)
+            printf0("gmres iters = %d\n", fgmres_iters);
+            END_MASTER(threading)
+
+#ifdef BLOCK_JACOBI
+            // restore the rhs
+            if ( px->block_jacobi_PRECISION.BJ_usable == 1 ) {
+              vector_PRECISION_copy( px->b, px->block_jacobi_PRECISION.b_backup, start, end, l );
+            }
+#endif
+
+#ifdef POLYPREC
+            if ( lx->level==0 && lx->p_PRECISION.polyprec_PRECISION.update_lejas == 1 ) {
+              if ( fgmres_iters >= 1.5*px->polyprec_PRECISION.d_poly ) {
+                // re-construct Lejas
+                re_construct_lejas_PRECISION( lx, threading );
+              }
+            }
+#endif
+
+#ifndef MUMPS_ADDS
           }
+#endif
         }
         START_MASTER(threading)
         if ( l->depth == 0 )

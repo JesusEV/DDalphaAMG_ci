@@ -21,7 +21,7 @@
 
 #include "main.h"
 
-#ifdef BLOCK_JACOBI
+#ifdef LOC_POLYPREC
 
 void local_fgmres_PRECISION_struct_init( local_gmres_PRECISION_struct *p ) {
 
@@ -40,11 +40,11 @@ void local_fgmres_PRECISION_struct_init( local_gmres_PRECISION_struct *p ) {
   p->eval_operator = NULL;
 
   // copy of Hesselnberg matrix
-#if defined(POLYPREC)
+#if defined(LOC_POLYPREC)
   p->polyprec_PRECISION.eigslvr.Hc = NULL;
 #endif
 
-#ifdef POLYPREC
+#ifdef LOC_POLYPREC
   p->polyprec_PRECISION.Hcc = NULL; 
   p->polyprec_PRECISION.L = NULL;
   p->polyprec_PRECISION.col_prods = NULL;
@@ -167,12 +167,12 @@ void local_fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION t
     ASSERT( type < 3 );
   }
 
-#if defined(GCRODR) || defined(POLYPREC)
+#if defined(GCRODR) || defined(LOC_POLYPREC)
   if (l->level==0) {
 #endif
 
   // copy of Hesselnberg matrix
-#if defined(POLYPREC)
+#if defined(LOC_POLYPREC)
   MALLOC(p->polyprec_PRECISION.eigslvr.Hc, complex_PRECISION*, m);
   p->polyprec_PRECISION.eigslvr.Hc[0] = NULL; // allocate connected memory
   MALLOC( p->polyprec_PRECISION.eigslvr.Hc[0], complex_PRECISION, m*(m+1) );
@@ -180,7 +180,7 @@ void local_fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION t
     p->polyprec_PRECISION.eigslvr.Hc[i] = p->polyprec_PRECISION.eigslvr.Hc[0] + i*(m+1);
 #endif
 
-#ifdef POLYPREC
+#ifdef LOC_POLYPREC
   //p->polyprec_PRECISION.d_poly = g.polyprec_d;
   int d_poly=p->polyprec_PRECISION.d_poly;
 
@@ -239,7 +239,7 @@ void local_fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION t
   p->polyprec_PRECISION.eigslvr.A = p->polyprec_PRECISION.Hc[0];
 #endif
 
-#if defined(POLYPREC)
+#if defined(LOC_POLYPREC)
   }
 #endif
 }
@@ -265,18 +265,18 @@ void local_fgmres_PRECISION_struct_free( local_gmres_PRECISION_struct *p, level_
   p->D = NULL;
   p->clover = NULL;
 
-#if defined(GCRODR) || defined(POLYPREC)
+#if defined(GCRODR) || defined(LOC_POLYPREC)
   if (l->level==0) {
 #endif
 
   // copy of Hesselnberg matrix
-#if defined(POLYPREC)
+#if defined(LOC_POLYPREC)
   int m = p->restart_length;
   FREE( p->polyprec_PRECISION.eigslvr.Hc[0], complex_PRECISION, m*(m+1) );
   FREE(p->polyprec_PRECISION.eigslvr.Hc, complex_PRECISION*, m);
 #endif
 
-#ifdef POLYPREC
+#ifdef LOC_POLYPREC
   int d_poly = 10;
   int vl = p->polyprec_PRECISION.syst_size;
   FREE( p->polyprec_PRECISION.Hcc, complex_PRECISION, d_poly*d_poly );
@@ -299,7 +299,7 @@ void local_fgmres_PRECISION_struct_free( local_gmres_PRECISION_struct *p, level_
   FREE( p->polyprec_PRECISION.dirctslvr.b, complex_PRECISION, d_poly );
 #endif
 
-#if defined(GCRODR) || defined(POLYPREC)
+#if defined(GCRODR) || defined(LOC_POLYPREC)
   }
 #endif
 }
@@ -894,6 +894,31 @@ void coarse_local_apply_schur_complement_PRECISION( vector_PRECISION out, vector
   SYNC_MASTER_TO_ALL(threading);
   SYNC_CORES(threading)
 }
+
+
+void local_apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op,
+                                            level_struct *l, struct Thread *threading ) {
+
+  //PROF_PRECISION_START( _SC, threading );
+  int start;
+  int end;
+  compute_core_start_end_custom(0, l->num_inner_lattice_sites, &start, &end, l, threading, 1);
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+#ifndef OPTIMIZED_COARSE_SELF_COUPLING_PRECISION
+  coarse_self_couplings_PRECISION( eta, phi, op, start, end, l);
+#else
+  coarse_self_couplings_PRECISION_vectorized( eta, phi, op, start, end, l );
+#endif
+
+  //PROF_PRECISION_STOP( _SC, 1, threading );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+}
+
 
 
 // ------------------------- LOCAL POLYPREC -------------------------

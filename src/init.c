@@ -339,21 +339,26 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   test_routine( l, threading );
 #endif
 
-#ifdef MUMPS_ADDS	//will not be executed!!!
+#ifdef MUMPS_ADDS
   level_struct *lx = l;
   while (lx->level > 0){
     lx = lx->next_level;
   }
-
-//set up all values to mumps_Vals, mumps_Is, mumps_Js
+  //set up all values to mumps_Vals, mumps_Is, mumps_Js
   if ( g.mixed_precision ) {
     mumps_setup_float(lx, threading);
   } else {
     mumps_setup_double(lx, threading);
   }
-
-  g.mumps_id.job = 4;	//analyze factorize
+  START_MASTER(threading)
+  double t0,t1;
+  t0 = MPI_Wtime();
+  g.mumps_id.job = 4;	//analyze + factorize
   cmumps_c(&(g.mumps_id));
+  t1 = MPI_Wtime();
+  printf0("MUMPS analyte+factorize time (seconds) : %f\n",t1-t0);
+  END_MASTER(threading)
+  SYNC_CORES(threading)
 #endif
 }
 
@@ -1030,6 +1035,11 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   g.local_polyprec_d++;
 #endif
 
+#ifdef MUMPS_ADDS
+  save_pt = &(g.mumps_drop_tol); g.mumps_drop_tol = 1.0e-3;
+  read_parameter( &save_pt, "coarse grid mumps_drop_tol:", "%le", 1, in, _DEFAULT_SET );
+#endif
+
   save_pt = &(g.low_level_meas); g.low_level_meas = 0;
   read_parameter( &save_pt, "low level meas:", "%d", 1, in, _DEFAULT_SET );
 
@@ -1067,9 +1077,9 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
 #endif
 
   int rnd_seed = 1234;
-  if ( g.randomize ) {
-    srand( time( 0 ) + rnd_seed*g.my_rank );
-  } else 
+  //if ( g.randomize ) {
+  //  srand( time( 0 ) + rnd_seed*g.my_rank );
+  //} else 
     srand( rnd_seed*g.my_rank );
 }
 

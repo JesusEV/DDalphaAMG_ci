@@ -36,6 +36,9 @@
                                                       operator_PRECISION_struct *op, level_struct *l,
                                                       struct Thread *threading );
 
+  void local_apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi, operator_PRECISION_struct *op,
+                                              level_struct *l, struct Thread *threading );
+
   void local_apply_polyprec_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
                                        int res, level_struct *l, struct Thread *threading );
 
