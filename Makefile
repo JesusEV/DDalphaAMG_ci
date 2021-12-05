@@ -85,9 +85,9 @@ LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
 LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
 
 # Enable the following three to activate MUMPS within DDalphaAMG
-#LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
-#OPT_VERSION_FLAGS += -DMUMPS_ADDS
-#DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
+LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
+OPT_VERSION_FLAGS += -DMUMPS_ADDS
+DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
 
 #---------------------------------------------------
 
