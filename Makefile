@@ -1,13 +1,14 @@
 # --- COMPILER ----------------------------------------
 #CC = mpicc
 #CC = /usr/lib64/mpi/gcc/openmpi2/bin/mpicc
-CC = /usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/bin/mpicc
+#CC = /usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/bin/mpicc
+CC = mpiicc
 
 # --- CFLAGS -----------------------------------------
 CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -lblas -llapack 
-#CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
-#CFLAGS = $(CFLAGS_intel)
-CFLAGS = $(CFLAGS_gnu)
+CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
+CFLAGS = $(CFLAGS_intel)
+#CFLAGS = $(CFLAGS_gnu)
 
 # --- DO NOT CHANGE -----------------------------------
 CPP = cpp
@@ -41,9 +42,9 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-LIMEDIR = /home/ramirez/installs/qio/bin
+LIMEDIR = /p/home/jusers/leemhuis1/juwels/Master/DDalphaAMG_ci/dependencies/qio/build
 LIMEFLAGS = -DHAVE_LIME -I$(LIMEDIR)/include
-LIMELIB = $(LIMEDIR)/lib64/liblime.a
+LIMELIB = $(LIMEDIR)/lib/liblime.a
 
 # Available flags:
 # -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING
@@ -68,15 +69,15 @@ DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -
 
 # clean integration of MUMPS within DDalphaAMG
 
-MUMPSDIR = /usr/local/sw/mumps-5.4.1/
+MUMPSDIR = /p/software/juwels/stages/2020/software/MUMPS/5.3.4-intel-2020/
 MUMPS_LIBS = $(MUMPSDIR)lib/
 
-LMETISDIR = /usr/local/sw/metis-5.1.0/install/lib/
+LMETISDIR = /p/software/juwels/stages/2020/software/METIS/5.1.0-iccifort-2020.2.254-GCC-9.3.0/lib/
 LMETIS=-L$(LMETISDIR) -lmetis
-LPMETISDIR = /usr/local/sw/parmetis-4.0.3/install/lib/
+LPMETISDIR = /p/software/juwels/stages/2020/software/ParMETIS/4.0.3-iimpi-2020/lib/
 LPMETIS=-L$(LPMETISDIR) -lparmetis
 
-LSCOTCHDIR = /usr/local/sw/scotch-6.1.1/lib/
+LSCOTCHDIR = /p/software/juwels/stages/2020/software/SCOTCH/6.1.0-iimpi-2020/lib/
 LSCOTCH = -L$(LSCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lscotch -lscotcherr
 
 LPORD=-L$(MUMPS_LIBS) -lpord
@@ -109,22 +110,22 @@ DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
 
 # lapack and scalapack linkages
 
-LAPACK_DIR = dependencies/lapack-3.9.0
-LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
-LAPACKE_INCLUDE = $(LAPACKE_DIR)/include
-BLASLIB      = $(LAPACK_DIR)/librefblas.a
-LAPACKLIB    = $(LAPACK_DIR)/liblapack.a
-LAPACKELIB   = $(LAPACK_DIR)/liblapacke.a
-LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
+#LAPACK_DIR = dependencies/lapack-3.9.0
+#LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
+#LAPACKE_INCLUDE = $(LAPACKE_DIR)/include
+#BLASLIB      = $(LAPACK_DIR)/librefblas.a
+#LAPACKLIB    = $(LAPACK_DIR)/liblapack.a
+#LAPACKELIB   = $(LAPACK_DIR)/liblapacke.a
+#LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
 
 #SPBLAS_DIR = dependencies/spblas
 #SPBLASLIB = $(SPBLAS_DIR)/libsparseblas.a
 #SPBLAS_LIBRARIES = $(SPBLASLIB)
 SPBLAS_LIBRARIES = 
 
-SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi3/scalapack/2.0.2/
+SCALAPACK_DIR = /p/software/juwels/stages/2020/software/imkl/2020.2.254-iimpi-2020/mkl/
 SCALAPACK_INCLUDE = -I$(SCALAPACK_DIR)/include/
-SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib64/ -lscalapack -lblacs
+SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib/intel64/ -lmkl_scalapack_ilp64 -lmkl_blacs_intelmpi_lp64
 
 #---------------------------------------------------
 
