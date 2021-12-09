@@ -379,7 +379,7 @@ void coarse_diag_oo_inv_PRECISION( vector_PRECISION y, vector_PRECISION x, opera
 #else
     for(int j=0; j<num_site_var; j++)
       y[j] = _COMPLEX_PRECISION_ZERO;
-    cgemv( num_site_var, sc, lda, (float *)x, (float *)y);
+    cgemv_custom( num_site_var, sc, lda, (float *)x, (float *)y);
 #endif
     x += num_site_var;
     y += num_site_var;

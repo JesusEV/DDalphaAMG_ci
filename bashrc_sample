@@ -1,0 +1,9 @@
+module load Stages/2020 Intel/2020.2.254-GCC-9.3.0 IntelMPI/2019.8.254
+module load SCOTCH/6.1.0
+module load METIS/5.1.0
+module load ParMETIS/4.0.3
+module load MUMPS/5.3.4
+
+export LD_LIBRARY_PATH=/p/software/juwels/stages/2020/software/SCOTCH/6.1.0-iimpi-2020/lib/:/p/software/juwels/stages/2020/software/METIS/5.1.0-iccifort-2020.2.254-GCC-9.3.0/lib/:/p/software/juwels/stages/2020/software/ParMETIS/4.0.3-iimpi-2020/lib/:/p/software/juwels/stages/2020/software/imkl/2021.2.0-iimpi-2021/compiler/2021.2.0/linux/compiler/lib/intel64_lin/:/p/software/juwels/stages/2020/software/impi/2019.8.254-iccifort-2020.2.254-GCC-9.3.0/intel64/libfabric/lib/:/p/software/juwels/stages/2020/software/impi/2019.8.254-iccifort-2020.2.254-GCC-9.3.0/intel64/lib/:/p/software/juwels/stages/2020/software/MUMPS/5.3.4-intel-2020/lib/
+
+export FI_PROVIDER=tcp

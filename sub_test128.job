@@ -1,0 +1,17 @@
+#!/bin/bash -x
+#SBATCH --account=hwu29
+#SBATCH --nodes=128
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --output=mpi-out.%j
+#SBATCH --error=mpi-err.%j
+#SBATCH --time=00:10:00
+#SBATCH --partition=batch
+
+#ulimit -l unlimited
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
+
+make clean
+make -j 32
+. run -i sample128.ini

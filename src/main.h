@@ -660,9 +660,12 @@
   #include "local_polyprec_float.h"
 #endif
 
-  #include "mkl.h"
+  #include <mkl.h>
   #include <mkl_scalapack.h>
   #include <mkl_blacs.h>
+
+  //#include <lapacke.h>
+
 #if defined(GCRODR) || defined(POLYPREC)
   //#include <lapacke.h>
 #ifdef GCRODR
