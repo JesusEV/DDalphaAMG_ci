@@ -1,15 +1,13 @@
 # --- COMPILER ----------------------------------------
-#CC = mpicc
+CC = mpicc
 #CC = /usr/lib64/mpi/gcc/openmpi2/bin/mpicc
 #CC = /usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/bin/mpicc
 
-CC = mpiicc 
-
 # --- CFLAGS -----------------------------------------
-CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -lblas -llapack 
-CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3 -xHOST -qopenmp
-CFLAGS = $(CFLAGS_intel)
-#CFLAGS = $(CFLAGS_gnu)
+CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp # -lblas -llapack 
+#CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
+#CFLAGS = $(CFLAGS_intel)
+CFLAGS = $(CFLAGS_gnu)
 
 # --- DO NOT CHANGE -----------------------------------
 CPP = cpp
@@ -43,7 +41,6 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-#LIMEDIR = /p/home/jusers/leemhuis1/juwels/Master/DDalphaAMG_ci/dependencies/qio/build
 LIMEDIR = /p/home/jusers/ramirez1/juwels/DDalphaAMG/DDalphaAMG_ci/dependencies/qio/build
 LIMEFLAGS = -DHAVE_LIME -I$(LIMEDIR)/include
 LIMELIB = $(LIMEDIR)/lib/liblime.a
@@ -71,34 +68,28 @@ DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -
 
 # clean integration of MUMPS within DDalphaAMG
 
-MUMPSDIR = /p/software/juwels/stages/2020/software/MUMPS/5.3.4-intel-2020/
-MUMPS_LIBS = $(MUMPSDIR)lib/
+MUMPSDIR = /p/software/juwels/stages/2020/software/MUMPS/5.3.4-gpsmkl-2021/
+MUMPS_LIBS = $(MUMPSDIR)lib64/
 
-LMETISDIR = /p/software/juwels/stages/2020/software/METIS/5.1.0-iccifort-2020.2.254-GCC-9.3.0/lib/
-LMETIS = -L$(LMETISDIR) -lmetis
-LPMETISDIR = /p/software/juwels/stages/2020/software/ParMETIS/4.0.3-iimpi-2020/lib/
-LPMETIS = -L$(LPMETISDIR) -lparmetis
+LMETISDIR = /p/software/juwels/stages/2020/software/METIS/5.1.0-GCC-10.3.0/lib64/
+LMETIS=-L$(LMETISDIR) -lmetis
 
-LSCOTCHDIR = /p/software/juwels/stages/2020/software/SCOTCH/6.1.0-iimpi-2020/lib/
+LPMETISDIR = /p/software/juwels/stages/2020/software/ParMETIS/4.0.3-gpsmpi-2021/lib64/
+LPMETIS=-L$(LPMETISDIR) -lparmetis
+
+LSCOTCHDIR = /p/software/juwels/stages/2020/software/SCOTCH/6.1.0-gpsmpi-2021/lib64/
 LSCOTCH = -L$(LSCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lscotch -lscotcherr
 
-LPORD = -L$(MUMPS_LIBS) -lpord
+LPORD=-L$(MUMPS_LIBS) -lpord
 LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
 
-# are these necessary ?
-#LMISCDIR1 = /p/software/juwels/stages/2020/software/iccifort/2020.2.254-GCC-9.3.0/compilers_and_libraries_2020.2.254/linux/compiler/lib/intel64_lin/
-LMISCDIR1 = /p/software/juwels/stages/2020/software/imkl/2021.2.0-iimpi-2021/compiler/2021.2.0/linux/compiler/lib/intel64_lin/
-LMISC1 = -L$(LMISCDIR1) -limf -lsvml -lirng -lintlc
-LMISCDIR2 = /p/software/juwels/stages/2020/software/impi/2019.8.254-iccifort-2020.2.254-GCC-9.3.0/intel64/libfabric/lib/
-LMISC2 = -L$(LMISCDIR2) -lfabric
-
-LORDERINGS = $(LMISC1) $(LMISC2) $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/p/software/juwels/stages/2020/software/impi/2019.8.254-iccifort-2020.2.254-GCC-9.3.0/intel64/lib/ -lmpi -lmpifort
-#-lmpi -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
+LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/p/software/juwels/stages/2020/software/psmpi/5.4.10-1-GCC-10.3.0/lib64/ -lmpi # -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
 
 # Enable the following three to activate MUMPS within DDalphaAMG
 LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
 OPT_VERSION_FLAGS += -DMUMPS_ADDS
 DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
+MUMPS_INCLUDE = -I/p/software/juwels/stages/2020/software/MUMPS/5.3.4-gpsmkl-2020/include/
 
 #---------------------------------------------------
 
@@ -131,15 +122,24 @@ DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
 LAPACKE_INCLUDE =
 LAPACK_LIBRARIES =
 
+#SPBLAS_DIR = dependencies/spblas
+#SPBLASLIB = $(SPBLAS_DIR)/libsparseblas.a
+#SPBLAS_LIBRARIES = $(SPBLASLIB)
 SPBLAS_LIBRARIES = 
 
-SCALAPACK_DIR = /p/software/juwels/stages/2020/software/imkl/2020.2.254-iimpi-2020/mkl/
+# /p/software/juwels/stages/2020/software/imkl/2021.2.0-gpsmpi-2021/compiler/2021.2.0/linux/lib/libOpenCL.so.1.2
+
+SCALAPACK_DIR = /p/software/juwels/stages/2020/software/imkl/2021.2.0-gpsmpi-2021/mkl/2021.2.0/
 SCALAPACK_INCLUDE = -I$(SCALAPACK_DIR)/include/
-SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib/intel64/ -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib/intel64/ -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+#-lscalapack -lblacs
+
+#SCALAPACK_INCLUDE =
+#SCALAPACK_LIBRARIES =
 
 #---------------------------------------------------
 
-all: execs library exec-tests
+all: execs library # exec-tests
 execs: $(BINDIR)/DDalphaAMG #$(BINDIR)/DDalphaAMG_devel
 library: $(LIB)
 exec-tests: $(TSTS)
@@ -151,7 +151,11 @@ install: copy
 .SECONDARY:
 
 $(BINDIR)/DDalphaAMG : $(OBJ) 
-	mpif90 $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) -lifcore -lpthread $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) $(SPBLAS_LIBRARIES) -lm -lgfortran $(LIBSMUMPS) -nofor_main
+	mpif90 $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) $(SPBLAS_LIBRARIES) -lm -lgfortran $(LIBSMUMPS) -fopenmp -Dintel_ -DALLOW_NON_INIT # -nofor-main
+
+#mpif90 $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) $(SPBLAS_LIBRARIES) -lm -lgfortran 
+#$(LIBSMUMPS) -fopenmp -Dintel_ -DALLOW_NON_INIT # -nofor-main
+#		$(MUMPS_LIBRARIES)
 
 DDalphaAMG : $(BINDIR)/DDalphaAMG
 	ln -sf $(BINDIR)/$@ $@
@@ -173,8 +177,8 @@ $(LIBDIR)/libDDalphaAMG_devel.a: $(OBJDB)
 	ar d $@ main.o
 	ranlib $@
 
-$(TSTDIR)/%: $(LIB) $(TSTDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) $(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) -lifcore -lpthread $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
+#$(TSTDIR)/%: $(LIB) $(TSTDIR)/%.c
+#	$(CC) -DAdd_ $(CFLAGS) -o $@ $@.c -I$(INCDIR) $(MUMPS_INCLUDE) $(LAPACKE_INCLUDE) $(SCALAPACK_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
 
 $(DOCDIR)/user_doc.pdf: $(DOCDIR)/user_doc.tex $(DOCDIR)/user_doc.bib
 	( cd $(DOCDIR); pdflatex user_doc; bibtex user_doc; pdflatex user_doc; pdflatex user_doc; )
@@ -183,10 +187,10 @@ $(INCDIR)/%: $(SRCDIR)/%
 	cp $(SRCDIR)/`basename $@` $@
 
 $(BUILDDIR)/%.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) -DAdd_ $(OPT_VERSION_FLAGS) $(LAPACKE_INCLUDE) -c $< -o $@ -lifcore -lpthread $(LIBSMUMPS)
+	$(CC) -DAdd_ $(OPT_VERSION_FLAGS) $(MUMPS_INCLUDE) $(LAPACKE_INCLUDE) $(SCALAPACK_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
 
 $(BUILDDIR)/%_devel.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) -g -DAdd_ $(DEVEL_VERSION_FLAGS) $(LAPACKE_INCLUDE) -c $< -o $@ -lifcore -lpthread $(LIBSMUMPS)
+	$(CC) -g -DAdd_ $(DEVEL_VERSION_FLAGS) $(MUMPS_INCLUDE) $(LAPACKE_INCLUDE) $(SCALAPACK_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
 
 $(GSRCDIR)/%.h: $(SRCDIR)/%.h $(firstword $(MAKEFILE_LIST))
 	cp $< $@
