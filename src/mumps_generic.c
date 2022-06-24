@@ -29,7 +29,9 @@
 void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 
   START_MASTER(threading)
-
+ 
+  printf0("call to MUMPS setup\n");  
+  
   double t0,t1;
   t0 = MPI_Wtime();
 
@@ -507,7 +509,14 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
                             int res, level_struct *lx, struct Thread *threading )
 {
 
+
   START_MASTER(threading)
+  printf0("mumps time  = %f, mumps solves:  %d\n", g.mumps_solve_time, g.mumps_solve_number);
+  g.mumps_solve_number ++;
+  g.mumps_solve_time -= MPI_Wtime();
+ // printf0("call to MUMPS solve!\n");
+ // printf0("mu fac = %f\n", g.mu_factor[lx->depth]);
+
 
   gmres_PRECISION_struct* px = &(lx->p_PRECISION);
 
@@ -537,6 +546,7 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
   int send_count = (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start);
   MPI_Scatter(px->mumps_SOL, send_count, MPI_COMPLEX_PRECISION, phi, send_count, MPI_COMPLEX_PRECISION, 0, MPI_COMM_WORLD);	//scatter again to have px->x filled with mumps' solution
 
+  g.mumps_solve_time += MPI_Wtime();
   END_MASTER(threading)
   SYNC_CORES(threading);
 }

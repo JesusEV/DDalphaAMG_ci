@@ -117,7 +117,7 @@ void test_routine( level_struct *l, struct Thread *threading ) {
 
 
 void prof_init( level_struct *l ) {
-  if ( l->depth == 0 ) { g.coarse_time=0; g.coarse_iter_count=0; g.coarsest_time=0; }
+  if ( l->depth == 0 ) { g.coarse_time=0; g.coarse_iter_count=0; g.coarsest_time=0;}
   prof_double_init( l );
   prof_float_init( l );
   if ( l->next_level != NULL )
@@ -144,6 +144,11 @@ double prof_print( level_struct *l ) {
       printf0("| flop/lattice site: %9.2le                             |\n", flop );
       printf0("| flop/s/MPIprocess: %9.2le                             |\n",
               (flop/g.total_time)*ll[T]*ll[Z]*ll[Y]*ll[X] );
+//#ifdef MUMPS_ADDS
+      printf0("|                                                          |\n"); 
+      printf0("| coarse solve calls: %ld                               |\n", g.mumps_solve_number);
+      printf0("| average coarse solve time in sec: %9.2le              |\n", g.mumps_solve_time / g.mumps_solve_number);
+//#endif
       printf0("+----------------------------------------------------------+\n\n");
     }
   }

@@ -89,6 +89,28 @@ int main( int argc, char **argv ) {
     method_update( l.setup_iter, &l, &threading );
 
     g.on_solve = 1;
+
+#ifdef MUMPS_ADDS
+    level_struct *lx = &l;
+    int i;
+    for (i = 1; i<g.num_levels; i++){
+	lx = lx->next_level;
+    }
+    mumps_setup_float(lx, &threading);        //setup vals, Is, Js
+    struct Thread* threadx = &threading;
+
+    START_MASTER(threadx)
+    double t0,t1;
+    t0 = MPI_Wtime();
+    g.mumps_id.job = 4; //analyze and factorize
+    cmumps_c(&(g.mumps_id));
+    t1 = MPI_Wtime();
+    if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f\n",t1-t0);
+    END_MASTER(threadx)
+    SYNC_CORES(threadx)
+#endif
+
+
     solve_driver( &l, &threading );
   }
   

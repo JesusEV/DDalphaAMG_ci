@@ -141,6 +141,9 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   
   START_LOCKED_MASTER(threading)
   g.in_setup = 1;
+
+  g.mumps_solve_time = 0;
+  g.mumps_solve_number = 0;
   if ( g.vt.evaluation ) {
     l->level = g.num_levels-1;
   }
@@ -339,7 +342,8 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   test_routine( l, threading );
 #endif
 
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_3
+  //TODO change ifdef flag
   level_struct *lx = l;
   while (lx->level > 0){
     lx = lx->next_level;

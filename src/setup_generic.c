@@ -343,7 +343,8 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
     l->p_PRECISION.block_jacobi_PRECISION.BJ_usable = 0;
 #endif
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_3		
+    //TODO change ifdef flag back to without 3
     mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
     START_MASTER(threading)
     double t0,t1;

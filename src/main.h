@@ -425,8 +425,13 @@
     int local_polyprec_d;
 #endif
 
+
+    double mumps_solve_time;
+    int mumps_solve_number;
 #ifdef MUMPS_ADDS
     double mumps_drop_tol;
+
+
 #endif
 
     // profiling, analysis, output
