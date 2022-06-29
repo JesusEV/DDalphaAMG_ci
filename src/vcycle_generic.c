@@ -159,7 +159,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 
 
 
-/*	   
+	   
 	    double old_mu_fac = 0;
 	    
 	    if (g.on_solve == 0){	 //not solve step aka. DONT USE MUMPS
@@ -170,11 +170,12 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 	      g.mu_factor[lx->depth] = 1.0;
  	    }
 		
-*/	  
+/*	  
 	    START_MASTER(threading)  
             g.mumps_solve_time -= MPI_Wtime();
             END_MASTER(threading)
             SYNC_CORES(threading)
+	    */
 //	    printf0("depth: %d, level: %d, mu fac: [%f, %f, %f]\n", lx->depth, lx->level, g.mu_factor[0], g.mu_factor[1], g.mu_factor[2]);
 
 
@@ -194,21 +195,21 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             g.coarsest_time += MPI_Wtime();
             END_MASTER(threading)
 
-    
+    /*
 	    
 	    START_MASTER(threading)  
             g.mumps_solve_time += MPI_Wtime();
 	    g.mumps_solve_number ++; 
 	    END_MASTER(threading)
             SYNC_CORES(threading)
-	    
-	    /*
+*/	    
+
 
 	    if (g.on_solve == 1){
 	       g.mu_factor[lx->depth] = old_mu_fac;
 	    }
 	    px->preconditioner = mumps_solve_PRECISION;
-*/	
+	
 
 
             START_MASTER(threading)

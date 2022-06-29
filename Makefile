@@ -41,7 +41,7 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-LIMEDIR = /p/home/jusers/ramirez1/juwels/DDalphaAMG/DDalphaAMG_ci/dependencies/qio/build
+LIMEDIR = ./dependencies/qio/build
 LIMEFLAGS = -DHAVE_LIME -I$(LIMEDIR)/include
 LIMELIB = $(LIMEDIR)/lib/liblime.a
 
@@ -86,10 +86,11 @@ LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
 LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/p/software/juwels/stages/2020/software/psmpi/5.4.10-1-GCC-10.3.0/lib64/ -lmpi # -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
 
 # Enable the following three to activate MUMPS within DDalphaAMG
-LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
-OPT_VERSION_FLAGS += -DMUMPS_ADDS
-DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
-MUMPS_INCLUDE = -I/p/software/juwels/stages/2020/software/MUMPS/5.3.4-gpsmkl-2020/include/
+# findme
+ LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
+ OPT_VERSION_FLAGS += -DMUMPS_ADDS
+ DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
+ MUMPS_INCLUDE = -I/p/software/juwels/stages/2020/software/MUMPS/5.3.4-gpsmkl-2020/include/
 
 #---------------------------------------------------
 
