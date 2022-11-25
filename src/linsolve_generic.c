@@ -442,6 +442,10 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     memset(l->p_PRECISION.mumps_rhs_loc, 0, rhs_len * sizeof(complex_PRECISION));
     memset(l->p_PRECISION.mumps_irhs_loc, 0, rhs_len * sizeof(int));
 
+
+  
+
+    /*
 	//confige MUMPS_struct
     g.mumps_id.job = JOB_INIT;
     g.mumps_id.par = 1;
@@ -477,6 +481,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     g.mumps_id.ICNTL(2) = 0;//1;	//diagnostic printing and statistics local to each MPI process
     g.mumps_id.ICNTL(3) = 0;//6;	//global information, collected on host (default 6)
     g.mumps_id.ICNTL(4) = 0;//2;	//level of printing for error, warning, and diagnostic messages (default 2)
+    */
   }
 #endif
 }

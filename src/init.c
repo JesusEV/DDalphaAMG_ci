@@ -90,6 +90,17 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
       next_level_float_setup( l );
       END_LOCKED_MASTER(threading)
 
+      if (l->level == 1){	//TODO: remove g.on_solve 
+	//			site_var 			no. of nodes
+        int mumps_n = l->next_level->num_lattice_site_var * l->next_level->num_inner_lattice_sites * g.num_processes;        //order of Matrix
+        int nnz = SQUARE(l->next_level->num_lattice_site_var) *l->next_level->num_inner_lattice_sites *9 * g.num_processes; //number of nonzero elements
+        int nnz_loc = SQUARE(l->next_level->num_lattice_site_var) * l->next_level->num_inner_lattice_sites *9;
+        int rhs_len = l->next_level->p_float.v_end-l->next_level->p_float.v_start;
+	printf0("calling mumps_init_float\n");
+        mumps_init_float(&(l->next_level->p_float), mumps_n, nnz_loc, rhs_len, threading);
+	printf0("mumps_init_float done\n");
+      }
+
       if ( l->depth == 0 ) {
         START_LOCKED_MASTER(threading)
         interpolation_float_alloc( l );
@@ -141,6 +152,9 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   
   START_LOCKED_MASTER(threading)
   g.in_setup = 1;
+
+  g.mumps_solve_time = 0;
+  g.mumps_solve_number = 0;
   if ( g.vt.evaluation ) {
     l->level = g.num_levels-1;
   }
@@ -339,7 +353,8 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   test_routine( l, threading );
 #endif
 
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_3
+  //TODO change ifdef flag
   level_struct *lx = l;
   while (lx->level > 0){
     lx = lx->next_level;
@@ -356,7 +371,7 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   g.mumps_id.job = 4;	//analyze + factorize
   cmumps_c(&(g.mumps_id));
   t1 = MPI_Wtime();
-  printf0("MUMPS analyte+factorize time (seconds) : %f\n",t1-t0);
+  printf0("MUMPS analize+factorize time (seconds) : %f\n",t1-t0);
   END_MASTER(threading)
   SYNC_CORES(threading)
 #endif

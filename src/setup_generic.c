@@ -343,13 +343,18 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
     l->p_PRECISION.block_jacobi_PRECISION.BJ_usable = 0;
 #endif
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_3		
+    //TODO change ifdef flag back to without 3
+    printf0("\n\nstarting mumps_setup\n\n\n");
     mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
-    START_MASTER(threading)
+    printf0("\n\nstarting MUMPS factorization\n\n\n");
     double t0,t1;
+    START_MASTER(threading)
     t0 = MPI_Wtime();
+    END_MASTER(threading)
     g.mumps_id.job = 2;	//factorize
     cmumps_c(&(g.mumps_id));
+    START_MASTER(threading)
     t1 = MPI_Wtime();
     printf0("MUMPS factorize time (seconds) : %f\n",t1-t0);
     END_MASTER(threading)

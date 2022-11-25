@@ -157,12 +157,61 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               }
 #endif
 
-            int fgmres_iters;
+
+
+	   
+	    double old_mu_fac = 0;
+	    
+	    if (g.on_solve == 0){	 //not solve step aka. DONT USE MUMPS
+	      px->preconditioner = NULL;  
+	    }
+	    else {			//on solve aka. USE MUMPS!
+	      old_mu_fac = g.mu_factor[lx->depth];
+	      g.mu_factor[lx->depth] = 1.0;
+ 	    }
+		
+/*	  
+	    START_MASTER(threading)  
+            g.mumps_solve_time -= MPI_Wtime();
+            END_MASTER(threading)
+            SYNC_CORES(threading)
+	    */
+//	    printf0("depth: %d, level: %d, mu fac: [%f, %f, %f]\n", lx->depth, lx->level, g.mu_factor[0], g.mu_factor[1], g.mu_factor[2]);
+
+
+            START_MASTER(threading)
+            g.coarsest_time -= MPI_Wtime();
+            END_MASTER(threading)
+
+
+	    int fgmres_iters;
 #ifdef GCRODR
             fgmres_iters = flgcrodr_PRECISION( px, lx, threading );
 #else
             fgmres_iters = fgmres_PRECISION( px, lx, threading );
 #endif
+
+	    START_MASTER(threading)
+            g.coarsest_time += MPI_Wtime();
+            END_MASTER(threading)
+
+    /*
+	    
+	    START_MASTER(threading)  
+            g.mumps_solve_time += MPI_Wtime();
+	    g.mumps_solve_number ++; 
+	    END_MASTER(threading)
+            SYNC_CORES(threading)
+*/	    
+
+
+	    if (g.on_solve == 1){
+	       g.mu_factor[lx->depth] = old_mu_fac;
+	    }
+	    px->preconditioner = mumps_solve_PRECISION;
+	
+
+
             START_MASTER(threading)
             printf0("gmres iters = %d\n", fgmres_iters);
             END_MASTER(threading)
