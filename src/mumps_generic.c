@@ -594,7 +594,7 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
   END_MASTER(threading)
   SYNC_CORES(threading);
 
-  exit(0);
+  //exit(0);
 }
 
 

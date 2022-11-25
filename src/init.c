@@ -90,6 +90,7 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
       next_level_float_setup( l );
       END_LOCKED_MASTER(threading)
 
+#ifdef MUMPS_ADDS
       if (l->level == 1){	//TODO: remove g.on_solve 
 	//			site_var 			no. of nodes
         int mumps_n = l->next_level->num_lattice_site_var * l->next_level->num_inner_lattice_sites * g.num_processes;        //order of Matrix
@@ -100,6 +101,7 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
         mumps_init_float(&(l->next_level->p_float), mumps_n, nnz_loc, rhs_len, threading);
 	printf0("mumps_init_float done\n");
       }
+#endif
 
       if ( l->depth == 0 ) {
         START_LOCKED_MASTER(threading)

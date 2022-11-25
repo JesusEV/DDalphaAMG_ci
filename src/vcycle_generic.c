@@ -159,7 +159,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 
 
 
-	   
+#ifdef MUMPS_ADDS
 	    double old_mu_fac = 0;
 	    
 	    if (g.on_solve == 0){	 //not solve step aka. DONT USE MUMPS
@@ -169,6 +169,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 	      old_mu_fac = g.mu_factor[lx->depth];
 	      g.mu_factor[lx->depth] = 1.0;
  	    }
+#endif
 		
 /*	  
 	    START_MASTER(threading)  
@@ -204,13 +205,12 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             SYNC_CORES(threading)
 */	    
 
-
+#ifdef MUMPS_ADDS
 	    if (g.on_solve == 1){
 	       g.mu_factor[lx->depth] = old_mu_fac;
 	    }
 	    px->preconditioner = mumps_solve_PRECISION;
-	
-
+#endif
 
             START_MASTER(threading)
             printf0("gmres iters = %d\n", fgmres_iters);
