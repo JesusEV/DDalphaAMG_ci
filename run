@@ -80,14 +80,9 @@ sed -e /'d0 block lattice:'/p -n $inputfile > tmplatticel1.txt
 cat tmplatticel1.txt | grep 'block lattice' | 
 awk -F': '   '{printf $2}' > tmplatticel2.txt
 
-sed -e /'number of openmp threads:'/p -n $inputfile > tmplatticet1.txt
-cat tmplatticet1.txt | grep 'openmp threads' | 
-awk -F': '   '{printf $2}' > tmplatticet2.txt
-
 read -a zahl1 < tmplatticeg2.txt 
 read -a zahl2 < tmplatticep2.txt
 read -a zahl4 < tmplatticel2.txt
-read -a zahl6 < tmplatticet2.txt
 
 i=0
 np=1
@@ -104,8 +99,6 @@ while [ ! $i = 4 ]
 done
 
 sd=$(printf %05i $numsub)
-
-export OMP_NUM_THREADS=$zahl6
 
 # check input parameters
 
@@ -198,10 +191,9 @@ fi
 if [ ${ipa[0]} = 0  ]
 then
 #   /opt/mpich/ch-p4/bin/mpirun $shareoption -np $np $exec $inputfile
-  #mpirun -np $np $exec $inputfile
+  mpirun -np $np $exec $inputfile
   #$MPIRUN -default-hostfile /etc/openmpi-default-hostfile $shareoption -np $np $NVPROF ./$exec $inputfile
   #scalasca -analyze srun ./$exec $inputfile
-  srun ./$exec $inputfile
 else
   cp $inputfile output/${opf}.txt
   echo "" >> output/${opf}.txt
@@ -211,8 +203,7 @@ else
   echo "+----------------------------------------------------------------------------------+" >> ../output/${opf}.txt
   echo "" >> output/${opf}.txt
   echo "" >> output/${opf}.txt
-  #mpirun -np $np $exec $inputfile >> ../output/${opf}.txt & disown
+  mpirun -np $np $exec $inputfile >> ../output/${opf}.txt & disown
   #$MPIRUN -default-hostfile /etc/openmpi-default-hostfile $shareoption -np $np $NVPROF ./$exec $inputfile >> ../output/${opf}.txt & disown
   #scalasca -analyze srun ./$exec $inputfile >> ../output/${opf}.txt & disown
-  srun ./$exec $inputfile >> ../output/${opf}.txt & disown
 fi
