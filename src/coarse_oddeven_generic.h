@@ -64,4 +64,10 @@
 
   void coarse_perform_fwd_bwd_subs_PRECISION( vector_PRECISION x, vector_PRECISION b, config_PRECISION A, level_struct *l );
 
+  void coarse_apply_oddeven_operator_PRECISION(vector_PRECISION out,
+                                               vector_PRECISION in,
+                                               operator_PRECISION_struct *op,
+                                               level_struct *l,
+                                               struct Thread *threading);
+
 #endif

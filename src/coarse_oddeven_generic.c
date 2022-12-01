@@ -1673,3 +1673,69 @@ void coarse_odd_even_PRECISION_test( vector_PRECISION out, vector_PRECISION in, 
     PUBLIC_FREE( buf1, complex_PRECISION, 2*l->vector_size );
   }
 }
+
+
+
+void coarse_apply_oddeven_operator_PRECISION(vector_PRECISION out,
+                                                vector_PRECISION in,
+                                                operator_PRECISION_struct *op,
+                                                level_struct *l,
+                                                struct Thread *threading){
+    /* TODO
+D = /D_ee D_eo\
+    \D_oe D_oo/ 
+
+    out_e = D_ee in_e + D_eo in_o
+    out_o = D_oo in_o + D_oe in_e
+    */
+
+
+
+  // start and end indices for vector functions depending on thread
+  int start;
+  int end;
+  // compute start and end indices for core
+  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
+  compute_core_start_end(op->num_even_sites*l->num_lattice_site_var, l->inner_vector_size, &start, &end, l, threading);
+
+/* content from apply_schur_complement
+  vector_PRECISION *tmp = op->buffer; //tmp buffer
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+  PROF_PRECISION_START( _SC, threading );
+  coarse_diag_ee_PRECISION( out, in, op, l, threading ); // out = D_ee in_e
+  PROF_PRECISION_STOP( _SC, 0, threading );
+
+  SYNC_CORES(threading)
+  vector_PRECISION_define( tmp[0], 0, start, end, l );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+  PROF_PRECISION_START( _NC, threading );
+  coarse_hopping_term_PRECISION( tmp[0], in, op, _ODD_SITES, l, threading );  //tmp0 = D_oe in_e
+  PROF_PRECISION_STOP( _NC, 0, threading );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+  PROF_PRECISION_START( _SC, threading );
+  coarse_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l, threading ); //tmp1 = D_oo tmp0
+  //what is this tmp[1]? is this the 2nd element in tmp? or another vector? why does this work?
+  PROF_PRECISION_STOP( _SC, 1, threading );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+  PROF_PRECISION_START( _NC, threading );
+  coarse_n_hopping_term_PRECISION( out, tmp[1], op, _EVEN_SITES, l, threading ); //out -= D_eo tmp1
+  PROF_PRECISION_STOP( _NC, 1, threading );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+*/
+
+}
