@@ -122,7 +122,54 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               g.coarsest_time -= MPI_Wtime();
               END_MASTER(threading)
 
-              coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
+
+
+              gmres_PRECISION_struct* px = &(l->next_level->p_PRECISION); 
+              operator_PRECISION_struct *opx = &(l->next_level->oe_op_PRECISION);
+
+              coarse_solve_odd_even_PRECISION( px, opx, l->next_level, threading );
+
+              
+	      coarse_apply_oddeven_operator_PRECISION(px->w, px->x, opx, l->next_level, threading);
+
+
+              vector_PRECISION_minus(px->w, px->w, px->b, px->v_start, px->v_end, l->next_level ); // x =  a - b
+
+              PRECISION beta1 = global_norm_PRECISION( px->w, px->v_start, px->v_end, l->next_level, threading );
+
+              PRECISION beta2 = global_norm_PRECISION( px->b, px->v_start, px->v_end, l->next_level, threading );
+
+	      printf("\n relative error %f\n", beta1/beta2);
+	      exit(0);
+
+	      
+	      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
               START_MASTER(threading)
               g.coarsest_time += MPI_Wtime();

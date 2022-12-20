@@ -706,12 +706,21 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     //############################################################################
 #endif
 
-
-
   // compute U_mu^dagger coupling
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;		// 5 = self + T-neighb. + Z-n + Y-n + X-n
     in_pt = in + num_site_var*op->neighbor_table[index];
+
+    
+    // e.g. we use amount == _EVEN_SITES:
+    //	this op->neighbor_table[index] is still in the odd site.
+    //	-> in_pt is odd part
+    //
+    // op->neighbor_table[index + k] for k > 0 is in the even site
+    // -> out_pt is even part
+    
+    
+    
     // block col ind: neighbor_table[index]
     D_pt = op->D + num_4link_var*op->neighbor_table[index] + 0*num_link_var;
     index++;		//first elements in n_t contains node itself, then T-neighbor, Z, Y, X
@@ -1372,7 +1381,61 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 
   SYNC_CORES(threading)
   PROF_PRECISION_START( _SC, threading );
+  
+
+
+//  vector_PRECISION_define_random( p->b, p->v_start, p->v_end, l);
+//  vector_PRECISION_define( p->x, 0, p->v_start, p->v_end, l);
+  vector_PRECISION_define( p->w, 0, p->v_start, p->v_end, l);
+  vector_PRECISION_define( p->r, 0, p->v_start, p->v_end, l);
+
+
+  printf0("before oo stuff\n");
+  int i; 
+ 
+  for (i = p->v_start; i<p->v_end;i+= 50){
+    printf0("b[%d]: %+-5lf%+-5lfi, x[%d]: %+-5lf%+-5lfi\n", i, CSPLIT(p->b[i]), i, CSPLIT(p->x[i])); 
+  }
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+
   coarse_diag_oo_inv_PRECISION( p->x, p->b, op, l, threading );
+
+
+  double r1, r2;
+
+
+  //this residual is basically useless. used only for debuging
+  vector_PRECISION_minus( p->r, p->x, p->b, p->v_end/2, p->v_end, l ); // ro = xo-bo
+  r1 = global_norm_PRECISION( p->r, p->v_end/2, p->v_end, l, threading ); // r1 = ||ro||
+  r2 = global_norm_PRECISION( p->b, p->v_end/2, p->v_end, l, threading ); // r2 = ||bo||
+
+  printf0("relative oo norm before coarse_diag_oo: %lf\n", r1/r2);
+  
+ 
+  for (i = p->v_start; i<p->v_end;i+= 50){
+    printf0("b[%d]: %+-5lf%+-5lfi, x[%d]: %+-5lf%+-5lfi\n", i, CSPLIT(p->b[i]), i, CSPLIT(p->x[i])); 
+  }
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+  
+  coarse_diag_oo_PRECISION( p->w, p->x, op, l, threading ); // wo = Doo x_o
+ 
+  vector_PRECISION_minus( p->r, p->w, p->b, p->v_end/2, p->v_end, l ); // ro = wo-bo
+  r1 = global_norm_PRECISION( p->r, p->v_end/2, p->v_end, l, threading ); // r1 = ||ro||
+  r2 = global_norm_PRECISION( p->b, p->v_end/2, p->v_end, l, threading ); // r2 = ||bo||
+
+  printf0("relative oo norm: %lf\n", r1/r2);
+
+//prints selected rows in w and b, not only odd sites
+
+  for (i = p->v_start; i<p->v_end;i+= 50){
+    printf0("b[%d]: %+-5lf%+-5lfi, w[%d]: %+-5lf%+-5lfi\n", i, CSPLIT(p->b[i]), i, CSPLIT(p->w[i])); 
+  }
+  exit(0);
+
   PROF_PRECISION_STOP( _SC, 0, threading );
   PROF_PRECISION_START( _NC, threading );
   coarse_n_hopping_term_PRECISION( p->b, p->x, op, _EVEN_SITES, l, threading );
@@ -1687,9 +1750,13 @@ D = /D_ee D_eo\
 
     out_e = D_ee in_e + D_eo in_o
     out_o = D_oo in_o + D_oe in_e
+
+    c = D * b
+    c = Dee be;
+    c += Deo bo;
+    c = Doo bo
+    c += Doe be
     */
-
-
 
   // start and end indices for vector functions depending on thread
   int start;
@@ -1697,9 +1764,6 @@ D = /D_ee D_eo\
   // compute start and end indices for core
   // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
   compute_core_start_end(op->num_even_sites*l->num_lattice_site_var, l->inner_vector_size, &start, &end, l, threading);
-
-/* content from apply_schur_complement
-  vector_PRECISION *tmp = op->buffer; //tmp buffer
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
@@ -1709,33 +1773,26 @@ D = /D_ee D_eo\
   PROF_PRECISION_STOP( _SC, 0, threading );
 
   SYNC_CORES(threading)
-  vector_PRECISION_define( tmp[0], 0, start, end, l );
-
-  SYNC_MASTER_TO_ALL(threading)
-  SYNC_CORES(threading)
 
   PROF_PRECISION_START( _NC, threading );
-  coarse_hopping_term_PRECISION( tmp[0], in, op, _ODD_SITES, l, threading );  //tmp0 = D_oe in_e
-  PROF_PRECISION_STOP( _NC, 0, threading );
-
-  SYNC_MASTER_TO_ALL(threading)
-  SYNC_CORES(threading)
-
-  PROF_PRECISION_START( _SC, threading );
-  coarse_diag_oo_inv_PRECISION( tmp[1], tmp[0], op, l, threading ); //tmp1 = D_oo tmp0
-  //what is this tmp[1]? is this the 2nd element in tmp? or another vector? why does this work?
-  PROF_PRECISION_STOP( _SC, 1, threading );
-
-  SYNC_MASTER_TO_ALL(threading)
-  SYNC_CORES(threading)
-
-  PROF_PRECISION_START( _NC, threading );
-  coarse_n_hopping_term_PRECISION( out, tmp[1], op, _EVEN_SITES, l, threading ); //out -= D_eo tmp1
+  coarse_hopping_term_PRECISION( out, in, op, _EVEN_SITES, l, threading ); //out += D_eo in_o	
   PROF_PRECISION_STOP( _NC, 1, threading );
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
-*/
+  PROF_PRECISION_START( _SC, threading );
+  coarse_diag_oo_PRECISION( out, in, op, l, threading ); // out = D_oo in_o
+  PROF_PRECISION_STOP( _SC, 0, threading );
+
+  SYNC_CORES(threading)
+
+  PROF_PRECISION_START( _NC, threading );
+  coarse_hopping_term_PRECISION( out, in, op, _ODD_SITES, l, threading ); //out += D_oe in_e
+  PROF_PRECISION_STOP( _NC, 1, threading );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
 
 }

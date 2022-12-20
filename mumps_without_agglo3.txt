@@ -1,0 +1,2016 @@
+
++- subspace correction methods for QCD applications -+
+|                                                    |
+|  Use option >> -? << for help                      |
+|                                                    |
++----------------------------------------------------+
+
+
+Number of Processes: 16
+Program is being started...
+
+
+
++----------------------------------------------------------+
+| The DDalphaAMG solver library.                           |
+| Copyright (C) 2016, Matthias Rottmann, Artur Strebel,    |
+|       Simon Heybrock, Simone Bacchio, Bjoern Leder.      |
+|                                                          |
+| This program comes with ABSOLUTELY NO WARRANTY.          |
++----------------------------------------------------------+
+
+configuration: /home/leemhuis/confs/conf.1255
+Lattice size nx=48 ny=48 nz=48 nt=96
+Reading configuration in double precision.
+
+Desired average plaquette: 0.6035764165540 in [0,1]
+BASIS4: tmLQCD basis
+antiperiodic in time boundary conditions
+Configuration stored...
+average plaquette: 0.6035764165538
+
++----------------------------------------------------------+
+| read in and set up the parallel dirac operator           |
+| elapsed wall clock time: 17.4654      seconds            |
++----------------------------------------------------------+
+initial definition --- depth: 0
+depth: 0, time spent for setting up next coarser operator: 136.818176 seconds
+initial definition --- depth: 1
+depth: 1, time spent for setting up next coarser operator: 5.055900 seconds
+
+initial coarse grid correction is defined
+elapsed time: 344.005484 seconds
+
+running with 10 openmp threads per core
++----------------------------------------------------------+
+| 3-level method                                           |
+| postsmoothing K-cycle                                    |
+| FGMRES + red-black multiplicative Schwarz                |
+|          restart length: 20                              |
+|                      m0: -0.358074                       |
+|                     csw: +1.575510                       |
+|                      mu: +0.000900                       |
++----------------------------------------------------------+
+|   preconditioner cycles: 1                               |
+|            inner solver: minimal residual iteration      |
+|               precision: single                          |
++---------------------- depth  0 --------------------------+
+|          global lattice: 96  48  48  48                  |
+|           local lattice: 12  24  48  48                  |
+|           block lattice: 4   4   4   4                   |
+|        post smooth iter: 4                               |
+|     smoother inner iter: 4                               |
+|              setup iter: 3                               |
+|            test vectors: 24                              |
++---------------------- depth  1 --------------------------+
+|          global lattice: 24  12  12  12                  |
+|           local lattice: 3   6   12  12                  |
+|           block lattice: 3   3   3   3                   |
+|        post smooth iter: 4                               |
+|     smoother inner iter: 4                               |
+|              setup iter: 2                               |
+|            test vectors: 24                              |
++---------------------- depth  2 --------------------------+
+|          global lattice: 8   4   4   4                   |
+|           local lattice: 1   2   4   4                   |
+|           block lattice: 1   1   1   1                   |
+|      coarge grid solver: GMRES                           |
+|              iterations: 50                              |
+|                  cycles: 50                              |
+|               tolerance: 1e-01                           |
++----------------------------------------------------------+
+|          K-cycle length: 5                               |
+|        K-cycle restarts: 2                               |
+|       K-cycle tolerance: 1e-01                           |
++----------------------------------------------------------+
+
+
++----------------------------------------------------------+
+| solver profiling                                         |
++----------------------------------------------------------+
+| depth:   0 / level:   2                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 1.07e+00(     24) |
+|       2 flop vector operations, float: 4.56e-01(     16) |
+|       8 flop vector operations, float: 3.16e+00(    116) |
+|                copy operations, float: 2.30e+00(     68) |
+|           set value operations, float: 1.09e+01(  37896) |
+|  interpolation and restriction, float: 4.04e+00(     24) |
+|                  self coupling, float: 7.56e+09(1489263) |
+|                       smoother, float: 9.45e+01(    144) |
+|             operator comm init, float: 2.36e-02(    864) |
+|             operator comm wait, float: 9.86e+00(    864) |
+|                     allreduces, float: 4.45e-01(     24) |
+|     Gram-Schmidt on aggregates, float: 3.05e+00(      1) |
+|      smoother - pt 3, res comm, float: 2.57e+00(  37728) |
+|    smoother - pt 4, solve comm, float: 4.30e+01(  37728) |
++----------------------------------------------------------+
+| depth:   1 / level:   1                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 2.59e+00(     24) |
+|       2 flop vector operations, float: 4.57e-02(     21) |
+|       8 flop vector operations, float: 4.53e-02(    144) |
+|                copy operations, float: 1.50e-01(    273) |
+|           set value operations, float: 3.14e-01( 125400) |
+|                       smoother, float: 8.06e+01(    144) |
+|             operator comm init, float: 3.70e-02(    864) |
+|             operator comm wait, float: 3.20e+01(    864) |
+|                     allreduces, float: 1.12e+00(     24) |
+|     Gram-Schmidt on aggregates, float: 8.92e-02(      1) |
+|      smoother - pt 3, res comm, float: 6.74e-01(    576) |
+|    smoother - pt 4, solve comm, float: 1.23e+01(    576) |
++----------------------------------------------------------+
+| depth:   2 / level:   0                time    ( count ) |
++----------------------------------------------------------+
++----------------------------------------------------------+
+| flop/lattice site:  8.24e+08                             |
+| flop/s/MPIprocess:  1.59e+12                             |
++----------------------------------------------------------+
+
+MUMPS pre-setup time (seconds) : 0.080360
+MUMPS analyte+factorize time (seconds) : 23.383308
+depth: 0, bootstrap step number 1...
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000488+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000488+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000345+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000099+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000345+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000097+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000488+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000244+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000345+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000104+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000101+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000103+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000100+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000099+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000345+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000105+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000345+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+depth: 0, time spent for setting up next coarser operator: 132.454504 seconds
+depth: 1, time spent for setting up next coarser operator: 5.378967 seconds
+MUMPS pre-setup time (seconds) : 0.358374
+MUMPS factorize time (seconds) : 33.464372
+depth: 1, bootstrap step number 1...
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000913+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000345+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000244+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000317+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000244+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000183+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000147+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000127+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000106+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000244+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000072+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000066+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000067+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000061+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000064+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000069+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000063+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000068+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000244+0.000000i
+gmres iters = 1
+depth: 1, time spent for setting up next coarser operator: 6.227800 seconds
+MUMPS pre-setup time (seconds) : 0.101668
+MUMPS factorize time (seconds) : 26.812197
+depth: 0, bootstrap step number 2...
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.004784+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.004442+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.004243+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.001092+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.004215+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000913+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.004271+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000977+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.004041+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000977+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003989+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000846+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003906+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000913+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003837+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000846+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003814+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000846+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003727+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000977+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003686+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000846+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003588+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000880+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003461+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000977+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003487+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000810+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003294+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000946+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003321+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000846+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003294+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000913+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003183+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000880+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003117+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000691+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003146+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000977+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003136+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000846+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003146+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000913+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003059+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.001007+0.000000i
+gmres iters = 1
+depth: 0, time spent for setting up next coarser operator: 121.472512 seconds
+depth: 1, time spent for setting up next coarser operator: 5.559408 seconds
+MUMPS pre-setup time (seconds) : 0.054086
+MUMPS factorize time (seconds) : 30.950584
+depth: 1, bootstrap step number 1...
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000244+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000141+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000345+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000345+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000126+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000122+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000123+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000126+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000127+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000120+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000123+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000423+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000244+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000115+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000121+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000117+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000119+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+depth: 1, time spent for setting up next coarser operator: 4.599459 seconds
+MUMPS pre-setup time (seconds) : 0.412662
+MUMPS factorize time (seconds) : 49.208725
+depth: 0, bootstrap step number 3...
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002652+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002773+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002641+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002629+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009590+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002454+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002417+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002290+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002674+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009543+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002316+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002380+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002405+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.008934+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002184+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002367+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002405+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002490+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.008910+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002454+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002466+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002652+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003193+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.007689+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002290+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002572+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002514+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002641+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.007896+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002537+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002719+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002686+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003383+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.007497+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002342+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002417+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002342+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.007324+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002342+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002211+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002417+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002466+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006978+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002290+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002490+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002502+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002595+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003383+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006832+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002367+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002316+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002478+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002490+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.007000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002367+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002490+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006832+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002466+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002405+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002514+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002441+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003239+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006385+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002290+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002290+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002417+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002514+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006637+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002367+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002290+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002990+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006404+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002316+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002290+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002329+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002502+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006492+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002290+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002417+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002342+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002514+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006533+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002316+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002417+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002441+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002572+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003356+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006390+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002405+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002441+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002290+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002970+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006501+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002316+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002367+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002514+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003294+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006310+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002342+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002303+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002417+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002441+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006459+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002290+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002316+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002417+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002549+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003294+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006469+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002264+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002303+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002466+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002537+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003127+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006282+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002392+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002514+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002618+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002572+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.003435+0.000000i
+gmres iters = 1
+depth: 0, time spent for setting up next coarser operator: 114.038848 seconds
+depth: 1, time spent for setting up next coarser operator: 4.231864 seconds
+MUMPS pre-setup time (seconds) : 0.190323
+MUMPS factorize time (seconds) : 25.292739
+depth: 1, bootstrap step number 1...
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000356+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000249+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000225+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000216+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000244+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000205+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000209+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000223+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000244+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000244+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000197+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000211+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000000+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000200+0.000000i
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.000214+0.000000i
+gmres iters = 1
+depth: 1, time spent for setting up next coarser operator: 4.518951 seconds
+MUMPS pre-setup time (seconds) : 0.035828
+MUMPS factorize time (seconds) : 48.026966
+depth: 1, bootstrap step number 2...
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+depth: 1, time spent for setting up next coarser operator: 4.068556 seconds
+MUMPS pre-setup time (seconds) : 0.308144
+MUMPS factorize time (seconds) : 45.319576
+
+performed 3 iterative setup steps
+elapsed time: 2127.709388 seconds (729.363825 seconds on coarse grid)
+
+
++----------------------------------------------------------+
+| solver profiling                                         |
++----------------------------------------------------------+
+| depth:   0 / level:   2                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 1.02e+01(    144) |
+|          process inner product, float: 1.05e+01(     72) |
+|       2 flop vector operations, float: 1.91e+00(     50) |
+|       8 flop vector operations, float: 1.13e+01(    315) |
+|        other vector operations, float: 4.24e+01(      3) |
+|                copy operations, float: 3.22e+00(    108) |
+|           set value operations, float: 5.07e-01(  75456) |
+|  interpolation and restriction, float: 2.18e+01(    144) |
+|                  self coupling, float: 1.19e+10(3166124) |
+|                       smoother, float: 2.43e+02(    288) |
+|             operator comm init, float: 5.63e-02(   2304) |
+|             operator comm wait, float: 3.29e+01(   2304) |
+|                     allreduces, float: 8.59e+00(    213) |
+|     Gram-Schmidt on aggregates, float: 1.10e+01(      3) |
+|      smoother - pt 3, res comm, float: 1.39e+01(  75456) |
+|    smoother - pt 4, solve comm, float: 9.16e+01(  75456) |
++----------------------------------------------------------+
+| depth:   1 / level:   1                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 6.46e+01(    548) |
+|          process inner product, float: 9.42e+00(    297) |
+|       2 flop vector operations, float: 4.07e-01(    248) |
+|       6 flop vector operations, float: 2.90e-03(      7) |
+|       8 flop vector operations, float: 1.03e+00(   1358) |
+|        other vector operations, float: 5.50e+01(      4) |
+|                copy operations, float: 3.55e-01(   1111) |
+|           set value operations, float: 5.67e+00( 877485) |
+|  interpolation and restriction, float: 1.26e+01(    594) |
+|                  self coupling, float: 6.14e+00(    212) |
+|              neighbor coupling, float: 5.55e+01(    212) |
+|                       smoother, float: 5.90e+02(   1188) |
+|             operator comm init, float: 1.88e-01(  10352) |
+|             operator comm wait, float: 2.40e+02(  10352) |
+|                     allreduces, float: 8.00e+01(    841) |
+|     Gram-Schmidt on aggregates, float: 7.43e-01(     14) |
+|      smoother - pt 3, res comm, float: 1.43e+01(   4752) |
+|    smoother - pt 4, solve comm, float: 9.20e+01(   4752) |
+|           Hessenberg: qr update float: 5.99e-05(   2778) |
+|          Hessenberg: bkwd subst float: 2.39e-05(    664) |
++----------------------------------------------------------+
+| depth:   2 / level:   0                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 4.56e+01(    341) |
+|          process inner product, float: 7.40e+00(    297) |
+|       2 flop vector operations, float: 1.43e-02(     88) |
+|       6 flop vector operations, float: 2.71e-04(     46) |
+|       8 flop vector operations, float: 4.05e-04(     46) |
+|                copy operations, float: 1.09e-03(    343) |
+|           set value operations, float: 7.64e+00(    594) |
+|                  self coupling, float: 1.08e+01(    297) |
+|              neighbor coupling, float: 4.71e+01(    297) |
+|             operator comm init, float: 4.61e-02(   1188) |
+|             operator comm wait, float: 1.55e+01(   1188) |
+|                     allreduces, float: 6.96e+01(    638) |
+|           Hessenberg: qr update float: 6.68e-06(    150) |
+|          Hessenberg: bkwd subst float: 6.40e-05(    594) |
++----------------------------------------------------------+
+| flop/lattice site:  1.75e+09                             |
+| flop/s/MPIprocess:  5.47e+11                             |
++----------------------------------------------------------+
+
+rhs = first unit vector
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
++----------------------------------------------------------+
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.002342+0.000000i
+gmres iters = 1
+| approx. rel. res. after  1      iterations: 5.460538e-02 |
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.006234+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  2      iterations: 1.446972e-02 |
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.008221+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  3      iterations: 8.020351e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  4      iterations: 7.064915e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  5      iterations: 6.505440e-03 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009766+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  6      iterations: 5.820184e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  7      iterations: 5.494917e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  8      iterations: 4.768862e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  9      iterations: 4.568906e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  10     iterations: 4.217432e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  11     iterations: 4.025852e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  12     iterations: 3.739616e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  13     iterations: 3.538383e-03 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009857+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  14     iterations: 3.261765e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  15     iterations: 2.985346e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  16     iterations: 2.760351e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  17     iterations: 2.648694e-03 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009556+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  18     iterations: 2.455775e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  19     iterations: 2.311864e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  20     iterations: 2.167445e-03 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009290+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  21     iterations: 2.151842e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  22     iterations: 2.127591e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  23     iterations: 2.036537e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  24     iterations: 1.984441e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  25     iterations: 1.859059e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  26     iterations: 1.740816e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  27     iterations: 1.641807e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  28     iterations: 1.516058e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  29     iterations: 1.463672e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  30     iterations: 1.337162e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  31     iterations: 1.248549e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  32     iterations: 1.182280e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  33     iterations: 1.126407e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  34     iterations: 1.072479e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  35     iterations: 1.026617e-03 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  36     iterations: 9.830414e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  37     iterations: 9.165358e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  38     iterations: 8.738872e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009637+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  39     iterations: 8.448289e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  40     iterations: 8.113347e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009537+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  41     iterations: 8.108530e-04 |
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009226+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  42     iterations: 8.102564e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  43     iterations: 8.001834e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  44     iterations: 7.944195e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  45     iterations: 7.706150e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  46     iterations: 7.486070e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  47     iterations: 7.144719e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  48     iterations: 6.833818e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  49     iterations: 6.588423e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  50     iterations: 6.196901e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009899+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  51     iterations: 5.848255e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009354+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  52     iterations: 5.485786e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  53     iterations: 5.349063e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  54     iterations: 4.903305e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  55     iterations: 4.657656e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009863+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  56     iterations: 4.409497e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  57     iterations: 4.168104e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009593+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  58     iterations: 3.927647e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  59     iterations: 3.784838e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  60     iterations: 3.671824e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009612+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  61     iterations: 3.670075e-04 |
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009474+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  62     iterations: 3.669676e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  63     iterations: 3.618616e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  64     iterations: 3.616579e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  65     iterations: 3.529051e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  66     iterations: 3.398406e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  67     iterations: 3.310306e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  68     iterations: 3.179204e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  69     iterations: 3.026569e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  70     iterations: 2.906740e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  71     iterations: 2.798705e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009935+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  72     iterations: 2.686526e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  73     iterations: 2.580689e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  74     iterations: 2.381602e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  75     iterations: 2.260955e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  76     iterations: 2.222089e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  77     iterations: 2.053858e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  78     iterations: 1.938403e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009947+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  79     iterations: 1.815743e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  80     iterations: 1.723585e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009512+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009869+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  81     iterations: 1.718889e-04 |
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009562+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  82     iterations: 1.711123e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009941+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  83     iterations: 1.656001e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  84     iterations: 1.624222e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  85     iterations: 1.566812e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  86     iterations: 1.540511e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  87     iterations: 1.515954e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  88     iterations: 1.459709e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  89     iterations: 1.412201e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  90     iterations: 1.345182e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  91     iterations: 1.259924e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  92     iterations: 1.217992e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009531+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  93     iterations: 1.189779e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  94     iterations: 1.105168e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.009881+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  95     iterations: 1.085118e-04 |
+gmres iters = 1
+from fgmres : depth: 2, iter: 1, p->H(1,0) = +0.008769+0.000000i
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  96     iterations: 1.034941e-04 |
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+gmres iters = 1
+| approx. rel. res. after  97     iterations: 9.748713e-05 |
++----------------------------------------------------------+
+
++----------------------------------------------------------+
+|       FGMRES iterations: 97     coarse average: 9.85     |
+| exact relative residual: ||r||/||b|| = 9.748713e-05      |
+| elapsed wall clock time: 4620.3986 seconds                |
+|        coarse grid time: 4070.4165 seconds (88.1%)        |
+|        coarsest grid time: 0.0000   seconds (00.0%)        |
+|  consumed core minutes*: 1.23e+04 (solve only)           |
+|    max used mem/MPIproc: 1.83e+01 GB                     |
++----------------------------------------------------------+
+*: only correct if #MPIprocs*#threads == #CPUs
+
+
++----------------------------------------------------------+
+| solver profiling                                         |
++----------------------------------------------------------+
+| depth:   0 / level:   2                time    ( count ) |
++----------------------------------------------------------+
+|          global inner product, double: 1.41e+01(    102) |
+|         process inner product, double: 1.85e+01(     97) |
+|      2 flop vector operations, double: 7.40e-01(     10) |
+|      6 flop vector operations, double: 8.29e-03(      0) |
+|      8 flop vector operations, double: 2.58e+01(    108) |
+|               copy operations, double: 9.59e-03(      0) |
+|                 self coupling, double: 4.84e+00(    101) |
+|             neighbor coupling, double: 3.34e+01(    101) |
+|            operator comm init, double: 2.76e-03(    404) |
+|            operator comm wait, double: 8.81e+00(    404) |
+|                    allreduces, double: 1.37e+01(    199) |
+|          Hessenberg: qr update double: 6.04e-05(   5958) |
+|         Hessenberg: bkwd subst double: 9.11e-05(   1090) |
+|       2 flop vector operations, float: 1.39e+00(     49) |
+|       8 flop vector operations, float: 9.13e+00(    313) |
+|                copy operations, float: 2.58e+00(    137) |
+|           set value operations, float: 6.70e-01( 101656) |
+|  interpolation and restriction, float: 2.64e+01(    194) |
+|                  self coupling, float: 1.39e+10(4265717) |
+|                       smoother, float: 3.79e+02(    388) |
+|             operator comm init, float: 5.67e-02(   3104) |
+|             operator comm wait, float: 6.25e+01(   3104) |
+|      smoother - pt 3, res comm, float: 1.87e+01( 101656) |
+|    smoother - pt 4, solve comm, float: 1.28e+02( 101656) |
++----------------------------------------------------------+
+| depth:   1 / level:   1                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 1.17e+02(   1147) |
+|          process inner product, float: 2.75e+01(    955) |
+|       2 flop vector operations, float: 4.58e-01(    721) |
+|       6 flop vector operations, float: 3.05e-03(      9) |
+|       8 flop vector operations, float: 2.24e+00(   4193) |
+|                copy operations, float: 6.50e-01(   1633) |
+|           set value operations, float: 3.06e+01(  15979) |
+|  interpolation and restriction, float: 3.71e+01(   1910) |
+|                  self coupling, float: 3.65e+01(   1050) |
+|              neighbor coupling, float: 3.28e+02(   1050) |
+|                       smoother, float: 2.09e+03(   3820) |
+|             operator comm init, float: 6.14e-01(  34760) |
+|             operator comm wait, float: 1.01e+03(  34760) |
+|                     allreduces, float: 2.18e+02(   2102) |
+|      smoother - pt 3, res comm, float: 4.33e+01(  15280) |
+|    smoother - pt 4, solve comm, float: 2.87e+02(  15280) |
+|           Hessenberg: qr update float: 2.47e-04(  17166) |
+|          Hessenberg: bkwd subst float: 6.49e-05(   3816) |
++----------------------------------------------------------+
+| depth:   2 / level:   0                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 1.77e+02(    955) |
+|          process inner product, float: 2.40e+01(    955) |
+|       2 flop vector operations, float: 1.01e-03(    298) |
+|       6 flop vector operations, float: 7.00e-04(    149) |
+|       8 flop vector operations, float: 1.06e-03(    149) |
+|                copy operations, float: 1.85e-01(   1104) |
+|           set value operations, float: 2.54e+01(   1910) |
+|                  self coupling, float: 3.43e+01(    955) |
+|              neighbor coupling, float: 1.62e+02(    955) |
+|             operator comm init, float: 1.16e-01(   3820) |
+|             operator comm wait, float: 5.34e+01(   3820) |
+|                     allreduces, float: 2.78e+02(   1910) |
+|           Hessenberg: qr update float: 2.11e-04(   5580) |
+|          Hessenberg: bkwd subst float: 7.87e-05(   1910) |
++----------------------------------------------------------+
+| flop/lattice site:  2.37e+09                             |
+| flop/s/MPIprocess:  3.40e+11                             |
++----------------------------------------------------------+
+
+avg coarsest iters = 0.000000
+solution vector norm: 4.968867e-01
+solution vector norm: 4.968867e-01
+solution vector norm: 4.968867e-01
+solution vector norm: 4.968867e-01
+solution vector norm: 4.968867e-01
+solution vector norm: 4.968867e-01
+solution vector norm: 4.968867e-01
+solution vector norm: 4.968867e-01
+solution vector norm: 4.968867e-01
+solution vector norm: 4.968867e-01
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+--------------------------------------------------------------------------
+MPI_ABORT was invoked on rank 15 in communicator MPI_COMM_WORLD
+with errorcode -99.
+
+NOTE: invoking MPI_ABORT causes Open MPI to kill all MPI processes.
+You may or may not see output from other processes, depending on
+exactly when Open MPI kills them.
+--------------------------------------------------------------------------
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+  ** Instance Error 1 in CMUMPS_F77           1
+[aicomp04:83020] 15 more processes have sent help message help-mpi-api.txt / mpi-abort
+[aicomp04:83020] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
+[warn] Epoll MOD(1) on fd 47 failed.  Old events were 6; read change was 0 (none); write change was 2 (del): Bad file descriptor
+[warn] Epoll MOD(4) on fd 47 failed.  Old events were 6; read change was 2 (del); write change was 0 (none): Bad file descriptor

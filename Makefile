@@ -50,7 +50,7 @@ LIMELIB = $(LIMEDIR)/lib64/liblime.a
 # -DSINGLE_ALLREDUCE_ARNOLDI
 # -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DDEBUG
 
-OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES -DOPENMP -DPROFILING #-DSSE -msse4.2
+OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES -DOPENMP -DPROFILING -DSSE -msse4.2
 #OPT_VERSION_FLAGS += -DGCRODR
 #OPT_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
 #OPT_VERSION_FLAGS += -DPOLYPREC
@@ -86,9 +86,9 @@ LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/usr/lib/hpc/gnu7/mpi/op
 
 # Enable the following three to activate MUMPS within DDalphaAMG
 # findme
- LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
- OPT_VERSION_FLAGS += -DMUMPS_ADDS
- DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
+# LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
+# OPT_VERSION_FLAGS += -DMUMPS_ADDS
+# DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
  MUMPS_INCLUDE = -I/p/software/juwels/stages/2020/software/MUMPS/5.3.4-gpsmkl-2020/include/
 
 #---------------------------------------------------

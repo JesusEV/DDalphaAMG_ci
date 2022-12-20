@@ -1,0 +1,9 @@
+
+mpirun:55513 terminated with signal 11 at PC=7f03bac68e17 SP=7ffd1d8f57a0.  Backtrace:
+/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/libopen-pal.so.40(OPAL_MCA_PMIX2X_PMIx_Finalize+0x4e7)[0x7f03bac68e17]
+/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/libopen-pal.so.40(pmix2x_client_finalize+0x3aa)[0x7f03bac1537a]
+/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/libopen-rte.so.40(+0x7dfef)[0x7f03bafecfef]
+/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/libopen-pal.so.40(opal_libevent2022_event_base_loop+0xdc9)[0x7f03babbe529]
+mpirun(+0x12c2)[0x55ac3e9662c2]
+/lib64/libc.so.6(__libc_start_main+0xea)[0x7f03ba51bf8a]
+mpirun(+0xeda)[0x55ac3e965eda]

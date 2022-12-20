@@ -1,0 +1,1023 @@
+.git/hooks/pre-rebase.sample:24:	topic=`git symbolic-ref HEAD` ||
+.git/hooks/pre-rebase.sample:137:	       /   /   c---c---c---c B         /
+Binary file .git/objects/pack/pack-c815c75288c6c19de392040735294dd4bf32a2c8.pack matches
+Binary file .git/objects/pack/pack-c815c75288c6c19de392040735294dd4bf32a2c8.idx matches
+Binary file .git/objects/14/b203ece273e8ab42c916db0f3bda5331980f92 matches
+Binary file .git/objects/fe/49b3e2a44668cf33b67107f2d6ec1a9ec2f7e8 matches
+Binary file .git/objects/05/5b83c93cca4c45956552bcb65e123b5e3e78e1 matches
+Binary file .git/objects/dc/ff1d75d1d4c281803223ab65fddf7e40f4cd18 matches
+Binary file .git/objects/e2/599bfac42d6c20128dccce7213dd31dbc50b2f matches
+Binary file .git/objects/27/ed83115e56fcaa9b6c9aebc2748237a8e929ce matches
+Binary file .git/objects/5e/a2a64c22aa568b44fc67edfa502fedc5149f1b matches
+Binary file .git/objects/60/3e56e9b64619b96f8e2c241f95edb49a40657d matches
+Binary file .git/objects/7d/b9b9d645c39d17b1372608e349b3a6dd00a2ef matches
+CREDITS:13:Email: {rottmann,strebel}@math.uni-wuppertal.de, s.bacchio@hpc-leap.eu
+Binary file bin/DDalphaAMG matches
+Binary file bin/DDalphaAMG_devel matches
+build/gsrc/sse_linalg.h:323:      if(k1 == num_vec-1)
+build/gsrc/DDalphaAMG.h:37:   *     Simone Bacchio at <s.bacchio@hpc-leap.eu>.
+build/gsrc/coarse_oddeven_double.c:1068:  // FIXME : use c->boundary_table[2*mu+1] instead of op->neighbor_table[index +1 + dir]
+build/gsrc/ghost_double.c:28:    int i, j, num_boundary_sites = c->num_boundary_sites[2*mu+1], boundary_start,
+build/gsrc/ghost_double.c:29:      *boundary_table = c->boundary_table[2*mu+1], n = l->num_lattice_site_var;
+build/gsrc/ghost_double.c:35:      boundary_start += c->num_boundary_sites[2*i];
+build/gsrc/ghost_double.c:47:               l->neighbor_rank[2*mu], 2*mu+1, g.comm_cart, &(c->rreqs[2*mu+1]) );
+build/gsrc/ghost_double.c:49:               l->neighbor_rank[2*mu+1], 2*mu+1, g.comm_cart, &(c->sreqs[2*mu+1]) );
+build/gsrc/ghost_double.c:59:    int i, j, num_boundary_sites = c->num_boundary_sites[2*mu+1], boundary_start,
+build/gsrc/ghost_double.c:60:        *boundary_table = c->boundary_table[2*mu+1], n = l->num_lattice_site_var;
+build/gsrc/ghost_double.c:67:      boundary_start += c->num_boundary_sites[2*i];
+build/gsrc/ghost_double.c:78:               l->neighbor_rank[2*mu], 2*mu+1, g.comm_cart, &(c->rreqs[2*mu+1]) );
+build/gsrc/ghost_double.c:80:               l->neighbor_rank[2*mu+1], 2*mu+1, g.comm_cart, &(c->sreqs[2*mu+1]) );
+build/gsrc/ghost_double.c:88:    MPI_Wait( &(c->sreqs[2*mu+1]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_double.c:89:    MPI_Wait( &(c->rreqs[2*mu+1]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_double.c:99:    c->offset = l->num_lattice_site_var;
+build/gsrc/ghost_double.c:101:    c->offset = l->num_lattice_site_var/2;
+build/gsrc/ghost_double.c:111:    c->comm_start[0] = c->offset*l->num_inner_lattice_sites;
+build/gsrc/ghost_double.c:112:    c->comm_start[1] = c->offset*l->num_inner_lattice_sites;
+build/gsrc/ghost_double.c:115:        c->comm_start[2*mu] = c->comm_start[2*(mu-1)] + buffer_size;
+build/gsrc/ghost_double.c:116:        c->comm_start[2*mu+1] = c->comm_start[2*(mu-1)+1] + buffer_size;
+build/gsrc/ghost_double.c:118:      buffer_size = c->offset;
+build/gsrc/ghost_double.c:124:      c->length[2*mu] = buffer_size;
+build/gsrc/ghost_double.c:125:      c->length[2*mu+1] = buffer_size;
+build/gsrc/ghost_double.c:126:      c->max_length[mu] = factor*buffer_size;
+build/gsrc/ghost_double.c:127:      MALLOC( c->buffer[2*mu], complex_double, factor*buffer_size );
+build/gsrc/ghost_double.c:128:      MALLOC( c->buffer[2*mu+1], complex_double, factor*buffer_size );
+build/gsrc/ghost_double.c:129:      c->in_use[2*mu] = 0;
+build/gsrc/ghost_double.c:130:      c->in_use[2*mu+1] = 0;
+build/gsrc/ghost_double.c:134:      c->max_length[mu] = buffer_size;
+build/gsrc/ghost_double.c:136:      MALLOC( c->buffer[2*mu], complex_double, 2*buffer_size );
+build/gsrc/ghost_double.c:137:      MALLOC( c->buffer[2*mu+1], complex_double, 2*buffer_size );
+build/gsrc/ghost_double.c:139:      MALLOC( c->buffer[2*mu], complex_double, buffer_size );
+build/gsrc/ghost_double.c:140:      MALLOC( c->buffer[2*mu+1], complex_double, buffer_size );
+build/gsrc/ghost_double.c:160:    FREE( c->buffer[2*mu], complex_double, c->max_length[mu] );
+build/gsrc/ghost_double.c:161:    FREE( c->buffer[2*mu+1], complex_double, c->max_length[mu] );
+build/gsrc/ghost_double.c:179:    c->comm = 1;
+build/gsrc/ghost_double.c:181:      ASSERT( c->in_use[2*mu] == 0 );
+build/gsrc/ghost_double.c:182:      ASSERT( c->in_use[2*mu+1] == 0 );
+build/gsrc/ghost_double.c:193:    int i, j, *table=NULL, mu_dir = 2*mu-MIN(dir,0), offset = c->offset,
+build/gsrc/ghost_double.c:198:      length[0] = (c->num_boundary_sites[2*mu])*offset;
+build/gsrc/ghost_double.c:199:      length[1] = (c->num_boundary_sites[2*mu+1])*offset;
+build/gsrc/ghost_double.c:200:      comm_start = c->comm_start[mu_dir];
+build/gsrc/ghost_double.c:203:      length[0] = c->num_even_boundary_sites[2*mu]*offset;
+build/gsrc/ghost_double.c:204:      length[1] = c->num_even_boundary_sites[2*mu+1]*offset;
+build/gsrc/ghost_double.c:205:      comm_start = c->comm_start[mu_dir];
+build/gsrc/ghost_double.c:208:      length[0] = c->num_odd_boundary_sites[2*mu]*offset;
+build/gsrc/ghost_double.c:209:      length[1] = c->num_odd_boundary_sites[2*mu+1]*offset;
+build/gsrc/ghost_double.c:210:      comm_start = c->comm_start[mu_dir]+c->num_even_boundary_sites[mu_dir]*offset;
+build/gsrc/ghost_double.c:211:      table_start = c->num_even_boundary_sites[mu_dir];
+build/gsrc/ghost_double.c:223:    ASSERT( c->in_use[mu_dir] == 0 );
+build/gsrc/ghost_double.c:224:    c->in_use[mu_dir] = 1;
+build/gsrc/ghost_double.c:226:    if ( MAX(length[0],length[1]) > c->max_length[mu] ) {
+build/gsrc/ghost_double.c:232:    buffer = (vector_double)c->buffer[mu_dir];
+build/gsrc/ghost_double.c:245:                   l->neighbor_rank[2*mu+1], 2*mu, g.comm_cart, &(c->rreqs[2*mu]) );
+build/gsrc/ghost_double.c:251:                   l->neighbor_rank[2*mu], 2*mu, g.comm_cart, &(c->sreqs[2*mu]) );
+build/gsrc/ghost_double.c:262:      table = c->boundary_table[2*mu+1]+table_start;
+build/gsrc/ghost_double.c:271:      buffer = (vector_double)c->buffer[mu_dir];      
+build/gsrc/ghost_double.c:277:                   l->neighbor_rank[2*mu], 2*mu+1, g.comm_cart, &(c->rreqs[2*mu+1]) );
+build/gsrc/ghost_double.c:283:                   l->neighbor_rank[2*mu+1], 2*mu+1, g.comm_cart, &(c->sreqs[2*mu+1]) );
+build/gsrc/ghost_double.c:297:    int i, j, *table, offset = c->offset, length[2]={0,0}, table_start = 0;
+build/gsrc/ghost_double.c:306:      length[0] = (c->num_boundary_sites[2*mu])*offset;
+build/gsrc/ghost_double.c:307:      length[1] = (c->num_boundary_sites[2*mu+1])*offset;
+build/gsrc/ghost_double.c:310:      length[0] = c->num_even_boundary_sites[2*mu]*offset;
+build/gsrc/ghost_double.c:311:      length[1] = c->num_even_boundary_sites[2*mu+1]*offset;
+build/gsrc/ghost_double.c:314:      length[0] = c->num_odd_boundary_sites[2*mu]*offset;
+build/gsrc/ghost_double.c:315:      length[1] = c->num_odd_boundary_sites[2*mu+1]*offset;
+build/gsrc/ghost_double.c:316:      table_start = c->num_even_boundary_sites[mu_dir];
+build/gsrc/ghost_double.c:319:    ASSERT( c->in_use[mu_dir] == 1 );
+build/gsrc/ghost_double.c:325:      buffer = (vector_double)c->buffer[mu_dir];      
+build/gsrc/ghost_double.c:326:      table = c->boundary_table[2*mu+1] + table_start;
+build/gsrc/ghost_double.c:330:        MPI_Wait( &(c->sreqs[2*mu]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_double.c:335:        MPI_Wait( &(c->rreqs[2*mu]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_double.c:362:        MPI_Wait( &(c->sreqs[2*mu+1]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_double.c:367:        MPI_Wait( &(c->rreqs[2*mu+1]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_double.c:373:    c->in_use[mu_dir] = 0;
+build/gsrc/ghost_double.c:386:    length = c->num_boundary_sites[mu_dir]*l->num_lattice_site_var;
+build/gsrc/ghost_double.c:387:    num_boundary_sites = c->num_boundary_sites[mu_dir];
+build/gsrc/ghost_double.c:388:    buffer = (vector_double)c->buffer[mu_dir];
+build/gsrc/ghost_double.c:395:      comm_start += c->num_boundary_sites[2*nu]*l->num_lattice_site_var;
+build/gsrc/ghost_double.c:398:    ASSERT( c->in_use[mu_dir] == 0 );
+build/gsrc/ghost_double.c:399:    c->in_use[mu_dir] = 1;
+build/gsrc/ghost_double.c:405:                 l->neighbor_rank[mu_dir], mu_dir, g.comm_cart, &(c->rreqs[mu_dir]) );
+build/gsrc/ghost_double.c:409:    table = c->boundary_table[inv_mu_dir];
+build/gsrc/ghost_double.c:418:    buffer = (vector_double)c->buffer[mu_dir];
+build/gsrc/ghost_double.c:423:                 l->neighbor_rank[inv_mu_dir], mu_dir, g.comm_cart, &(c->sreqs[mu_dir]) );
+build/gsrc/ghost_double.c:433:    int mu_dir = 2*mu-MIN(dir,0), length = c->num_boundary_sites[mu_dir]*l->num_lattice_site_var;
+build/gsrc/ghost_double.c:435:    ASSERT( c->in_use[mu_dir] == 1 );
+build/gsrc/ghost_double.c:439:      MPI_Wait( &(c->sreqs[mu_dir]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_double.c:440:      MPI_Wait( &(c->rreqs[mu_dir]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_double.c:443:    c->in_use[mu_dir] = 0;
+build/gsrc/local_polyprec_double.c:487:    int i, j, *table=NULL, mu_dir = 2*mu-MIN(dir,0), offset = c->offset,
+build/gsrc/local_polyprec_double.c:492:      length[0] = (c->num_boundary_sites[2*mu])*offset;
+build/gsrc/local_polyprec_double.c:493:      length[1] = (c->num_boundary_sites[2*mu+1])*offset;
+build/gsrc/local_polyprec_double.c:494:      comm_start = c->comm_start[mu_dir];
+build/gsrc/local_polyprec_double.c:497:      length[0] = c->num_even_boundary_sites[2*mu]*offset;
+build/gsrc/local_polyprec_double.c:498:      length[1] = c->num_even_boundary_sites[2*mu+1]*offset;
+build/gsrc/local_polyprec_double.c:499:      comm_start = c->comm_start[mu_dir];
+build/gsrc/local_polyprec_double.c:502:      length[0] = c->num_odd_boundary_sites[2*mu]*offset;
+build/gsrc/local_polyprec_double.c:503:      length[1] = c->num_odd_boundary_sites[2*mu+1]*offset;
+build/gsrc/local_polyprec_double.c:504:      comm_start = c->comm_start[mu_dir]+c->num_even_boundary_sites[mu_dir]*offset;
+build/gsrc/local_polyprec_double.c:505:      table_start = c->num_even_boundary_sites[mu_dir];
+build/gsrc/local_polyprec_double.c:517:    if ( MAX(length[0],length[1]) > c->max_length[mu] ) {
+build/gsrc/local_polyprec_double.c:523:    buffer = (vector_double)c->buffer[mu_dir];
+build/gsrc/local_polyprec_double.c:537:      buffer = (vector_double)c->buffer[mu_dir];      
+build/gsrc/local_polyprec_double.c:538:      table = c->boundary_table[2*mu+1] + table_start;
+build/gsrc/sse_linalg_double.c:48:    if(num_vec-i < SIMD_LENGTH_double)
+build/gsrc/sse_linalg_double.c:49:      vecs = num_vec-i;
+build/gsrc/coarse_oddeven_float.c:1068:  // FIXME : use c->boundary_table[2*mu+1] instead of op->neighbor_table[index +1 + dir]
+build/gsrc/ghost_float.c:28:    int i, j, num_boundary_sites = c->num_boundary_sites[2*mu+1], boundary_start,
+build/gsrc/ghost_float.c:29:      *boundary_table = c->boundary_table[2*mu+1], n = l->num_lattice_site_var;
+build/gsrc/ghost_float.c:35:      boundary_start += c->num_boundary_sites[2*i];
+build/gsrc/ghost_float.c:47:               l->neighbor_rank[2*mu], 2*mu+1, g.comm_cart, &(c->rreqs[2*mu+1]) );
+build/gsrc/ghost_float.c:49:               l->neighbor_rank[2*mu+1], 2*mu+1, g.comm_cart, &(c->sreqs[2*mu+1]) );
+build/gsrc/ghost_float.c:59:    int i, j, num_boundary_sites = c->num_boundary_sites[2*mu+1], boundary_start,
+build/gsrc/ghost_float.c:60:        *boundary_table = c->boundary_table[2*mu+1], n = l->num_lattice_site_var;
+build/gsrc/ghost_float.c:67:      boundary_start += c->num_boundary_sites[2*i];
+build/gsrc/ghost_float.c:78:               l->neighbor_rank[2*mu], 2*mu+1, g.comm_cart, &(c->rreqs[2*mu+1]) );
+build/gsrc/ghost_float.c:80:               l->neighbor_rank[2*mu+1], 2*mu+1, g.comm_cart, &(c->sreqs[2*mu+1]) );
+build/gsrc/ghost_float.c:88:    MPI_Wait( &(c->sreqs[2*mu+1]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_float.c:89:    MPI_Wait( &(c->rreqs[2*mu+1]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_float.c:99:    c->offset = l->num_lattice_site_var;
+build/gsrc/ghost_float.c:101:    c->offset = l->num_lattice_site_var/2;
+build/gsrc/ghost_float.c:111:    c->comm_start[0] = c->offset*l->num_inner_lattice_sites;
+build/gsrc/ghost_float.c:112:    c->comm_start[1] = c->offset*l->num_inner_lattice_sites;
+build/gsrc/ghost_float.c:115:        c->comm_start[2*mu] = c->comm_start[2*(mu-1)] + buffer_size;
+build/gsrc/ghost_float.c:116:        c->comm_start[2*mu+1] = c->comm_start[2*(mu-1)+1] + buffer_size;
+build/gsrc/ghost_float.c:118:      buffer_size = c->offset;
+build/gsrc/ghost_float.c:124:      c->length[2*mu] = buffer_size;
+build/gsrc/ghost_float.c:125:      c->length[2*mu+1] = buffer_size;
+build/gsrc/ghost_float.c:126:      c->max_length[mu] = factor*buffer_size;
+build/gsrc/ghost_float.c:127:      MALLOC( c->buffer[2*mu], complex_float, factor*buffer_size );
+build/gsrc/ghost_float.c:128:      MALLOC( c->buffer[2*mu+1], complex_float, factor*buffer_size );
+build/gsrc/ghost_float.c:129:      c->in_use[2*mu] = 0;
+build/gsrc/ghost_float.c:130:      c->in_use[2*mu+1] = 0;
+build/gsrc/ghost_float.c:134:      c->max_length[mu] = buffer_size;
+build/gsrc/ghost_float.c:136:      MALLOC( c->buffer[2*mu], complex_float, 2*buffer_size );
+build/gsrc/ghost_float.c:137:      MALLOC( c->buffer[2*mu+1], complex_float, 2*buffer_size );
+build/gsrc/ghost_float.c:139:      MALLOC( c->buffer[2*mu], complex_float, buffer_size );
+build/gsrc/ghost_float.c:140:      MALLOC( c->buffer[2*mu+1], complex_float, buffer_size );
+build/gsrc/ghost_float.c:160:    FREE( c->buffer[2*mu], complex_float, c->max_length[mu] );
+build/gsrc/ghost_float.c:161:    FREE( c->buffer[2*mu+1], complex_float, c->max_length[mu] );
+build/gsrc/ghost_float.c:179:    c->comm = 1;
+build/gsrc/ghost_float.c:181:      ASSERT( c->in_use[2*mu] == 0 );
+build/gsrc/ghost_float.c:182:      ASSERT( c->in_use[2*mu+1] == 0 );
+build/gsrc/ghost_float.c:193:    int i, j, *table=NULL, mu_dir = 2*mu-MIN(dir,0), offset = c->offset,
+build/gsrc/ghost_float.c:198:      length[0] = (c->num_boundary_sites[2*mu])*offset;
+build/gsrc/ghost_float.c:199:      length[1] = (c->num_boundary_sites[2*mu+1])*offset;
+build/gsrc/ghost_float.c:200:      comm_start = c->comm_start[mu_dir];
+build/gsrc/ghost_float.c:203:      length[0] = c->num_even_boundary_sites[2*mu]*offset;
+build/gsrc/ghost_float.c:204:      length[1] = c->num_even_boundary_sites[2*mu+1]*offset;
+build/gsrc/ghost_float.c:205:      comm_start = c->comm_start[mu_dir];
+build/gsrc/ghost_float.c:208:      length[0] = c->num_odd_boundary_sites[2*mu]*offset;
+build/gsrc/ghost_float.c:209:      length[1] = c->num_odd_boundary_sites[2*mu+1]*offset;
+build/gsrc/ghost_float.c:210:      comm_start = c->comm_start[mu_dir]+c->num_even_boundary_sites[mu_dir]*offset;
+build/gsrc/ghost_float.c:211:      table_start = c->num_even_boundary_sites[mu_dir];
+build/gsrc/ghost_float.c:223:    ASSERT( c->in_use[mu_dir] == 0 );
+build/gsrc/ghost_float.c:224:    c->in_use[mu_dir] = 1;
+build/gsrc/ghost_float.c:226:    if ( MAX(length[0],length[1]) > c->max_length[mu] ) {
+build/gsrc/ghost_float.c:232:    buffer = (vector_float)c->buffer[mu_dir];
+build/gsrc/ghost_float.c:245:                   l->neighbor_rank[2*mu+1], 2*mu, g.comm_cart, &(c->rreqs[2*mu]) );
+build/gsrc/ghost_float.c:251:                   l->neighbor_rank[2*mu], 2*mu, g.comm_cart, &(c->sreqs[2*mu]) );
+build/gsrc/ghost_float.c:262:      table = c->boundary_table[2*mu+1]+table_start;
+build/gsrc/ghost_float.c:271:      buffer = (vector_float)c->buffer[mu_dir];      
+build/gsrc/ghost_float.c:277:                   l->neighbor_rank[2*mu], 2*mu+1, g.comm_cart, &(c->rreqs[2*mu+1]) );
+build/gsrc/ghost_float.c:283:                   l->neighbor_rank[2*mu+1], 2*mu+1, g.comm_cart, &(c->sreqs[2*mu+1]) );
+build/gsrc/ghost_float.c:297:    int i, j, *table, offset = c->offset, length[2]={0,0}, table_start = 0;
+build/gsrc/ghost_float.c:306:      length[0] = (c->num_boundary_sites[2*mu])*offset;
+build/gsrc/ghost_float.c:307:      length[1] = (c->num_boundary_sites[2*mu+1])*offset;
+build/gsrc/ghost_float.c:310:      length[0] = c->num_even_boundary_sites[2*mu]*offset;
+build/gsrc/ghost_float.c:311:      length[1] = c->num_even_boundary_sites[2*mu+1]*offset;
+build/gsrc/ghost_float.c:314:      length[0] = c->num_odd_boundary_sites[2*mu]*offset;
+build/gsrc/ghost_float.c:315:      length[1] = c->num_odd_boundary_sites[2*mu+1]*offset;
+build/gsrc/ghost_float.c:316:      table_start = c->num_even_boundary_sites[mu_dir];
+build/gsrc/ghost_float.c:319:    ASSERT( c->in_use[mu_dir] == 1 );
+build/gsrc/ghost_float.c:325:      buffer = (vector_float)c->buffer[mu_dir];      
+build/gsrc/ghost_float.c:326:      table = c->boundary_table[2*mu+1] + table_start;
+build/gsrc/ghost_float.c:330:        MPI_Wait( &(c->sreqs[2*mu]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_float.c:335:        MPI_Wait( &(c->rreqs[2*mu]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_float.c:362:        MPI_Wait( &(c->sreqs[2*mu+1]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_float.c:367:        MPI_Wait( &(c->rreqs[2*mu+1]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_float.c:373:    c->in_use[mu_dir] = 0;
+build/gsrc/ghost_float.c:386:    length = c->num_boundary_sites[mu_dir]*l->num_lattice_site_var;
+build/gsrc/ghost_float.c:387:    num_boundary_sites = c->num_boundary_sites[mu_dir];
+build/gsrc/ghost_float.c:388:    buffer = (vector_float)c->buffer[mu_dir];
+build/gsrc/ghost_float.c:395:      comm_start += c->num_boundary_sites[2*nu]*l->num_lattice_site_var;
+build/gsrc/ghost_float.c:398:    ASSERT( c->in_use[mu_dir] == 0 );
+build/gsrc/ghost_float.c:399:    c->in_use[mu_dir] = 1;
+build/gsrc/ghost_float.c:405:                 l->neighbor_rank[mu_dir], mu_dir, g.comm_cart, &(c->rreqs[mu_dir]) );
+build/gsrc/ghost_float.c:409:    table = c->boundary_table[inv_mu_dir];
+build/gsrc/ghost_float.c:418:    buffer = (vector_float)c->buffer[mu_dir];
+build/gsrc/ghost_float.c:423:                 l->neighbor_rank[inv_mu_dir], mu_dir, g.comm_cart, &(c->sreqs[mu_dir]) );
+build/gsrc/ghost_float.c:433:    int mu_dir = 2*mu-MIN(dir,0), length = c->num_boundary_sites[mu_dir]*l->num_lattice_site_var;
+build/gsrc/ghost_float.c:435:    ASSERT( c->in_use[mu_dir] == 1 );
+build/gsrc/ghost_float.c:439:      MPI_Wait( &(c->sreqs[mu_dir]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_float.c:440:      MPI_Wait( &(c->rreqs[mu_dir]), MPI_STATUS_IGNORE );
+build/gsrc/ghost_float.c:443:    c->in_use[mu_dir] = 0;
+build/gsrc/local_polyprec_float.c:487:    int i, j, *table=NULL, mu_dir = 2*mu-MIN(dir,0), offset = c->offset,
+build/gsrc/local_polyprec_float.c:492:      length[0] = (c->num_boundary_sites[2*mu])*offset;
+build/gsrc/local_polyprec_float.c:493:      length[1] = (c->num_boundary_sites[2*mu+1])*offset;
+build/gsrc/local_polyprec_float.c:494:      comm_start = c->comm_start[mu_dir];
+build/gsrc/local_polyprec_float.c:497:      length[0] = c->num_even_boundary_sites[2*mu]*offset;
+build/gsrc/local_polyprec_float.c:498:      length[1] = c->num_even_boundary_sites[2*mu+1]*offset;
+build/gsrc/local_polyprec_float.c:499:      comm_start = c->comm_start[mu_dir];
+build/gsrc/local_polyprec_float.c:502:      length[0] = c->num_odd_boundary_sites[2*mu]*offset;
+build/gsrc/local_polyprec_float.c:503:      length[1] = c->num_odd_boundary_sites[2*mu+1]*offset;
+build/gsrc/local_polyprec_float.c:504:      comm_start = c->comm_start[mu_dir]+c->num_even_boundary_sites[mu_dir]*offset;
+build/gsrc/local_polyprec_float.c:505:      table_start = c->num_even_boundary_sites[mu_dir];
+build/gsrc/local_polyprec_float.c:517:    if ( MAX(length[0],length[1]) > c->max_length[mu] ) {
+build/gsrc/local_polyprec_float.c:523:    buffer = (vector_float)c->buffer[mu_dir];
+build/gsrc/local_polyprec_float.c:537:      buffer = (vector_float)c->buffer[mu_dir];      
+build/gsrc/local_polyprec_float.c:538:      table = c->boundary_table[2*mu+1] + table_start;
+build/gsrc/sse_linalg_float.c:48:    if(num_vec-i < SIMD_LENGTH_float)
+build/gsrc/sse_linalg_float.c:49:      vecs = num_vec-i;
+build/gsrc/lime_io.c:122:    if(strcmp(lime_type,"etmc-source-format")==0 || strcmp(lime_type,"etmc-propagator-format")==0)
+build/gsrc/lime_io.c:183:  limeheader = limeCreateHeader(1, 1, "etmc-propagator-format", message_length);
+build/gsrc/lime_io.c:202:  limeheader = limeCreateHeader(1, 1, "scidac-binary-data", message_length);
+build/gsrc/lime_io.c:363:    lime_read_info(&file, &lime, "scidac-binary-data");
+build/gsrc/lime_io.c:473:    lime_write_info(&file, "scidac-binary-data", (n_uint64_t) 4*3*sizeof(complex_double), &offset);
+Binary file build/ghost_float.o matches
+Binary file build/ghost_double.o matches
+Binary file build/init_devel.o matches
+Binary file build/top_level_devel.o matches
+Binary file build/ghost_double_devel.o matches
+Binary file build/DDalphaAMG_interface.o matches
+Binary file build/data_float_devel.o matches
+Binary file build/dirac_devel.o matches
+Binary file build/ghost_float_devel.o matches
+Binary file build/operator_float_devel.o matches
+Binary file build/dirac_float_devel.o matches
+Binary file build/linsolve_float_devel.o matches
+Binary file build/coarsening_float_devel.o matches
+Binary file build/lime_io_devel.o matches
+Binary file build/coarsening_double_devel.o matches
+Binary file build/DDalphaAMG_interface_devel.o matches
+Binary file build/gathering_float_devel.o matches
+Binary file build/lime_io.o matches
+Binary file build/oddeven_float_devel.o matches
+Binary file build/gathering_double_devel.o matches
+Binary file build/coarse_operator_float_devel.o matches
+Binary file build/coarse_oddeven_float_devel.o matches
+Binary file build/block_jacobi_float_devel.o matches
+Binary file build/oddeven_double_devel.o matches
+Binary file build/schwarz_double_devel.o matches
+Binary file build/coarse_oddeven_double_devel.o matches
+Binary file conf/4x4x4x4b6.0000id3n1 matches
+Binary file conf/8x8x8x8b6.0000id3n1 matches
+Binary file dependencies/v3.9.0.tar.gz matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat1s matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat1c matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat1z matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat1d matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat3s matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat3d matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat2s matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat2d matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat2c matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat3c matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat2z matches
+Binary file dependencies/lapack-3.9.0/BLAS/TESTING/xblat3z matches
+dependencies/lapack-3.9.0/DOCS/Doxyfile:174:# first line (until the first dot) of a Javadoc-style comment as the brief
+dependencies/lapack-3.9.0/DOCS/Doxyfile:175:# description. If set to NO, the Javadoc-style will behave just like regular Qt-
+dependencies/lapack-3.9.0/DOCS/Doxyfile_man:174:# first line (until the first dot) of a Javadoc-style comment as the brief
+dependencies/lapack-3.9.0/DOCS/Doxyfile_man:175:# description. If set to NO, the Javadoc-style will behave just like regular Qt-
+Binary file dependencies/lapack-3.9.0/DOCS/lapack.png matches
+Binary file dependencies/lapack-3.9.0/DOCS/lapacke.pdf matches
+Binary file dependencies/lapack-3.9.0/INSTALL/testlsame matches
+Binary file dependencies/lapack-3.9.0/INSTALL/testieee matches
+Binary file dependencies/lapack-3.9.0/INSTALL/testsecond matches
+Binary file dependencies/lapack-3.9.0/INSTALL/testdlamch matches
+Binary file dependencies/lapack-3.9.0/INSTALL/testslamch matches
+Binary file dependencies/lapack-3.9.0/INSTALL/testversion matches
+Binary file dependencies/lapack-3.9.0/INSTALL/testdsecnd matches
+dependencies/lapack-3.9.0/SRC/cgesvj.f:1082:               jgl = ( jbc-1 )*KBL + 1
+dependencies/lapack-3.9.0/SRC/cgesvj.f:1313:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/cgesvj.f:1315:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/cgsvj0.f:637:               jgl = ( jbc-1 )*KBL + 1
+dependencies/lapack-3.9.0/SRC/cgsvj0.f:868:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/cgsvj0.f:870:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/cgsvj1.f:406:               jgl = ( jbc-1 )*KBL + N1 + 1
+dependencies/lapack-3.9.0/SRC/cgsvj1.f:637:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/cgsvj1.f:639:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/dgesvj.f:1156:               jgl = ( jbc-1 )*KBL + 1
+dependencies/lapack-3.9.0/SRC/dgesvj.f:1479:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/dgesvj.f:1481:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/dgsvj0.f:699:               jgl = ( jbc-1 )*KBL + 1
+dependencies/lapack-3.9.0/SRC/dgsvj0.f:1013:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/dgsvj0.f:1015:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/dgsvj1.f:398:               jgl = N1 + ( jbc-1 )*KBL + 1
+dependencies/lapack-3.9.0/SRC/dgsvj1.f:716:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/dgsvj1.f:718:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/dsbgst.f:39:*> DSBGST reduces a real symmetric-definite banded generalized
+dependencies/lapack-3.9.0/SRC/dsbgv.f:40:*> of a real generalized symmetric-definite banded eigenproblem, of
+dependencies/lapack-3.9.0/SRC/dsbgvd.f:41:*> of a real generalized symmetric-definite banded eigenproblem, of the
+dependencies/lapack-3.9.0/SRC/dsbgvx.f:44:*> of a real generalized symmetric-definite banded eigenproblem, of
+dependencies/lapack-3.9.0/SRC/dspgst.f:37:*> DSPGST reduces a real symmetric-definite generalized eigenproblem
+dependencies/lapack-3.9.0/SRC/dspgv.f:40:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/dspgvd.f:41:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/dspgvx.f:43:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/dsygs2.f:37:*> DSYGS2 reduces a real symmetric-definite generalized eigenproblem
+dependencies/lapack-3.9.0/SRC/dsygst.f:37:*> DSYGST reduces a real symmetric-definite generalized eigenproblem
+dependencies/lapack-3.9.0/SRC/dsygv.f:39:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/dsygv_2stage.f:43:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/dsygvd.f:40:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/dsygvx.f:43:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/sgesvj.f:1142:               jgl = ( jbc-1 )*KBL + 1
+dependencies/lapack-3.9.0/SRC/sgesvj.f:1465:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/sgesvj.f:1467:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/sgsvj0.f:699:               jgl = ( jbc-1 )*KBL + 1
+dependencies/lapack-3.9.0/SRC/sgsvj0.f:1013:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/sgsvj0.f:1015:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/sgsvj1.f:398:               jgl = N1 + ( jbc-1 )*KBL + 1
+dependencies/lapack-3.9.0/SRC/sgsvj1.f:716:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/sgsvj1.f:718:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/ssbgst.f:39:*> SSBGST reduces a real symmetric-definite banded generalized
+dependencies/lapack-3.9.0/SRC/ssbgv.f:40:*> of a real generalized symmetric-definite banded eigenproblem, of
+dependencies/lapack-3.9.0/SRC/ssbgvd.f:41:*> of a real generalized symmetric-definite banded eigenproblem, of the
+dependencies/lapack-3.9.0/SRC/ssbgvx.f:44:*> of a real generalized symmetric-definite banded eigenproblem, of
+dependencies/lapack-3.9.0/SRC/sspgst.f:37:*> SSPGST reduces a real symmetric-definite generalized eigenproblem
+dependencies/lapack-3.9.0/SRC/sspgv.f:40:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/sspgvd.f:41:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/sspgvx.f:43:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/ssygs2.f:37:*> SSYGS2 reduces a real symmetric-definite generalized eigenproblem
+dependencies/lapack-3.9.0/SRC/ssygst.f:37:*> SSYGST reduces a real symmetric-definite generalized eigenproblem
+dependencies/lapack-3.9.0/SRC/ssygv.f:39:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/ssygv_2stage.f:43:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/ssygvd.f:40:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/ssygvx.f:43:*> of a real generalized symmetric-definite eigenproblem, of the form
+dependencies/lapack-3.9.0/SRC/zgesvj.f:1083:               jgl = ( jbc-1 )*KBL + 1
+dependencies/lapack-3.9.0/SRC/zgesvj.f:1315:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/zgesvj.f:1317:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/zgsvj0.f:637:               jgl = ( jbc-1 )*KBL + 1
+dependencies/lapack-3.9.0/SRC/zgsvj0.f:868:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/zgsvj0.f:870:*2011 bailed out of the jbc-loop
+dependencies/lapack-3.9.0/SRC/zgsvj1.f:407:               jgl = ( jbc-1 )*KBL + N1 + 1
+dependencies/lapack-3.9.0/SRC/zgsvj1.f:638:*     end of the jbc-loop
+dependencies/lapack-3.9.0/SRC/zgsvj1.f:640:*2011 bailed out of the jbc-loop
+Binary file dependencies/lapack-3.9.0/SRC/strevc3.o matches
+Binary file dependencies/lapack-3.9.0/SRC/dgesvd.o matches
+Binary file dependencies/lapack-3.9.0/SRC/dtrevc3.o matches
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg.f:38:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg.f:42:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg.f:46:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg.f:50:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg.f:54:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg.f:59:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg.f:63:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg.f:67:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg.f:72:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg2stg.f:40:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg2stg.f:44:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg2stg.f:48:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg2stg.f:52:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg2stg.f:56:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg2stg.f:61:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg2stg.f:65:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg2stg.f:69:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/ddrvsg2stg.f:74:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg.f:38:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg.f:42:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg.f:46:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg.f:50:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg.f:54:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg.f:59:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg.f:63:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg.f:67:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg.f:72:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg2stg.f:40:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg2stg.f:44:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg2stg.f:48:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg2stg.f:52:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg2stg.f:56:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg2stg.f:61:*>              eigenvectors of a real symmetric-definite generalized
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg2stg.f:65:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg2stg.f:69:*>              eigenvectors of a real symmetric-definite banded
+dependencies/lapack-3.9.0/TESTING/EIG/sdrvsg2stg.f:74:*>              eigenvectors of a real symmetric-definite banded
+Binary file dependencies/lapack-3.9.0/TESTING/EIG/serred.o matches
+Binary file dependencies/lapack-3.9.0/TESTING/EIG/xeigtsts matches
+Binary file dependencies/lapack-3.9.0/TESTING/EIG/xeigtstc matches
+Binary file dependencies/lapack-3.9.0/TESTING/EIG/xeigtstd matches
+Binary file dependencies/lapack-3.9.0/TESTING/EIG/zerred.o matches
+Binary file dependencies/lapack-3.9.0/TESTING/EIG/zdrvsg.o matches
+Binary file dependencies/lapack-3.9.0/TESTING/EIG/xeigtstz matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/schkaa.o matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/xlintsts matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/clattb.o matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/cerrvx.o matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/cerrsy.o matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/xlintstc matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/dchkaa.o matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/derrvx.o matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/xlintstd matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/zerrhe.o matches
+Binary file dependencies/lapack-3.9.0/TESTING/LIN/xlintstz matches
+Binary file dependencies/lapack-3.9.0/liblapack.a matches
+dependencies/lapack-3.9.0/lapack_testing.py:235:    ("Nonsymmetric-Eigenvalue-Problem", "Symmetric-Eigenvalue-Problem", "Symmetric-Eigenvalue-Problem-2-stage", "Singular-Value-Decomposition",
+dependencies/lapack-3.9.0/lapack_testing.py:236:    "Eigen-Condition","Nonsymmetric-Eigenvalue","Nonsymmetric-Generalized-Eigenvalue-Problem",
+dependencies/lapack-3.9.0/lapack_testing.py:237:    "Nonsymmetric-Generalized-Eigenvalue-Problem-driver", "Symmetric-Eigenvalue-Problem", "Symmetric-Eigenvalue-Generalized-Problem",
+Binary file dependencies/v3.9.0.tar.gz.1 matches
+Binary file dependencies/qmp/qmp-2.1.7.tar.gz matches
+dependencies/qmp/qmp-2.1.7/bin/Makefile.in:238:install-exec: install-exec-am
+dependencies/qmp/qmp-2.1.7/bin/Makefile.in:243:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/bin/Makefile.in:281:install-exec-am: install-binSCRIPTS
+dependencies/qmp/qmp-2.1.7/bin/Makefile.in:310:	install-data-am install-exec install-exec-am install-info \
+dependencies/qmp/qmp-2.1.7/bin/qmp-config.in:34:  [--exec-prefix[=DIR]]
+dependencies/qmp/qmp-2.1.7/bin/qmp-config.in:70:    --exec-prefix=*)
+dependencies/qmp/qmp-2.1.7/bin/qmp-config.in:75:    --exec-prefix)
+dependencies/qmp/qmp-2.1.7/bin/Makefile:238:install-exec: install-exec-am
+dependencies/qmp/qmp-2.1.7/bin/Makefile:243:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/bin/Makefile:281:install-exec-am: install-binSCRIPTS
+dependencies/qmp/qmp-2.1.7/bin/Makefile:310:	install-data-am install-exec install-exec-am install-info \
+dependencies/qmp/qmp-2.1.7/bin/qmp-config:34:  [--exec-prefix[=DIR]]
+dependencies/qmp/qmp-2.1.7/bin/qmp-config:70:    --exec-prefix=*)
+dependencies/qmp/qmp-2.1.7/bin/qmp-config:75:    --exec-prefix)
+dependencies/qmp/qmp-2.1.7/doc/Makefile.am:20:doc-install: oxydocs
+dependencies/qmp/qmp-2.1.7/doc/Makefile.am:25:doc-uninstall:
+dependencies/qmp/qmp-2.1.7/doc/Makefile.am:29:doc-clean:
+dependencies/qmp/qmp-2.1.7/doc/Makefile.am:32:doc-distclean: doc-clean
+dependencies/qmp/qmp-2.1.7/doc/Makefile.am:35:clean-local: doc-clean
+dependencies/qmp/qmp-2.1.7/doc/Makefile.am:40:.PHONY: doc doc-install doc-uninstall doc-clean doc-distclean
+dependencies/qmp/qmp-2.1.7/doc/Makefile.in:214:install-exec: install-exec-am
+dependencies/qmp/qmp-2.1.7/doc/Makefile.in:219:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/doc/Makefile.in:257:install-exec-am:
+dependencies/qmp/qmp-2.1.7/doc/Makefile.in:286:	install-exec install-exec-am install-info install-info-am \
+dependencies/qmp/qmp-2.1.7/doc/Makefile.in:300:doc-install: oxydocs
+dependencies/qmp/qmp-2.1.7/doc/Makefile.in:305:doc-uninstall:
+dependencies/qmp/qmp-2.1.7/doc/Makefile.in:309:doc-clean:
+dependencies/qmp/qmp-2.1.7/doc/Makefile.in:312:doc-distclean: doc-clean
+dependencies/qmp/qmp-2.1.7/doc/Makefile.in:315:clean-local: doc-clean
+dependencies/qmp/qmp-2.1.7/doc/Makefile.in:317:.PHONY: doc doc-install doc-uninstall doc-clean doc-distclean
+dependencies/qmp/qmp-2.1.7/doc/MessageAPI.htm:47:	mso-generic-font-family:auto;
+dependencies/qmp/qmp-2.1.7/doc/MessageAPI.htm:54:	mso-generic-font-family:swiss;
+dependencies/qmp/qmp-2.1.7/doc/Makefile:214:install-exec: install-exec-am
+dependencies/qmp/qmp-2.1.7/doc/Makefile:219:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/doc/Makefile:257:install-exec-am:
+dependencies/qmp/qmp-2.1.7/doc/Makefile:286:	install-exec install-exec-am install-info install-info-am \
+dependencies/qmp/qmp-2.1.7/doc/Makefile:300:doc-install: oxydocs
+dependencies/qmp/qmp-2.1.7/doc/Makefile:305:doc-uninstall:
+dependencies/qmp/qmp-2.1.7/doc/Makefile:309:doc-clean:
+dependencies/qmp/qmp-2.1.7/doc/Makefile:312:doc-distclean: doc-clean
+dependencies/qmp/qmp-2.1.7/doc/Makefile:315:clean-local: doc-clean
+dependencies/qmp/qmp-2.1.7/doc/Makefile:317:.PHONY: doc doc-install doc-uninstall doc-clean doc-distclean
+dependencies/qmp/qmp-2.1.7/Makefile.am:15:doc-install:
+dependencies/qmp/qmp-2.1.7/Makefile.am:16:	cd doc && $(MAKE) doc-install
+dependencies/qmp/qmp-2.1.7/Makefile.am:18:doc-uninstall:
+dependencies/qmp/qmp-2.1.7/Makefile.am:19:	cd doc && $(MAKE) doc-uninstall
+dependencies/qmp/qmp-2.1.7/Makefile.am:21:doc-clean:
+dependencies/qmp/qmp-2.1.7/Makefile.am:22:	cd doc && $(MAKE) doc-clean
+dependencies/qmp/qmp-2.1.7/Makefile.am:24:doc-distclean:
+dependencies/qmp/qmp-2.1.7/Makefile.am:25:	cd doc && $(MAKE) doc-distclean
+dependencies/qmp/qmp-2.1.7/Makefile.am:27:.PHONY: doc doc-install doc-uninstall doc-clean doc-distclean
+dependencies/qmp/qmp-2.1.7/Makefile.in:55:	install-exec-recursive install-info-recursive \
+dependencies/qmp/qmp-2.1.7/Makefile.in:428:	  && dc_destdir="$${TMPDIR-/tmp}/am-dc-$$$$/" \
+dependencies/qmp/qmp-2.1.7/Makefile.in:480:install-exec: install-exec-recursive
+dependencies/qmp/qmp-2.1.7/Makefile.in:485:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/Makefile.in:524:install-exec-am:
+dependencies/qmp/qmp-2.1.7/Makefile.in:561:	install-exec-am install-info install-info-am install-man \
+dependencies/qmp/qmp-2.1.7/Makefile.in:575:doc-install:
+dependencies/qmp/qmp-2.1.7/Makefile.in:576:	cd doc && $(MAKE) doc-install
+dependencies/qmp/qmp-2.1.7/Makefile.in:578:doc-uninstall:
+dependencies/qmp/qmp-2.1.7/Makefile.in:579:	cd doc && $(MAKE) doc-uninstall
+dependencies/qmp/qmp-2.1.7/Makefile.in:581:doc-clean:
+dependencies/qmp/qmp-2.1.7/Makefile.in:582:	cd doc && $(MAKE) doc-clean
+dependencies/qmp/qmp-2.1.7/Makefile.in:584:doc-distclean:
+dependencies/qmp/qmp-2.1.7/Makefile.in:585:	cd doc && $(MAKE) doc-distclean
+dependencies/qmp/qmp-2.1.7/Makefile.in:587:.PHONY: doc doc-install doc-uninstall doc-clean doc-distclean
+dependencies/qmp/qmp-2.1.7/configure:383:  -exec-prefix | --exec_prefix | --exec-prefix | --exec-prefi \
+dependencies/qmp/qmp-2.1.7/configure:384:  | --exec-pref | --exec-pre | --exec-pr | --exec-p | --exec- \
+dependencies/qmp/qmp-2.1.7/configure:387:  -exec-prefix=* | --exec_prefix=* | --exec-prefix=* | --exec-prefi=* \
+dependencies/qmp/qmp-2.1.7/configure:388:  | --exec-pref=* | --exec-pre=* | --exec-pr=* | --exec-p=* | --exec-=* \
+dependencies/qmp/qmp-2.1.7/configure:769:  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
+dependencies/qmp/qmp-2.1.7/INSTALL:109:give `configure' the option `--exec-prefix=PATH', the package will use
+dependencies/qmp/qmp-2.1.7/include/Makefile.in:304:install-exec: install-exec-am
+dependencies/qmp/qmp-2.1.7/include/Makefile.in:309:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/include/Makefile.in:347:install-exec-am:
+dependencies/qmp/qmp-2.1.7/include/Makefile.in:377:	install-exec-am install-includeHEADERS install-info \
+dependencies/qmp/qmp-2.1.7/include/Makefile:304:install-exec: install-exec-am
+dependencies/qmp/qmp-2.1.7/include/Makefile:309:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/include/Makefile:347:install-exec-am:
+dependencies/qmp/qmp-2.1.7/include/Makefile:377:	install-exec-am install-includeHEADERS install-info \
+dependencies/qmp/qmp-2.1.7/lib/Makefile.in:387:install-exec: install-exec-am
+dependencies/qmp/qmp-2.1.7/lib/Makefile.in:392:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/lib/Makefile.in:432:install-exec-am: install-libLIBRARIES
+dependencies/qmp/qmp-2.1.7/lib/Makefile.in:463:	install-data-am install-exec install-exec-am install-info \
+dependencies/qmp/qmp-2.1.7/lib/Makefile:387:install-exec: install-exec-am
+dependencies/qmp/qmp-2.1.7/lib/Makefile:392:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/lib/Makefile:432:install-exec-am: install-libLIBRARIES
+dependencies/qmp/qmp-2.1.7/lib/Makefile:463:	install-data-am install-exec install-exec-am install-info \
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_comm_mpi.Po:1:QMP_comm_mpi.o: QMP_comm_mpi.c /usr/include/stdc-predef.h \
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_comm_mpi.Po:2: /usr/include/stdio.h /usr/include/bits/libc-header-start.h \
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_comm_mpi.Po:37:/usr/include/stdc-predef.h:
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_comm_mpi.Po:41:/usr/include/bits/libc-header-start.h:
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_error_mpi.Po:1:QMP_error_mpi.o: QMP_error_mpi.c /usr/include/stdc-predef.h \
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_error_mpi.Po:2: /usr/include/stdio.h /usr/include/bits/libc-header-start.h \
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_error_mpi.Po:40:/usr/include/stdc-predef.h:
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_error_mpi.Po:44:/usr/include/bits/libc-header-start.h:
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_init_mpi.Po:1:QMP_init_mpi.o: QMP_init_mpi.c /usr/include/stdc-predef.h \
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_init_mpi.Po:2: /usr/include/stdio.h /usr/include/bits/libc-header-start.h \
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_init_mpi.Po:39:/usr/include/stdc-predef.h:
+dependencies/qmp/qmp-2.1.7/lib/.deps/QMP_init_mpi.Po:43:/usr/include/bits/libc-header-start.h:
+dependencies/qmp/qmp-2.1.7/examples/Makefile.in:373:install-exec: install-exec-am
+dependencies/qmp/qmp-2.1.7/examples/Makefile.in:378:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/examples/Makefile.in:418:install-exec-am:
+dependencies/qmp/qmp-2.1.7/examples/Makefile.in:449:	install-data install-data-am install-exec install-exec-am \
+dependencies/qmp/qmp-2.1.7/examples/Makefile:373:install-exec: install-exec-am
+dependencies/qmp/qmp-2.1.7/examples/Makefile:378:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/examples/Makefile:418:install-exec-am:
+dependencies/qmp/qmp-2.1.7/examples/Makefile:449:	install-data install-data-am install-exec install-exec-am \
+dependencies/qmp/qmp-2.1.7/config.log:148:Configured with: ../configure --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man --libdir=/usr/lib64 --libexecdir=/usr/lib64 --enable-languages=c,c++,objc,fortran,obj-c++,ada,go --enable-offload-targets=hsa,nvptx-none=/usr/nvptx-none, --without-cuda-driver --enable-checking=release --disable-werror --with-gxx-include-dir=/usr/include/c++/7 --enable-ssp --disable-libssp --disable-libvtv --disable-libcc1 --disable-plugin --with-bugurl=https://bugs.opensuse.org/ --with-pkgversion='SUSE Linux' --with-slibdir=/lib64 --with-system-zlib --enable-libstdcxx-allocator=new --disable-libstdcxx-pch --enable-version-specific-runtime-libs --with-gcc-major-version-only --enable-linker-build-id --enable-linux-futex --enable-gnu-indirect-function --program-suffix=-7 --without-system-libunwind --enable-multilib --with-arch-32=x86-64 --with-tune=generic --build=x86_64-suse-linux --host=x86_64-suse-linux
+dependencies/qmp/qmp-2.1.7/Makefile:55:	install-exec-recursive install-info-recursive \
+dependencies/qmp/qmp-2.1.7/Makefile:428:	  && dc_destdir="$${TMPDIR-/tmp}/am-dc-$$$$/" \
+dependencies/qmp/qmp-2.1.7/Makefile:480:install-exec: install-exec-recursive
+dependencies/qmp/qmp-2.1.7/Makefile:485:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qmp/qmp-2.1.7/Makefile:524:install-exec-am:
+dependencies/qmp/qmp-2.1.7/Makefile:561:	install-exec-am install-info install-info-am install-man \
+dependencies/qmp/qmp-2.1.7/Makefile:575:doc-install:
+dependencies/qmp/qmp-2.1.7/Makefile:576:	cd doc && $(MAKE) doc-install
+dependencies/qmp/qmp-2.1.7/Makefile:578:doc-uninstall:
+dependencies/qmp/qmp-2.1.7/Makefile:579:	cd doc && $(MAKE) doc-uninstall
+dependencies/qmp/qmp-2.1.7/Makefile:581:doc-clean:
+dependencies/qmp/qmp-2.1.7/Makefile:582:	cd doc && $(MAKE) doc-clean
+dependencies/qmp/qmp-2.1.7/Makefile:584:doc-distclean:
+dependencies/qmp/qmp-2.1.7/Makefile:585:	cd doc && $(MAKE) doc-distclean
+dependencies/qmp/qmp-2.1.7/Makefile:587:.PHONY: doc doc-install doc-uninstall doc-clean doc-distclean
+Binary file dependencies/qio/qio-2.1.8.tar.gz matches
+dependencies/qio/qio-2.1.8/bin/Makefile.in:250:install-exec: install-exec-am
+dependencies/qio/qio-2.1.8/bin/Makefile.in:255:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/bin/Makefile.in:293:install-exec-am: install-binSCRIPTS
+dependencies/qio/qio-2.1.8/bin/Makefile.in:322:	install-data-am install-exec install-exec-am install-info \
+dependencies/qio/qio-2.1.8/bin/qio-config.in:34:  [--exec-prefix[=DIR]]
+dependencies/qio/qio-2.1.8/bin/qio-config.in:71:    --exec-prefix=*)
+dependencies/qio/qio-2.1.8/bin/qio-config.in:76:    --exec-prefix)
+dependencies/qio/qio-2.1.8/configure.ac:285:AC_CONFIG_SUBDIRS(other_libs/c-lime)
+dependencies/qio/qio-2.1.8/Makefile.in:55:	install-exec-recursive install-info-recursive \
+dependencies/qio/qio-2.1.8/Makefile.in:440:	  && dc_destdir="$${TMPDIR-/tmp}/am-dc-$$$$/" \
+dependencies/qio/qio-2.1.8/Makefile.in:492:install-exec: install-exec-recursive
+dependencies/qio/qio-2.1.8/Makefile.in:497:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/Makefile.in:536:install-exec-am:
+dependencies/qio/qio-2.1.8/Makefile.in:573:	install-exec-am install-info install-info-am install-man \
+dependencies/qio/qio-2.1.8/configure:314:ac_subdirs_all="$ac_subdirs_all other_libs/c-lime"
+dependencies/qio/qio-2.1.8/configure:420:  -exec-prefix | --exec_prefix | --exec-prefix | --exec-prefi \
+dependencies/qio/qio-2.1.8/configure:421:  | --exec-pref | --exec-pre | --exec-pr | --exec-p | --exec- \
+dependencies/qio/qio-2.1.8/configure:424:  -exec-prefix=* | --exec_prefix=* | --exec-prefix=* | --exec-prefi=* \
+dependencies/qio/qio-2.1.8/configure:425:  | --exec-pref=* | --exec-pre=* | --exec-pr=* | --exec-p=* | --exec-=* \
+dependencies/qio/qio-2.1.8/configure:810:  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
+dependencies/qio/qio-2.1.8/configure:7995:subdirs="$subdirs other_libs/c-lime"
+dependencies/qio/qio-2.1.8/ChangeLog:353:2005-07-21 14:43  tag c-lime1-2-3
+dependencies/qio/qio-2.1.8/ChangeLog:360:	  lib/qio/QIO_write.c, other_libs/c-lime/examples/lime_contents.c,
+dependencies/qio/qio-2.1.8/ChangeLog:361:	  other_libs/c-lime/examples/lime_extract_record.c,
+dependencies/qio/qio-2.1.8/ChangeLog:362:	  other_libs/c-lime/examples/lime_extract_type.c,
+dependencies/qio/qio-2.1.8/ChangeLog:363:	  other_libs/c-lime/examples/lime_pack.c,
+dependencies/qio/qio-2.1.8/ChangeLog:364:	  other_libs/c-lime/examples/lime_unpack.c,
+dependencies/qio/qio-2.1.8/ChangeLog:365:	  other_libs/c-lime/include/lime_header.h,
+dependencies/qio/qio-2.1.8/ChangeLog:366:	  other_libs/c-lime/include/lime_reader.h,
+dependencies/qio/qio-2.1.8/ChangeLog:367:	  other_libs/c-lime/include/lime_writer.h,
+dependencies/qio/qio-2.1.8/ChangeLog:368:	  other_libs/c-lime/lib/lime_header.c,
+dependencies/qio/qio-2.1.8/ChangeLog:369:	  other_libs/c-lime/lib/lime_reader.c,
+dependencies/qio/qio-2.1.8/ChangeLog:370:	  other_libs/c-lime/lib/lime_writer.c: Further changes to support
+dependencies/qio/qio-2.1.8/ChangeLog:406:	  lib/qio/QIO_write.c, other_libs/c-lime/examples/lime_contents.c,
+dependencies/qio/qio-2.1.8/ChangeLog:407:	  other_libs/c-lime/examples/lime_extract_record.c,
+dependencies/qio/qio-2.1.8/ChangeLog:408:	  other_libs/c-lime/examples/lime_extract_type.c,
+dependencies/qio/qio-2.1.8/ChangeLog:409:	  other_libs/c-lime/examples/lime_pack.c,
+dependencies/qio/qio-2.1.8/ChangeLog:410:	  other_libs/c-lime/examples/lime_unpack.c,
+dependencies/qio/qio-2.1.8/ChangeLog:411:	  other_libs/c-lime/examples/lime_writer_test1.c,
+dependencies/qio/qio-2.1.8/ChangeLog:412:	  other_libs/c-lime/lib/lime_fseeko.c,
+dependencies/qio/qio-2.1.8/ChangeLog:413:	  other_libs/c-lime/lib/lime_header.c,
+dependencies/qio/qio-2.1.8/ChangeLog:414:	  other_libs/c-lime/lib/lime_reader.c,
+dependencies/qio/qio-2.1.8/ChangeLog:415:	  other_libs/c-lime/lib/lime_utils.c,
+dependencies/qio/qio-2.1.8/ChangeLog:416:	  other_libs/c-lime/lib/lime_writer.c: Further corrections to
+dependencies/qio/qio-2.1.8/ChangeLog:427:	  other_libs/c-lime/aclocal.m4, other_libs/c-lime/configure,
+dependencies/qio/qio-2.1.8/ChangeLog:428:	  other_libs/c-lime/configure.ac, other_libs/c-lime/include/lime.h,
+dependencies/qio/qio-2.1.8/ChangeLog:429:	  other_libs/c-lime/include/lime_config_internal.h.in,
+dependencies/qio/qio-2.1.8/ChangeLog:430:	  other_libs/c-lime/lib/lime_writer.c: Large file support.  See
+dependencies/qio/qio-2.1.8/ChangeLog:448:2005-07-11 14:37  tag c-lime1-2-2
+dependencies/qio/qio-2.1.8/ChangeLog:457:	  other_libs/c-lime/examples/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:458:	  other_libs/c-lime/examples/lime_extract_type.c: Add capability
+dependencies/qio/qio-2.1.8/ChangeLog:470:	  other_libs/c-lime/examples/lime_contents.c: Fixing some compiler
+dependencies/qio/qio-2.1.8/ChangeLog:499:	  lib/qio/QIO_write.c, other_libs/c-lime/aclocal.m4,
+dependencies/qio/qio-2.1.8/ChangeLog:500:	  other_libs/c-lime/configure,
+dependencies/qio/qio-2.1.8/ChangeLog:501:	  other_libs/c-lime/examples/lime_contents.c,
+dependencies/qio/qio-2.1.8/ChangeLog:502:	  other_libs/c-lime/examples/lime_pack.c,
+dependencies/qio/qio-2.1.8/ChangeLog:503:	  other_libs/c-lime/include/lime_config_internal.h.in,
+dependencies/qio/qio-2.1.8/ChangeLog:504:	  other_libs/c-lime/lib/lime_header.c,
+dependencies/qio/qio-2.1.8/ChangeLog:505:	  other_libs/c-lime/lib/lime_reader.c,
+dependencies/qio/qio-2.1.8/ChangeLog:506:	  other_libs/c-lime/lib/lime_writer.c: Major changes to support
+dependencies/qio/qio-2.1.8/ChangeLog:521:	  other_libs/c-lime/configure.ac: Preparing to commit qio-2.1.0 and
+dependencies/qio/qio-2.1.8/ChangeLog:543:	  other_libs/c-lime/doc/Makefile.am, other_libs/c-lime/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:544:	  other_libs/c-lime/lib/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:545:	  other_libs/c-lime/include/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:546:	  other_libs/c-lime/examples/Makefile.am, Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:560:	  other_libs/c-lime/examples/lime_writer_test1.c: Small fixes in
+dependencies/qio/qio-2.1.8/ChangeLog:571:	  other_libs/c-lime/INSTALL, other_libs/c-lime/aclocal.m4,
+dependencies/qio/qio-2.1.8/ChangeLog:572:	  other_libs/c-lime/configure, other_libs/c-lime/configure.ac,
+dependencies/qio/qio-2.1.8/ChangeLog:573:	  other_libs/c-lime/config/depcomp,
+dependencies/qio/qio-2.1.8/ChangeLog:574:	  other_libs/c-lime/config/install-sh,
+dependencies/qio/qio-2.1.8/ChangeLog:575:	  other_libs/c-lime/config/missing,
+dependencies/qio/qio-2.1.8/ChangeLog:576:	  other_libs/c-lime/config/mkinstalldirs,
+dependencies/qio/qio-2.1.8/ChangeLog:577:	  other_libs/c-lime/examples/lime_contents.c,
+dependencies/qio/qio-2.1.8/ChangeLog:578:	  other_libs/c-lime/examples/lime_pack.c,
+dependencies/qio/qio-2.1.8/ChangeLog:579:	  other_libs/c-lime/lib/lime_reader.c,
+dependencies/qio/qio-2.1.8/ChangeLog:580:	  other_libs/c-lime/lib/lime_writer.c: Changed the num_sites
+dependencies/qio/qio-2.1.8/ChangeLog:598:2005-05-18 18:24  tag c-lime1-2-1
+dependencies/qio/qio-2.1.8/ChangeLog:602:	* other_libs/c-lime/NEWS: Info on 1.2.1
+dependencies/qio/qio-2.1.8/ChangeLog:619:	* other_libs/c-lime/aclocal.m4, other_libs/c-lime/configure,
+dependencies/qio/qio-2.1.8/ChangeLog:624:	* other_libs/c-lime/configure.ac: Changed to version 1.2.1
+dependencies/qio/qio-2.1.8/ChangeLog:628:	* other_libs/c-lime/: doc/Makefile.am, examples/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:646:	* aclocal.m4, lib/Makefile.am, other_libs/c-lime/aclocal.m4,
+dependencies/qio/qio-2.1.8/ChangeLog:647:	  other_libs/c-lime/lib/Makefile.am: Fixed problem with VPATH
+dependencies/qio/qio-2.1.8/ChangeLog:670:2005-04-28 15:31  tag c-lime1-2
+dependencies/qio/qio-2.1.8/ChangeLog:674:	* other_libs/c-lime/NEWS: Info on 1.2
+dependencies/qio/qio-2.1.8/ChangeLog:678:	* other_libs/c-lime/: aclocal.m4, configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:682:	* other_libs/c-lime/include/lime_config_internal.h.in: Apparently
+dependencies/qio/qio-2.1.8/ChangeLog:702:	  other_libs/c-lime/aclocal.m4, other_libs/c-lime/configure,
+dependencies/qio/qio-2.1.8/ChangeLog:703:	  other_libs/c-lime/doc/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:704:	  other_libs/c-lime/doc/lime_1p1.tex,
+dependencies/qio/qio-2.1.8/ChangeLog:705:	  other_libs/c-lime/doc/lime_1p2.tex,
+dependencies/qio/qio-2.1.8/ChangeLog:706:	  other_libs/c-lime/examples/lime_contents.c,
+dependencies/qio/qio-2.1.8/ChangeLog:707:	  other_libs/c-lime/examples/lime_extract_record.c,
+dependencies/qio/qio-2.1.8/ChangeLog:708:	  other_libs/c-lime/examples/lime_unpack.c,
+dependencies/qio/qio-2.1.8/ChangeLog:709:	  other_libs/c-lime/examples/lime_writer_test1.c,
+dependencies/qio/qio-2.1.8/ChangeLog:710:	  other_libs/c-lime/include/lime_config_internal.h.in,
+dependencies/qio/qio-2.1.8/ChangeLog:711:	  other_libs/c-lime/include/lime_reader.h,
+dependencies/qio/qio-2.1.8/ChangeLog:712:	  other_libs/c-lime/include/lime_writer.h,
+dependencies/qio/qio-2.1.8/ChangeLog:713:	  other_libs/c-lime/lib/lime_reader.c,
+dependencies/qio/qio-2.1.8/ChangeLog:714:	  other_libs/c-lime/lib/lime_writer.c: Significant changes support
+dependencies/qio/qio-2.1.8/ChangeLog:720:	* configure.ac, other_libs/c-lime/configure.ac: New version number
+dependencies/qio/qio-2.1.8/ChangeLog:730:	* other_libs/c-lime/include/Makefile.am: Added
+dependencies/qio/qio-2.1.8/ChangeLog:735:	* other_libs/c-lime/include/Makefile.am: Fixed including of
+dependencies/qio/qio-2.1.8/ChangeLog:742:	* other_libs/c-lime/: aclocal.m4, configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:746:	* other_libs/c-lime/examples/Makefile.am: Moved programs to
+dependencies/qio/qio-2.1.8/ChangeLog:772:	  other_libs/c-lime/include/lime_defs.h: t_qio now much more stable
+dependencies/qio/qio-2.1.8/ChangeLog:799:	* other_libs/c-lime/: aclocal.m4, configure: Updated baryons code
+dependencies/qio/qio-2.1.8/ChangeLog:816:	  other_libs/c-lime/examples/lime_reader_test1.c: Fix errors in
+dependencies/qio/qio-2.1.8/ChangeLog:832:	* include/qio_config.h, other_libs/c-lime/include/lime_config.h:
+dependencies/qio/qio-2.1.8/ChangeLog:845:	  other_libs/c-lime/include/lime_fixed_types.h: Autoconfiscated
+dependencies/qio/qio-2.1.8/ChangeLog:850:	* other_libs/c-lime/: include/lime_fseeko.h, lib/lime_utils.c:
+dependencies/qio/qio-2.1.8/ChangeLog:855:	* other_libs/c-lime/: configure, configure.ac, include/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:864:	* other_libs/c-lime/configure, configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:897:2005-01-07 01:04  tag c-lime1-1-new
+dependencies/qio/qio-2.1.8/ChangeLog:901:	* other_libs/c-lime/NEWS: Info on 1.1
+dependencies/qio/qio-2.1.8/ChangeLog:903:2005-01-07 01:02  tag c-lime1-1
+dependencies/qio/qio-2.1.8/ChangeLog:907:	* other_libs/c-lime/: README, doc/README, doc/lime_1p1.tex,
+dependencies/qio/qio-2.1.8/ChangeLog:920:	* other_libs/c-lime/configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:924:	* other_libs/c-lime/examples/Makefile.am: Added more test files.
+dependencies/qio/qio-2.1.8/ChangeLog:928:	* other_libs/c-lime/doc/Makefile.am: First version
+dependencies/qio/qio-2.1.8/ChangeLog:932:	* other_libs/c-lime/Makefile.am: Added doc to SUBDIRS
+dependencies/qio/qio-2.1.8/ChangeLog:936:	* other_libs/c-lime/: aclocal.m4: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:940:	* other_libs/c-lime/configure.ac: Changed to version 1.1 . Added
+dependencies/qio/qio-2.1.8/ChangeLog:950:	  other_libs/c-lime/configure,
+dependencies/qio/qio-2.1.8/ChangeLog:951:	  other_libs/c-lime/include/lime_config_internal.h.in,
+dependencies/qio/qio-2.1.8/ChangeLog:952:	  other_libs/c-lime/include/lime_fixed_types.h: Made sure
+dependencies/qio/qio-2.1.8/ChangeLog:958:	* other_libs/c-lime/configure.ac: Fixed c-lime configure.ac to
+dependencies/qio/qio-2.1.8/ChangeLog:966:	  other_libs/c-lime/aclocal.m4, other_libs/c-lime/configure: Made
+dependencies/qio/qio-2.1.8/ChangeLog:1038:	  other_libs/c-lime/aclocal.m4, other_libs/c-lime/configure: Minor
+dependencies/qio/qio-2.1.8/ChangeLog:1046:	  other_libs/c-lime/include/lime_fixed_types.h: Attempt to fix int
+dependencies/qio/qio-2.1.8/ChangeLog:1100:	* other_libs/c-lime/: aclocal.m4, configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1108:	* other_libs/c-lime/include/Makefile.am: Don't install c-lime's
+dependencies/qio/qio-2.1.8/ChangeLog:1135:	  other_libs/c-lime/aclocal.m4, other_libs/c-lime/configure: Added
+dependencies/qio/qio-2.1.8/ChangeLog:1143:2004-11-01 12:58  tag c-lime1-1-0
+dependencies/qio/qio-2.1.8/ChangeLog:1147:	* other_libs/c-lime/NEWS: Info on 1.1.0
+dependencies/qio/qio-2.1.8/ChangeLog:1169:	* other_libs/c-lime/aclocal.m4, other_libs/c-lime/configure,
+dependencies/qio/qio-2.1.8/ChangeLog:1199:	  other_libs/c-lime/examples/lime_reader_test1.c,
+dependencies/qio/qio-2.1.8/ChangeLog:1200:	  other_libs/c-lime/examples/lime_writer_test1.c,
+dependencies/qio/qio-2.1.8/ChangeLog:1201:	  other_libs/c-lime/include/lime_reader.h,
+dependencies/qio/qio-2.1.8/ChangeLog:1202:	  other_libs/c-lime/lib/lime_reader.c: Support host file conversion
+dependencies/qio/qio-2.1.8/ChangeLog:1244:2004-10-18 15:35  tag c-lime1-0-0
+dependencies/qio/qio-2.1.8/ChangeLog:1248:	* other_libs/c-lime/NEWS: Info on 1.0.0
+dependencies/qio/qio-2.1.8/ChangeLog:1260:	* other_libs/c-lime/: aclocal.m4, configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1264:	* other_libs/c-lime/include/Makefile.am: Added hooks for
+dependencies/qio/qio-2.1.8/ChangeLog:1269:	* other_libs/c-lime/include/lime_config_internal.h.in: New header
+dependencies/qio/qio-2.1.8/ChangeLog:1274:	* other_libs/c-lime/include/lime_config.h: New config file.
+dependencies/qio/qio-2.1.8/ChangeLog:1278:	* other_libs/c-lime/configure.ac: Added config headers.
+dependencies/qio/qio-2.1.8/ChangeLog:1291:	* other_libs/c-lime/configure.ac: Added config header info.
+dependencies/qio/qio-2.1.8/ChangeLog:1299:	* aclocal.m4, other_libs/c-lime/aclocal.m4, configure,
+dependencies/qio/qio-2.1.8/ChangeLog:1300:	  other_libs/c-lime/configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1305:	  other_libs/c-lime/examples/lime_writer_test1.c: Fixed distcheck
+dependencies/qio/qio-2.1.8/ChangeLog:1315:	  other_libs/c-lime/aclocal.m4, other_libs/c-lime/configure: Made
+dependencies/qio/qio-2.1.8/ChangeLog:1321:	* other_libs/c-lime/configure, configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1330:	* configure.ac: Removed other_libs/c-lime/Makefile from
+dependencies/qio/qio-2.1.8/ChangeLog:1331:	  AC_CONFIG_FILES in configure.ac.  The configure.ac in c-lime will
+dependencies/qio/qio-2.1.8/ChangeLog:1392:	* other_libs/c-lime/configure, configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1396:	* aclocal.m4, other_libs/c-lime/aclocal.m4: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1408:	* configure, configure.ac, other_libs/c-lime/aclocal.m4,
+dependencies/qio/qio-2.1.8/ChangeLog:1409:	  other_libs/c-lime/configure: Removed ':' from path in
+dependencies/qio/qio-2.1.8/ChangeLog:1416:	* INSTALL, lib/dml/DML_parscalar.c, other_libs/c-lime/acinclude.m4:
+dependencies/qio/qio-2.1.8/ChangeLog:1436:	  other_libs/c-lime/include/lime_fixed_types.h,
+dependencies/qio/qio-2.1.8/ChangeLog:1437:	  other_libs/c-lime/include/lime_reader.h,
+dependencies/qio/qio-2.1.8/ChangeLog:1438:	  other_libs/c-lime/include/lime_writer.h,
+dependencies/qio/qio-2.1.8/ChangeLog:1439:	  other_libs/c-lime/lib/lime_reader.c,
+dependencies/qio/qio-2.1.8/ChangeLog:1440:	  other_libs/c-lime/lib/lime_utils.c,
+dependencies/qio/qio-2.1.8/ChangeLog:1441:	  other_libs/c-lime/lib/lime_writer.c: Added partitioned I/O
+dependencies/qio/qio-2.1.8/ChangeLog:1476:2004-05-11 16:23  tag c-lime0-9-0
+dependencies/qio/qio-2.1.8/ChangeLog:1480:	* other_libs/c-lime/NEWS: Info on 0.9.0
+dependencies/qio/qio-2.1.8/ChangeLog:1508:	* other_libs/c-lime/examples/lime_extract_record.c: Added record
+dependencies/qio/qio-2.1.8/ChangeLog:1513:	* other_libs/c-lime/examples/lime_extract_record.c: New program.
+dependencies/qio/qio-2.1.8/ChangeLog:1517:	* other_libs/c-lime/examples/Makefile.am: Added lime_extract_record
+dependencies/qio/qio-2.1.8/ChangeLog:1556:	* aclocal.m4, configure, other_libs/c-lime/configure: Induced
+dependencies/qio/qio-2.1.8/ChangeLog:1582:	* configure, other_libs/c-lime/aclocal.m4,
+dependencies/qio/qio-2.1.8/ChangeLog:1583:	  other_libs/c-lime/configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1617:	* lib/qio/QIO_utils.c, other_libs/c-lime/aclocal.m4,
+dependencies/qio/qio-2.1.8/ChangeLog:1618:	  other_libs/c-lime/configure,
+dependencies/qio/qio-2.1.8/ChangeLog:1619:	  other_libs/c-lime/include/Makefile.am: Correct multifile lime
+dependencies/qio/qio-2.1.8/ChangeLog:1624:	* other_libs/c-lime/configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1628:	* other_libs/c-lime/aclocal.m4: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1632:	* other_libs/c-lime/: Makefile.am, examples/Makefile.am: Added
+dependencies/qio/qio-2.1.8/ChangeLog:1637:	* other_libs/c-lime/configure.ac: Added generation of examples.
+dependencies/qio/qio-2.1.8/ChangeLog:1641:	* other_libs/c-lime/examples/: lime_reader_test1.c,
+dependencies/qio/qio-2.1.8/ChangeLog:1668:	  other_libs/c-lime/include/lime_defs.h,
+dependencies/qio/qio-2.1.8/ChangeLog:1669:	  other_libs/c-lime/lib/lime_header.c,
+dependencies/qio/qio-2.1.8/ChangeLog:1670:	  other_libs/c-lime/lib/lime_reader.c: Added reads and writes for
+dependencies/qio/qio-2.1.8/ChangeLog:1684:	* other_libs/c-lime/lib/: lime_reader.c, lime_writer.c: Changed
+dependencies/qio/qio-2.1.8/ChangeLog:1695:	* other_libs/c-lime/: aclocal.m4, configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1804:	* other_libs/c-lime/aclocal.m4: Induced changes
+dependencies/qio/qio-2.1.8/ChangeLog:1808:	* aclocal.m4, configure, other_libs/c-lime/configure: Induced
+dependencies/qio/qio-2.1.8/ChangeLog:1816:	  other_libs/c-lime/aclocal.m4, other_libs/c-lime/configure:
+dependencies/qio/qio-2.1.8/ChangeLog:1853:	* other_libs/c-lime/lib/: lime_reader.c, lime_writer.c: Fixed some
+dependencies/qio/qio-2.1.8/ChangeLog:1858:	* other_libs/c-lime/include/lime_binary_header.h: Changed type of
+dependencies/qio/qio-2.1.8/ChangeLog:1918:	* aclocal.m4, other_libs/c-lime/aclocal.m4, configure,
+dependencies/qio/qio-2.1.8/ChangeLog:1919:	  other_libs/c-lime/configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1923:	* other_libs/c-lime/Makefile.am: Removed building examples.
+dependencies/qio/qio-2.1.8/ChangeLog:1927:	* other_libs/c-lime/: configure, configure.ac: Removed building
+dependencies/qio/qio-2.1.8/ChangeLog:1932:	* other_libs/c-lime/: aclocal.m4, configure: Induced changes.
+dependencies/qio/qio-2.1.8/ChangeLog:1936:	* other_libs/c-lime/examples/: Makefile.am, lime_reader_test1.c,
+dependencies/qio/qio-2.1.8/ChangeLog:1947:	  other_libs/c-lime/lib/lime_reader.c: Added root tags and xml info
+dependencies/qio/qio-2.1.8/ChangeLog:1988:	* other_libs/c-lime/include/lime_binary_header.h: . fix comment
+dependencies/qio/qio-2.1.8/ChangeLog:2019:	  other_libs/c-lime/AUTHORS, other_libs/c-lime/COPYING,
+dependencies/qio/qio-2.1.8/ChangeLog:2020:	  other_libs/c-lime/INSTALL, other_libs/c-lime/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:2021:	  other_libs/c-lime/NEWS, other_libs/c-lime/README,
+dependencies/qio/qio-2.1.8/ChangeLog:2022:	  other_libs/c-lime/aclocal.m4, other_libs/c-lime/configure,
+dependencies/qio/qio-2.1.8/ChangeLog:2023:	  other_libs/c-lime/configure.ac, other_libs/c-lime/config/depcomp,
+dependencies/qio/qio-2.1.8/ChangeLog:2024:	  other_libs/c-lime/config/install-sh,
+dependencies/qio/qio-2.1.8/ChangeLog:2025:	  other_libs/c-lime/config/missing,
+dependencies/qio/qio-2.1.8/ChangeLog:2026:	  other_libs/c-lime/config/mkinstalldirs,
+dependencies/qio/qio-2.1.8/ChangeLog:2027:	  other_libs/c-lime/examples/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:2028:	  other_libs/c-lime/examples/lime_reader_test1.c,
+dependencies/qio/qio-2.1.8/ChangeLog:2029:	  other_libs/c-lime/examples/lime_writer_test1.c,
+dependencies/qio/qio-2.1.8/ChangeLog:2030:	  other_libs/c-lime/include/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:2031:	  other_libs/c-lime/include/lime.h,
+dependencies/qio/qio-2.1.8/ChangeLog:2032:	  other_libs/c-lime/include/lime_binary_header.h,
+dependencies/qio/qio-2.1.8/ChangeLog:2033:	  other_libs/c-lime/include/lime_defs.h,
+dependencies/qio/qio-2.1.8/ChangeLog:2034:	  other_libs/c-lime/include/lime_fixed_types.h,
+dependencies/qio/qio-2.1.8/ChangeLog:2035:	  other_libs/c-lime/include/lime_header.h,
+dependencies/qio/qio-2.1.8/ChangeLog:2036:	  other_libs/c-lime/include/lime_reader.h,
+dependencies/qio/qio-2.1.8/ChangeLog:2037:	  other_libs/c-lime/include/lime_utils.h,
+dependencies/qio/qio-2.1.8/ChangeLog:2038:	  other_libs/c-lime/include/lime_writer.h,
+dependencies/qio/qio-2.1.8/ChangeLog:2039:	  other_libs/c-lime/lib/Makefile.am,
+dependencies/qio/qio-2.1.8/ChangeLog:2040:	  other_libs/c-lime/lib/lime_header.c,
+dependencies/qio/qio-2.1.8/ChangeLog:2041:	  other_libs/c-lime/lib/lime_reader.c,
+dependencies/qio/qio-2.1.8/ChangeLog:2042:	  other_libs/c-lime/lib/lime_utils.c,
+dependencies/qio/qio-2.1.8/ChangeLog:2043:	  other_libs/c-lime/lib/lime_writer.c: Insert LIME and modify code
+dependencies/qio/qio-2.1.8/ChangeLog:2463:	* configure.ac: Moved around c-dime.
+dependencies/qio/qio-2.1.8/INSTALL:112:give `configure' the option `--exec-prefix=PREFIX', the package will
+dependencies/qio/qio-2.1.8/NEWS:72:	Version 0.9.5. Last minor changes. Will split off c-lime to
+dependencies/qio/qio-2.1.8/other_libs/Makefile.am:2:SUBDIRS = c-lime
+dependencies/qio/qio-2.1.8/other_libs/Makefile.in:50:	install-exec-recursive install-info-recursive \
+dependencies/qio/qio-2.1.8/other_libs/Makefile.in:155:SUBDIRS = c-lime
+dependencies/qio/qio-2.1.8/other_libs/Makefile.in:370:install-exec: install-exec-recursive
+dependencies/qio/qio-2.1.8/other_libs/Makefile.in:375:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/other_libs/Makefile.in:413:install-exec-am:
+dependencies/qio/qio-2.1.8/other_libs/Makefile.in:446:	install-exec-am install-info install-info-am install-man \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/Makefile.in:55:	install-exec-recursive install-info-recursive \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/Makefile.in:415:	  && dc_destdir="$${TMPDIR-/tmp}/am-dc-$$$$/" \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/Makefile.in:467:install-exec: install-exec-recursive
+dependencies/qio/qio-2.1.8/other_libs/c-lime/Makefile.in:472:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/other_libs/c-lime/Makefile.in:511:install-exec-am:
+dependencies/qio/qio-2.1.8/other_libs/c-lime/Makefile.in:548:	install-exec-am install-info install-info-am install-man \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/configure:419:  -exec-prefix | --exec_prefix | --exec-prefix | --exec-prefi \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/configure:420:  | --exec-pref | --exec-pre | --exec-pr | --exec-p | --exec- \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/configure:423:  -exec-prefix=* | --exec_prefix=* | --exec-prefix=* | --exec-prefi=* \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/configure:424:  | --exec-pref=* | --exec-pre=* | --exec-pr=* | --exec-p=* | --exec-=* \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/configure:809:  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:53:2005-07-21 14:43  tag c-lime1-2-3
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:188:2005-07-11 14:37  tag c-lime1-2-2
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:255:2005-05-18 18:24  tag c-lime1-2-1
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:305:2005-04-28 15:31  tag c-lime1-2
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:438:2005-01-07 01:04  tag c-lime1-1-new
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:446:2005-01-07 01:02  tag c-lime1-1
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:497:	* configure.ac: Fixed c-lime configure.ac to check for stdint.h.
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:524:	* include/Makefile.am: Don't install c-lime's lime_config.h and
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:532:2004-11-01 12:58  tag c-lime1-1-0
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:551:2004-10-18 15:35  tag c-lime1-0-0
+dependencies/qio/qio-2.1.8/other_libs/c-lime/ChangeLog:656:2004-05-11 16:23  tag c-lime0-9-0
+dependencies/qio/qio-2.1.8/other_libs/c-lime/INSTALL:112:give `configure' the option `--exec-prefix=PREFIX', the package will
+dependencies/qio/qio-2.1.8/other_libs/c-lime/include/Makefile.in:310:install-exec: install-exec-am
+dependencies/qio/qio-2.1.8/other_libs/c-lime/include/Makefile.in:315:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/other_libs/c-lime/include/Makefile.in:353:install-exec-am:
+dependencies/qio/qio-2.1.8/other_libs/c-lime/include/Makefile.in:384:	install-exec-am install-includeHEADERS install-info \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/Makefile.in:332:install-exec: install-exec-am
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/Makefile.in:337:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/Makefile.in:377:install-exec-am: install-libLIBRARIES
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/Makefile.in:408:	install-data-am install-exec install-exec-am install-info \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_writer.c:391:  wdest->first_record = wsrc->first_record ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_writer.c:392:  wdest->last_written = wsrc->last_written ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_writer.c:393:  wdest->header_nextP = wsrc->header_nextP ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_writer.c:394:  wdest->bytes_total  = wsrc->bytes_total  ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_writer.c:395:  wdest->bytes_left   = wsrc->bytes_left   ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_writer.c:396:  wdest->rec_ptr      = wsrc->rec_ptr      ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_writer.c:397:  wdest->rec_start    = wsrc->rec_start    ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_writer.c:398:  wdest->bytes_pad    = wsrc->bytes_pad    ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_writer.c:399:  wdest->isLastP      = wsrc->isLastP      ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_reader.c:468:  rdest->first_read   = rsrc->first_read   ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_reader.c:469:  rdest->is_last      = rsrc->is_last      ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_reader.c:470:  rdest->header_nextP = rsrc->header_nextP ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_reader.c:471:  rdest->bytes_total  = rsrc->bytes_total  ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_reader.c:472:  rdest->bytes_left   = rsrc->bytes_left   ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_reader.c:473:  rdest->rec_ptr      = rsrc->rec_ptr      ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_reader.c:474:  rdest->rec_start    = rsrc->rec_start    ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/lib/lime_reader.c:475:  rdest->bytes_pad    = rsrc->bytes_pad    ;
+dependencies/qio/qio-2.1.8/other_libs/c-lime/examples/Makefile.in:372:install-exec: install-exec-am
+dependencies/qio/qio-2.1.8/other_libs/c-lime/examples/Makefile.in:377:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/other_libs/c-lime/examples/Makefile.in:418:install-exec-am: install-binPROGRAMS
+dependencies/qio/qio-2.1.8/other_libs/c-lime/examples/Makefile.in:450:	install-exec-am install-info install-info-am install-man \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/README:7:  make doc-install
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.am:31:doc-install: ${PS} ${HTMLDIR}
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.am:35:doc-uninstall:
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.am:39:doc-clean:
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.am:43:doc-distclean: clean
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.am:48:clean-local: doc-clean
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.am:52:.PHONY: doc doc-install doc-uninstall doc-clean doc-distclean
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.in:207:install-exec: install-exec-am
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.in:212:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.in:248:install-exec-am:
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.in:275:	install-exec install-exec-am install-info install-info-am \
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.in:298:doc-install: ${PS} ${HTMLDIR}
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.in:302:doc-uninstall:
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.in:306:doc-clean:
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.in:310:doc-distclean: clean
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.in:315:clean-local: doc-clean
+dependencies/qio/qio-2.1.8/other_libs/c-lime/doc/Makefile.in:317:.PHONY: doc doc-install doc-uninstall doc-clean doc-distclean
+dependencies/qio/qio-2.1.8/lib/Makefile.am:2:AM_CFLAGS = -I@top_srcdir@/include -I@top_srcdir@/other_libs/c-lime/include \
+dependencies/qio/qio-2.1.8/lib/Makefile.am:3:            -I@top_builddir@/include -I@top_builddir@/other_libs/c-lime/include @QMP_CFLAGS@
+dependencies/qio/qio-2.1.8/lib/Makefile.in:195:AM_CFLAGS = -I@top_srcdir@/include -I@top_srcdir@/other_libs/c-lime/include \
+dependencies/qio/qio-2.1.8/lib/Makefile.in:196:            -I@top_builddir@/include -I@top_builddir@/other_libs/c-lime/include @QMP_CFLAGS@
+dependencies/qio/qio-2.1.8/lib/Makefile.in:699:install-exec: install-exec-am
+dependencies/qio/qio-2.1.8/lib/Makefile.in:704:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/lib/Makefile.in:744:install-exec-am: install-libLIBRARIES
+dependencies/qio/qio-2.1.8/lib/Makefile.in:775:	install-data-am install-exec install-exec-am install-info \
+dependencies/qio/qio-2.1.8/lib/qio/QIO_string.c:108:  if( src->length > 0 ) { 
+dependencies/qio/qio-2.1.8/lib/qio/QIO_string.c:109:    size_t len = src->length;
+dependencies/qio/qio-2.1.8/lib/qio/QIO_string.c:121:    memcpy(dest->string, src->string, len);
+dependencies/qio/qio-2.1.8/lib/qio/QIO_write.c:169:			  (LIME_type)"scidac-binx-xml"))
+dependencies/qio/qio-2.1.8/lib/qio/QIO_write.c:284:			  (LIME_type)"scidac-checksum"))
+dependencies/qio/qio-2.1.8/lib/dml/DML_utils.c:496:/* We do a crc32 sum on the site data -- then do two lexicographic-
+dependencies/qio/qio-2.1.8/include/qio.h:63:#define QIO_LIMETYPE_PRIVATE_FILE_XML   "scidac-private-file-xml"
+dependencies/qio/qio-2.1.8/include/qio.h:64:#define QIO_LIMETYPE_SITELIST           "scidac-sitelist"
+dependencies/qio/qio-2.1.8/include/qio.h:65:#define QIO_LIMETYPE_FILE_XML           "scidac-file-xml"
+dependencies/qio/qio-2.1.8/include/qio.h:66:#define QIO_LIMETYPE_PRIVATE_RECORD_XML "scidac-private-record-xml"
+dependencies/qio/qio-2.1.8/include/qio.h:67:#define QIO_LIMETYPE_RECORD_XML         "scidac-record-xml"
+dependencies/qio/qio-2.1.8/include/qio.h:68:#define QIO_LIMETYPE_BINARY_DATA        "scidac-binary-data"
+dependencies/qio/qio-2.1.8/include/Makefile.in:353:install-exec: install-exec-am
+dependencies/qio/qio-2.1.8/include/Makefile.in:358:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/include/Makefile.in:397:install-exec-am:
+dependencies/qio/qio-2.1.8/include/Makefile.in:429:	install-exec-am install-includeHEADERS install-info \
+dependencies/qio/qio-2.1.8/examples/Makefile.am:3:AM_CFLAGS  = -I@top_srcdir@/include -I@top_srcdir@/other_libs/c-lime/include \
+dependencies/qio/qio-2.1.8/examples/Makefile.am:4:             -I@top_builddir@/include -I@top_builddir@/other_libs/c-lime/include @QMP_CFLAGS@
+dependencies/qio/qio-2.1.8/examples/Makefile.am:5:AM_LDFLAGS = -L../lib -L../other_libs/c-lime/lib @QMP_LDFLAGS@
+dependencies/qio/qio-2.1.8/examples/Makefile.am:51:DEPENDENCIES = ../lib/libqio.a ../other_libs/c-lime/lib/liblime.a
+dependencies/qio/qio-2.1.8/examples/Makefile.in:237:AM_CFLAGS = -I@top_srcdir@/include -I@top_srcdir@/other_libs/c-lime/include \
+dependencies/qio/qio-2.1.8/examples/Makefile.in:238:             -I@top_builddir@/include -I@top_builddir@/other_libs/c-lime/include @QMP_CFLAGS@
+dependencies/qio/qio-2.1.8/examples/Makefile.in:240:AM_LDFLAGS = -L../lib -L../other_libs/c-lime/lib @QMP_LDFLAGS@
+dependencies/qio/qio-2.1.8/examples/Makefile.in:255:DEPENDENCIES = ../lib/libqio.a ../other_libs/c-lime/lib/liblime.a
+dependencies/qio/qio-2.1.8/examples/Makefile.in:467:install-exec: install-exec-am
+dependencies/qio/qio-2.1.8/examples/Makefile.in:472:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/examples/Makefile.in:513:install-exec-am: install-binPROGRAMS
+dependencies/qio/qio-2.1.8/examples/Makefile.in:545:	install-exec-am install-info install-info-am install-man \
+Binary file dependencies/qio/qio-2.1.8/examples/binary_host_test matches
+dependencies/qio/qio-2.1.8/doc/Makefile.am:32:doc-install: ${PS} ${HTMLDIR}
+dependencies/qio/qio-2.1.8/doc/Makefile.am:36:doc-uninstall:
+dependencies/qio/qio-2.1.8/doc/Makefile.am:40:doc-clean:
+dependencies/qio/qio-2.1.8/doc/Makefile.am:44:doc-distclean: clean
+dependencies/qio/qio-2.1.8/doc/Makefile.am:49:clean-local: doc-clean
+dependencies/qio/qio-2.1.8/doc/Makefile.am:53:.PHONY: doc doc-install doc-uninstall doc-clean doc-distclean
+dependencies/qio/qio-2.1.8/doc/Makefile.in:227:install-exec: install-exec-am
+dependencies/qio/qio-2.1.8/doc/Makefile.in:232:	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+dependencies/qio/qio-2.1.8/doc/Makefile.in:268:install-exec-am:
+dependencies/qio/qio-2.1.8/doc/Makefile.in:295:	install-exec install-exec-am install-info install-info-am \
+dependencies/qio/qio-2.1.8/doc/Makefile.in:318:doc-install: ${PS} ${HTMLDIR}
+dependencies/qio/qio-2.1.8/doc/Makefile.in:322:doc-uninstall:
+dependencies/qio/qio-2.1.8/doc/Makefile.in:326:doc-clean:
+dependencies/qio/qio-2.1.8/doc/Makefile.in:330:doc-distclean: clean
+dependencies/qio/qio-2.1.8/doc/Makefile.in:335:clean-local: doc-clean
+dependencies/qio/qio-2.1.8/doc/Makefile.in:337:.PHONY: doc doc-install doc-uninstall doc-clean doc-distclean
+dependencies/qio/qio-2.1.8/config.log:159:Configured with: ../configure --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man --libdir=/usr/lib64 --libexecdir=/usr/lib64 --enable-languages=c,c++,objc,fortran,obj-c++,ada,go --enable-offload-targets=hsa,nvptx-none=/usr/nvptx-none, --without-cuda-driver --enable-checking=release --disable-werror --with-gxx-include-dir=/usr/include/c++/7 --enable-ssp --disable-libssp --disable-libvtv --disable-libcc1 --disable-plugin --with-bugurl=https://bugs.opensuse.org/ --with-pkgversion='SUSE Linux' --with-slibdir=/lib64 --with-system-zlib --enable-libstdcxx-allocator=new --disable-libstdcxx-pch --enable-version-specific-runtime-libs --with-gcc-major-version-only --enable-linker-build-id --enable-linux-futex --enable-gnu-indirect-function --program-suffix=-7 --without-system-libunwind --enable-multilib --with-arch-32=x86-64 --with-tune=generic --build=x86_64-suse-linux --host=x86_64-suse-linux
+dependencies/qio/qio-2.1.8/config.log:238:Configured with: ../configure --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man --libdir=/usr/lib64 --libexecdir=/usr/lib64 --enable-languages=c,c++,objc,fortran,obj-c++,ada,go --enable-offload-targets=hsa,nvptx-none=/usr/nvptx-none, --without-cuda-driver --enable-checking=release --disable-werror --with-gxx-include-dir=/usr/include/c++/7 --enable-ssp --disable-libssp --disable-libvtv --disable-libcc1 --disable-plugin --with-bugurl=https://bugs.opensuse.org/ --with-pkgversion='SUSE Linux' --with-slibdir=/lib64 --with-system-zlib --enable-libstdcxx-allocator=new --disable-libstdcxx-pch --enable-version-specific-runtime-libs --with-gcc-major-version-only --enable-linker-build-id --enable-linux-futex --enable-gnu-indirect-function --program-suffix=-7 --without-system-libunwind --enable-multilib --with-arch-32=x86-64 --with-tune=generic --build=x86_64-suse-linux --host=x86_64-suse-linux
+Binary file doc/user_doc.pdf matches
+doc/user_doc.tex:103:  \item \texttt{-DHAVE\_LIME}: enables the code to read configurations in lime format. It requires an installed version of the c-lime library by USQCD and the enviroment variable \texttt{LIMEDIR} to be set with the installation directory. The functions in the header file \texttt{lime\_io.h} can be used to manage the io required for reading and saving the vectors.
+include/DDalphaAMG.h:37:   *     Simone Bacchio at <s.bacchio@hpc-leap.eu>.
+Binary file lib/libDDalphaAMG.a matches
+Binary file lib/libDDalphaAMG_devel.a matches
+src/DDalphaAMG.h:37:   *     Simone Bacchio at <s.bacchio@hpc-leap.eu>.
+src/ghost_generic.c:28:    int i, j, num_boundary_sites = c->num_boundary_sites[2*mu+1], boundary_start,
+src/ghost_generic.c:29:      *boundary_table = c->boundary_table[2*mu+1], n = l->num_lattice_site_var;
+src/ghost_generic.c:35:      boundary_start += c->num_boundary_sites[2*i];
+src/ghost_generic.c:47:               l->neighbor_rank[2*mu], 2*mu+1, g.comm_cart, &(c->rreqs[2*mu+1]) );
+src/ghost_generic.c:49:               l->neighbor_rank[2*mu+1], 2*mu+1, g.comm_cart, &(c->sreqs[2*mu+1]) );
+src/ghost_generic.c:59:    int i, j, num_boundary_sites = c->num_boundary_sites[2*mu+1], boundary_start,
+src/ghost_generic.c:60:        *boundary_table = c->boundary_table[2*mu+1], n = l->num_lattice_site_var;
+src/ghost_generic.c:67:      boundary_start += c->num_boundary_sites[2*i];
+src/ghost_generic.c:78:               l->neighbor_rank[2*mu], 2*mu+1, g.comm_cart, &(c->rreqs[2*mu+1]) );
+src/ghost_generic.c:80:               l->neighbor_rank[2*mu+1], 2*mu+1, g.comm_cart, &(c->sreqs[2*mu+1]) );
+src/ghost_generic.c:88:    MPI_Wait( &(c->sreqs[2*mu+1]), MPI_STATUS_IGNORE );
+src/ghost_generic.c:89:    MPI_Wait( &(c->rreqs[2*mu+1]), MPI_STATUS_IGNORE );
+src/ghost_generic.c:99:    c->offset = l->num_lattice_site_var;
+src/ghost_generic.c:101:    c->offset = l->num_lattice_site_var/2;
+src/ghost_generic.c:111:    c->comm_start[0] = c->offset*l->num_inner_lattice_sites;
+src/ghost_generic.c:112:    c->comm_start[1] = c->offset*l->num_inner_lattice_sites;
+src/ghost_generic.c:115:        c->comm_start[2*mu] = c->comm_start[2*(mu-1)] + buffer_size;
+src/ghost_generic.c:116:        c->comm_start[2*mu+1] = c->comm_start[2*(mu-1)+1] + buffer_size;
+src/ghost_generic.c:118:      buffer_size = c->offset;
+src/ghost_generic.c:124:      c->length[2*mu] = buffer_size;
+src/ghost_generic.c:125:      c->length[2*mu+1] = buffer_size;
+src/ghost_generic.c:126:      c->max_length[mu] = factor*buffer_size;
+src/ghost_generic.c:127:      MALLOC( c->buffer[2*mu], complex_PRECISION, factor*buffer_size );
+src/ghost_generic.c:128:      MALLOC( c->buffer[2*mu+1], complex_PRECISION, factor*buffer_size );
+src/ghost_generic.c:129:      c->in_use[2*mu] = 0;
+src/ghost_generic.c:130:      c->in_use[2*mu+1] = 0;
+src/ghost_generic.c:134:      c->max_length[mu] = buffer_size;
+src/ghost_generic.c:136:      MALLOC( c->buffer[2*mu], complex_PRECISION, 2*buffer_size );
+src/ghost_generic.c:137:      MALLOC( c->buffer[2*mu+1], complex_PRECISION, 2*buffer_size );
+src/ghost_generic.c:139:      MALLOC( c->buffer[2*mu], complex_PRECISION, buffer_size );
+src/ghost_generic.c:140:      MALLOC( c->buffer[2*mu+1], complex_PRECISION, buffer_size );
+src/ghost_generic.c:160:    FREE( c->buffer[2*mu], complex_PRECISION, c->max_length[mu] );
+src/ghost_generic.c:161:    FREE( c->buffer[2*mu+1], complex_PRECISION, c->max_length[mu] );
+src/ghost_generic.c:179:    c->comm = 1;
+src/ghost_generic.c:181:      ASSERT( c->in_use[2*mu] == 0 );
+src/ghost_generic.c:182:      ASSERT( c->in_use[2*mu+1] == 0 );
+src/ghost_generic.c:193:    int i, j, *table=NULL, mu_dir = 2*mu-MIN(dir,0), offset = c->offset,
+src/ghost_generic.c:198:      length[0] = (c->num_boundary_sites[2*mu])*offset;
+src/ghost_generic.c:199:      length[1] = (c->num_boundary_sites[2*mu+1])*offset;
+src/ghost_generic.c:200:      comm_start = c->comm_start[mu_dir];
+src/ghost_generic.c:203:      length[0] = c->num_even_boundary_sites[2*mu]*offset;
+src/ghost_generic.c:204:      length[1] = c->num_even_boundary_sites[2*mu+1]*offset;
+src/ghost_generic.c:205:      comm_start = c->comm_start[mu_dir];
+src/ghost_generic.c:208:      length[0] = c->num_odd_boundary_sites[2*mu]*offset;
+src/ghost_generic.c:209:      length[1] = c->num_odd_boundary_sites[2*mu+1]*offset;
+src/ghost_generic.c:210:      comm_start = c->comm_start[mu_dir]+c->num_even_boundary_sites[mu_dir]*offset;
+src/ghost_generic.c:211:      table_start = c->num_even_boundary_sites[mu_dir];
+src/ghost_generic.c:223:    ASSERT( c->in_use[mu_dir] == 0 );
+src/ghost_generic.c:224:    c->in_use[mu_dir] = 1;
+src/ghost_generic.c:226:    if ( MAX(length[0],length[1]) > c->max_length[mu] ) {
+src/ghost_generic.c:232:    buffer = (vector_PRECISION)c->buffer[mu_dir];
+src/ghost_generic.c:245:                   l->neighbor_rank[2*mu+1], 2*mu, g.comm_cart, &(c->rreqs[2*mu]) );
+src/ghost_generic.c:251:                   l->neighbor_rank[2*mu], 2*mu, g.comm_cart, &(c->sreqs[2*mu]) );
+src/ghost_generic.c:262:      table = c->boundary_table[2*mu+1]+table_start;
+src/ghost_generic.c:271:      buffer = (vector_PRECISION)c->buffer[mu_dir];      
+src/ghost_generic.c:277:                   l->neighbor_rank[2*mu], 2*mu+1, g.comm_cart, &(c->rreqs[2*mu+1]) );
+src/ghost_generic.c:283:                   l->neighbor_rank[2*mu+1], 2*mu+1, g.comm_cart, &(c->sreqs[2*mu+1]) );
+src/ghost_generic.c:297:    int i, j, *table, offset = c->offset, length[2]={0,0}, table_start = 0;
+src/ghost_generic.c:306:      length[0] = (c->num_boundary_sites[2*mu])*offset;
+src/ghost_generic.c:307:      length[1] = (c->num_boundary_sites[2*mu+1])*offset;
+src/ghost_generic.c:310:      length[0] = c->num_even_boundary_sites[2*mu]*offset;
+src/ghost_generic.c:311:      length[1] = c->num_even_boundary_sites[2*mu+1]*offset;
+src/ghost_generic.c:314:      length[0] = c->num_odd_boundary_sites[2*mu]*offset;
+src/ghost_generic.c:315:      length[1] = c->num_odd_boundary_sites[2*mu+1]*offset;
+src/ghost_generic.c:316:      table_start = c->num_even_boundary_sites[mu_dir];
+src/ghost_generic.c:319:    ASSERT( c->in_use[mu_dir] == 1 );
+src/ghost_generic.c:325:      buffer = (vector_PRECISION)c->buffer[mu_dir];      
+src/ghost_generic.c:326:      table = c->boundary_table[2*mu+1] + table_start;
+src/ghost_generic.c:330:        MPI_Wait( &(c->sreqs[2*mu]), MPI_STATUS_IGNORE );
+src/ghost_generic.c:335:        MPI_Wait( &(c->rreqs[2*mu]), MPI_STATUS_IGNORE );
+src/ghost_generic.c:362:        MPI_Wait( &(c->sreqs[2*mu+1]), MPI_STATUS_IGNORE );
+src/ghost_generic.c:367:        MPI_Wait( &(c->rreqs[2*mu+1]), MPI_STATUS_IGNORE );
+src/ghost_generic.c:373:    c->in_use[mu_dir] = 0;
+src/ghost_generic.c:386:    length = c->num_boundary_sites[mu_dir]*l->num_lattice_site_var;
+src/ghost_generic.c:387:    num_boundary_sites = c->num_boundary_sites[mu_dir];
+src/ghost_generic.c:388:    buffer = (vector_PRECISION)c->buffer[mu_dir];
+src/ghost_generic.c:395:      comm_start += c->num_boundary_sites[2*nu]*l->num_lattice_site_var;
+src/ghost_generic.c:398:    ASSERT( c->in_use[mu_dir] == 0 );
+src/ghost_generic.c:399:    c->in_use[mu_dir] = 1;
+src/ghost_generic.c:405:                 l->neighbor_rank[mu_dir], mu_dir, g.comm_cart, &(c->rreqs[mu_dir]) );
+src/ghost_generic.c:409:    table = c->boundary_table[inv_mu_dir];
+src/ghost_generic.c:418:    buffer = (vector_PRECISION)c->buffer[mu_dir];
+src/ghost_generic.c:423:                 l->neighbor_rank[inv_mu_dir], mu_dir, g.comm_cart, &(c->sreqs[mu_dir]) );
+src/ghost_generic.c:433:    int mu_dir = 2*mu-MIN(dir,0), length = c->num_boundary_sites[mu_dir]*l->num_lattice_site_var;
+src/ghost_generic.c:435:    ASSERT( c->in_use[mu_dir] == 1 );
+src/ghost_generic.c:439:      MPI_Wait( &(c->sreqs[mu_dir]), MPI_STATUS_IGNORE );
+src/ghost_generic.c:440:      MPI_Wait( &(c->rreqs[mu_dir]), MPI_STATUS_IGNORE );
+src/ghost_generic.c:443:    c->in_use[mu_dir] = 0;
+src/lime_io.c:122:    if(strcmp(lime_type,"etmc-source-format")==0 || strcmp(lime_type,"etmc-propagator-format")==0)
+src/lime_io.c:183:  limeheader = limeCreateHeader(1, 1, "etmc-propagator-format", message_length);
+src/lime_io.c:202:  limeheader = limeCreateHeader(1, 1, "scidac-binary-data", message_length);
+src/lime_io.c:363:    lime_read_info(&file, &lime, "scidac-binary-data");
+src/lime_io.c:473:    lime_write_info(&file, "scidac-binary-data", (n_uint64_t) 4*3*sizeof(complex_double), &offset);
+src/local_polyprec_generic.c:487:    int i, j, *table=NULL, mu_dir = 2*mu-MIN(dir,0), offset = c->offset,
+src/local_polyprec_generic.c:492:      length[0] = (c->num_boundary_sites[2*mu])*offset;
+src/local_polyprec_generic.c:493:      length[1] = (c->num_boundary_sites[2*mu+1])*offset;
+src/local_polyprec_generic.c:494:      comm_start = c->comm_start[mu_dir];
+src/local_polyprec_generic.c:497:      length[0] = c->num_even_boundary_sites[2*mu]*offset;
+src/local_polyprec_generic.c:498:      length[1] = c->num_even_boundary_sites[2*mu+1]*offset;
+src/local_polyprec_generic.c:499:      comm_start = c->comm_start[mu_dir];
+src/local_polyprec_generic.c:502:      length[0] = c->num_odd_boundary_sites[2*mu]*offset;
+src/local_polyprec_generic.c:503:      length[1] = c->num_odd_boundary_sites[2*mu+1]*offset;
+src/local_polyprec_generic.c:504:      comm_start = c->comm_start[mu_dir]+c->num_even_boundary_sites[mu_dir]*offset;
+src/local_polyprec_generic.c:505:      table_start = c->num_even_boundary_sites[mu_dir];
+src/local_polyprec_generic.c:517:    if ( MAX(length[0],length[1]) > c->max_length[mu] ) {
+src/local_polyprec_generic.c:523:    buffer = (vector_PRECISION)c->buffer[mu_dir];
+src/local_polyprec_generic.c:537:      buffer = (vector_PRECISION)c->buffer[mu_dir];      
+src/local_polyprec_generic.c:538:      table = c->boundary_table[2*mu+1] + table_start;
+src/sse_linalg.h:323:      if(k1 == num_vec-1)
+src/sse_linalg_generic.c:48:    if(num_vec-i < SIMD_LENGTH_PRECISION)
+src/sse_linalg_generic.c:49:      vecs = num_vec-i;
+src/coarse_oddeven_generic.c:1068:  // FIXME : use c->boundary_table[2*mu+1] instead of op->neighbor_table[index +1 + dir]
+tests/DDalphaAMG_proj_test.c:404:    printf0("Restult (D_c-RDP)v = %e\n\n", num/den);
+Binary file tests/DDalphaAMG_sample matches
+Binary file tests/DDalphaAMG_proj_test matches
+Makefile:87:all: execs library exec-tests
+Makefile:90:exec-tests: $(TSTS)

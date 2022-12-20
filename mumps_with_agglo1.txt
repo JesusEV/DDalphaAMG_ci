@@ -1,0 +1,47 @@
+
++- subspace correction methods for QCD applications -+
+|                                                    |
+|  Use option >> -? << for help                      |
+|                                                    |
++----------------------------------------------------+
+
+
+Number of Processes: 16
+Program is being started...
+
+
+
++----------------------------------------------------------+
+| The DDalphaAMG solver library.                           |
+| Copyright (C) 2016, Matthias Rottmann, Artur Strebel,    |
+|       Simon Heybrock, Simone Bacchio, Bjoern Leder.      |
+|                                                          |
+| This program comes with ABSOLUTELY NO WARRANTY.          |
++----------------------------------------------------------+
+
+configuration: /home/leemhuis/confs/conf.1255
+Lattice size nx=48 ny=48 nz=48 nt=96
+Reading configuration in double precision.
+
+Desired average plaquette: 0.6035764165540 in [0,1]
+BASIS4: tmLQCD basis
+antiperiodic in time boundary conditions
+Configuration stored...
+average plaquette: 0.6035764165538
+
++----------------------------------------------------------+
+| read in and set up the parallel dirac operator           |
+| elapsed wall clock time: 27.4834      seconds            |
++----------------------------------------------------------+
+initial definition --- depth: 0
+depth: 0, time spent for setting up next coarser operator: 148.952030 seconds
+[aicomp04:88865] *** An error occurred in MPI_Bcast
+[aicomp04:88865] *** reported by process [1362362369,7]
+[aicomp04:88865] *** on communicator MPI_COMM_WORLD
+[aicomp04:88865] *** MPI_ERR_COMM: invalid communicator
+[aicomp04:88865] *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+[aicomp04:88865] ***    and potentially your MPI job)
+[aicomp04:88846] 7 more processes have sent help message help-mpi-errors.txt / mpi_errors_are_fatal
+[aicomp04:88846] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
+[warn] Epoll MOD(1) on fd 39 failed.  Old events were 6; read change was 0 (none); write change was 2 (del): Bad file descriptor
+[warn] Epoll MOD(4) on fd 39 failed.  Old events were 6; read change was 2 (del); write change was 0 (none): Bad file descriptor

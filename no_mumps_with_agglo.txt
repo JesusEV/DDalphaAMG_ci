@@ -1,0 +1,1903 @@
+
++- subspace correction methods for QCD applications -+
+|                                                    |
+|  Use option >> -? << for help                      |
+|                                                    |
++----------------------------------------------------+
+
+
+Number of Processes: 16
+Program is being started...
+
+
+
++----------------------------------------------------------+
+| The DDalphaAMG solver library.                           |
+| Copyright (C) 2016, Matthias Rottmann, Artur Strebel,    |
+|       Simon Heybrock, Simone Bacchio, Bjoern Leder.      |
+|                                                          |
+| This program comes with ABSOLUTELY NO WARRANTY.          |
++----------------------------------------------------------+
+
+configuration: /home/leemhuis/confs/conf.1255
+Lattice size nx=48 ny=48 nz=48 nt=96
+Reading configuration in double precision.
+
+Desired average plaquette: 0.6035764165540 in [0,1]
+BASIS4: tmLQCD basis
+antiperiodic in time boundary conditions
+Configuration stored...
+average plaquette: 0.6035764165538
+
++----------------------------------------------------------+
+| read in and set up the parallel dirac operator           |
+| elapsed wall clock time: 19.8187      seconds            |
++----------------------------------------------------------+
+initial definition --- depth: 0
+depth: 0, time spent for setting up next coarser operator: 154.742473 seconds
+initial definition --- depth: 1
+depth: 1, time spent for setting up next coarser operator: 6.780640 seconds
+
+initial coarse grid correction is defined
+elapsed time: 481.271716 seconds
+
+running with 10 openmp threads per core
++----------------------------------------------------------+
+| 3-level method                                           |
+| postsmoothing K-cycle                                    |
+| FGMRES + red-black multiplicative Schwarz                |
+|          restart length: 20                              |
+|                      m0: -0.358074                       |
+|                     csw: +1.575510                       |
+|                      mu: +0.000900                       |
++----------------------------------------------------------+
+|   preconditioner cycles: 1                               |
+|            inner solver: minimal residual iteration      |
+|               precision: single                          |
++---------------------- depth  0 --------------------------+
+|          global lattice: 96  48  48  48                  |
+|           local lattice: 12  24  48  48                  |
+|           block lattice: 4   4   4   4                   |
+|        post smooth iter: 4                               |
+|     smoother inner iter: 4                               |
+|              setup iter: 3                               |
+|            test vectors: 24                              |
++---------------------- depth  1 --------------------------+
+|          global lattice: 24  12  12  12                  |
+|           local lattice: 3   6   12  12                  |
+|           block lattice: 3   3   3   3                   |
+|        post smooth iter: 4                               |
+|     smoother inner iter: 4                               |
+|              setup iter: 2                               |
+|            test vectors: 24                              |
++---------------------- depth  2 --------------------------+
+|          global lattice: 8   4   4   4                   |
+|           local lattice: 2   2   4   4                   |
+|           block lattice: 1   1   1   1                   |
+|      coarge grid solver: GMRES                           |
+|              iterations: 50                              |
+|                  cycles: 50                              |
+|               tolerance: 1e-01                           |
++----------------------------------------------------------+
+|          K-cycle length: 5                               |
+|        K-cycle restarts: 2                               |
+|       K-cycle tolerance: 1e-01                           |
++----------------------------------------------------------+
+
+
++----------------------------------------------------------+
+| solver profiling                                         |
++----------------------------------------------------------+
+| depth:   0 / level:   2                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 4.25e+00(     24) |
+|       2 flop vector operations, float: 4.97e-01(     16) |
+|       8 flop vector operations, float: 5.21e+00(    116) |
+|                copy operations, float: 1.86e+00(     68) |
+|           set value operations, float: 1.70e+01(  37896) |
+|  interpolation and restriction, float: 3.95e+00(     24) |
+|                  self coupling, float: 6.44e+09(1491099) |
+|                       smoother, float: 1.70e+02(    144) |
+|             operator comm init, float: 5.85e-02(    864) |
+|             operator comm wait, float: 2.26e+01(    864) |
+|                     allreduces, float: 2.03e+00(     24) |
+|     Gram-Schmidt on aggregates, float: 3.45e+00(      1) |
+|      smoother - pt 3, res comm, float: 3.67e+00(  37728) |
+|    smoother - pt 4, solve comm, float: 6.21e+01(  37728) |
++----------------------------------------------------------+
+| depth:   1 / level:   1                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 3.64e+00(     24) |
+|       2 flop vector operations, float: 4.43e-03(     21) |
+|       8 flop vector operations, float: 6.69e-02(    144) |
+|                copy operations, float: 1.61e-01(    273) |
+|           set value operations, float: 4.35e-01( 125400) |
+|                       smoother, float: 1.07e+02(    144) |
+|             operator comm init, float: 5.07e-03(    864) |
+|             operator comm wait, float: 1.94e+01(    864) |
+|                     allreduces, float: 1.81e+00(     24) |
+|     Gram-Schmidt on aggregates, float: 5.32e-02(      1) |
+|      smoother - pt 3, res comm, float: 1.60e+00(    576) |
+|    smoother - pt 4, solve comm, float: 1.50e+01(    576) |
++----------------------------------------------------------+
+| depth:   2 / level:   0                time    ( count ) |
++----------------------------------------------------------+
+| data re-distribution comm init, float: 5.40e-06(      2) |
+| data re-distribution comm wait, float: 1.23e-01(      4) |
++----------------------------------------------------------+
+| flop/lattice site:  8.25e+08                             |
+| flop/s/MPIprocess:  1.14e+12                             |
++----------------------------------------------------------+
+
+depth: 0, bootstrap step number 1...
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+depth: 0, time spent for setting up next coarser operator: 172.567983 seconds
+depth: 1, time spent for setting up next coarser operator: 8.755703 seconds
+depth: 1, bootstrap step number 1...
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+depth: 1, time spent for setting up next coarser operator: 7.478214 seconds
+depth: 0, bootstrap step number 2...
+gmres iters = 5
+gmres iters = 5
+gmres iters = 5
+gmres iters = 4
+gmres iters = 5
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+gmres iters = 4
+depth: 0, time spent for setting up next coarser operator: 153.674225 seconds
+depth: 1, time spent for setting up next coarser operator: 5.307134 seconds
+depth: 1, bootstrap step number 1...
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+gmres iters = 2
+depth: 1, time spent for setting up next coarser operator: 7.097462 seconds
+depth: 0, bootstrap step number 3...
+gmres iters = 10
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 10
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 10
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 10
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 10
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 10
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 10
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 9
+gmres iters = 10
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 10
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 10
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 10
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+gmres iters = 9
+gmres iters = 11
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 10
+gmres iters = 9
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 8
+gmres iters = 9
+depth: 0, time spent for setting up next coarser operator: 165.758836 seconds
+depth: 1, time spent for setting up next coarser operator: 7.567656 seconds
+depth: 1, bootstrap step number 1...
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+gmres iters = 3
+depth: 1, time spent for setting up next coarser operator: 6.676156 seconds
+depth: 1, bootstrap step number 2...
+gmres iters = 23
+gmres iters = 23
+gmres iters = 19
+gmres iters = 21
+gmres iters = 25
+gmres iters = 21
+gmres iters = 21
+gmres iters = 22
+gmres iters = 18
+gmres iters = 23
+gmres iters = 16
+gmres iters = 18
+gmres iters = 19
+gmres iters = 17
+gmres iters = 18
+gmres iters = 20
+gmres iters = 19
+gmres iters = 23
+gmres iters = 21
+gmres iters = 24
+gmres iters = 16
+gmres iters = 21
+gmres iters = 19
+gmres iters = 21
+depth: 1, time spent for setting up next coarser operator: 6.856026 seconds
+
+performed 3 iterative setup steps
+elapsed time: 4573.303241 seconds (2362.932825 seconds on coarse grid)
+
+
++----------------------------------------------------------+
+| solver profiling                                         |
++----------------------------------------------------------+
+| depth:   0 / level:   2                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 2.40e+01(    144) |
+|          process inner product, float: 1.53e+01(     72) |
+|       2 flop vector operations, float: 1.67e+00(     50) |
+|       8 flop vector operations, float: 1.29e+01(    315) |
+|        other vector operations, float: 7.99e+01(      3) |
+|                copy operations, float: 3.55e+00(    108) |
+|           set value operations, float: 7.57e-01(  75456) |
+|  interpolation and restriction, float: 3.13e+01(    144) |
+|                  self coupling, float: 9.64e+09(3168989) |
+|                       smoother, float: 3.77e+02(    288) |
+|             operator comm init, float: 1.44e-02(   2304) |
+|             operator comm wait, float: 4.60e+01(   2304) |
+|                     allreduces, float: 1.90e+01(    213) |
+|     Gram-Schmidt on aggregates, float: 1.37e+01(      3) |
+|      smoother - pt 3, res comm, float: 1.83e+01(  75456) |
+|    smoother - pt 4, solve comm, float: 1.32e+02(  75456) |
++----------------------------------------------------------+
+| depth:   1 / level:   1                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 1.08e+02(    558) |
+|          process inner product, float: 2.41e+01(    302) |
+|       2 flop vector operations, float: 2.68e-01(    252) |
+|       6 flop vector operations, float: 1.97e-03(      7) |
+|       8 flop vector operations, float: 8.53e-01(   1379) |
+|        other vector operations, float: 8.81e+01(      4) |
+|                copy operations, float: 4.84e-01(   1120) |
+|           set value operations, float: 1.47e+01( 877572) |
+|  interpolation and restriction, float: 3.66e+01(    604) |
+|                  self coupling, float: 1.49e+01(    222) |
+|              neighbor coupling, float: 9.01e+01(    222) |
+|                       smoother, float: 9.81e+02(   1208) |
+|             operator comm init, float: 2.37e-01(  10552) |
+|             operator comm wait, float: 2.75e+02(  10552) |
+|                     allreduces, float: 1.09e+02(    856) |
+|     Gram-Schmidt on aggregates, float: 8.74e-01(     14) |
+|      smoother - pt 3, res comm, float: 2.15e+01(   4832) |
+|    smoother - pt 4, solve comm, float: 1.27e+02(   4832) |
+|           Hessenberg: qr update float: 7.61e-05(   2808) |
+|          Hessenberg: bkwd subst float: 2.75e-05(    674) |
++----------------------------------------------------------+
+| depth:   2 / level:   0                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 4.38e+01(    302) |
+|          process inner product, float: 1.18e+02(   2039) |
+|       2 flop vector operations, float: 2.88e-02(    274) |
+|       6 flop vector operations, float: 4.19e-04(     35) |
+|       8 flop vector operations, float: 8.71e-02(   1558) |
+|                copy operations, float: 1.22e-02(     35) |
+|           set value operations, float: 6.58e+01(   3058) |
+|                  self coupling, float: 7.24e+01(   2039) |
+|              neighbor coupling, float: 6.99e+02(   2039) |
+|             operator comm init, float: 3.71e-01(   8156) |
+|             operator comm wait, float: 3.64e+02(   8156) |
+|                     allreduces, float: 3.33e+02(   2341) |
+| data re-distribution comm init, float: 7.80e-02(    618) |
+| data re-distribution comm wait, float: 1.04e+01(    632) |
+|           Hessenberg: qr update float: 1.05e-03(  69348) |
+|          Hessenberg: bkwd subst float: 2.70e-04(  13597) |
++----------------------------------------------------------+
+| flop/lattice site:  1.75e+09                             |
+| flop/s/MPIprocess:  2.55e+11                             |
++----------------------------------------------------------+
+
+rhs = first unit vector
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
+source vector norm: 1.000000e+00
++----------------------------------------------------------+
+gmres iters = 6
+| approx. rel. res. after  1      iterations: 4.925555e-02 |
+gmres iters = 24
+gmres iters = 126
+gmres iters = 417
+gmres iters = 426
+| approx. rel. res. after  2      iterations: 1.277337e-02 |
+gmres iters = 28
+gmres iters = 1037
+gmres iters = 743
+gmres iters = 670
+gmres iters = 722
+gmres iters = 300
+gmres iters = 1167
+gmres iters = 483
+gmres iters = 674
+gmres iters = 944
+| approx. rel. res. after  3      iterations: 7.048208e-03 |
+gmres iters = 165
+gmres iters = 570
+gmres iters = 686
+gmres iters = 1024
+gmres iters = 839
+gmres iters = 531
+gmres iters = 854
+gmres iters = 794
+gmres iters = 970
+gmres iters = 502
+| approx. rel. res. after  4      iterations: 6.271137e-03 |
+gmres iters = 145
+gmres iters = 719
+gmres iters = 595
+gmres iters = 707
+gmres iters = 747
+gmres iters = 723
+gmres iters = 643
+gmres iters = 697
+gmres iters = 576
+gmres iters = 1337
+| approx. rel. res. after  5      iterations: 5.918589e-03 |
+gmres iters = 594
+gmres iters = 665
+gmres iters = 165
+gmres iters = 586
+gmres iters = 849
+gmres iters = 692
+gmres iters = 404
+gmres iters = 272
+gmres iters = 2236
+gmres iters = 1573
+| approx. rel. res. after  6      iterations: 5.218596e-03 |
+gmres iters = 779
+gmres iters = 1092
+gmres iters = 468
+gmres iters = 625
+gmres iters = 816
+gmres iters = 1034
+gmres iters = 543
+gmres iters = 584
+gmres iters = 971
+gmres iters = 288
+| approx. rel. res. after  7      iterations: 5.009114e-03 |
+gmres iters = 163
+gmres iters = 430
+gmres iters = 506
+gmres iters = 769
+gmres iters = 575
+gmres iters = 574
+gmres iters = 821
+gmres iters = 837
+gmres iters = 1187
+gmres iters = 1089
+| approx. rel. res. after  8      iterations: 4.675747e-03 |
+gmres iters = 600
+gmres iters = 775
+gmres iters = 673
+gmres iters = 616
+gmres iters = 790
+gmres iters = 742
+gmres iters = 830
+gmres iters = 838
+gmres iters = 908
+gmres iters = 583
+| approx. rel. res. after  9      iterations: 4.196004e-03 |
+gmres iters = 382
+gmres iters = 390
+gmres iters = 401
+gmres iters = 832
+gmres iters = 397
+gmres iters = 410
+gmres iters = 616
+gmres iters = 1041
+gmres iters = 978
+gmres iters = 1181
+| approx. rel. res. after  10     iterations: 3.992526e-03 |
+gmres iters = 474
+gmres iters = 833
+gmres iters = 893
+gmres iters = 1447
+gmres iters = 385
+gmres iters = 526
+gmres iters = 1018
+gmres iters = 1036
+gmres iters = 600
+gmres iters = 1358
+| approx. rel. res. after  11     iterations: 3.735400e-03 |
+gmres iters = 774
+gmres iters = 986
+gmres iters = 324
+gmres iters = 631
+gmres iters = 773
+gmres iters = 774
+gmres iters = 696
+gmres iters = 774
+gmres iters = 531
+gmres iters = 818
+| approx. rel. res. after  12     iterations: 3.447025e-03 |
+gmres iters = 541
+gmres iters = 445
+gmres iters = 889
+gmres iters = 756
+gmres iters = 938
+gmres iters = 817
+gmres iters = 880
+gmres iters = 716
+gmres iters = 630
+gmres iters = 570
+| approx. rel. res. after  13     iterations: 3.368567e-03 |
+gmres iters = 357
+gmres iters = 920
+gmres iters = 373
+gmres iters = 852
+gmres iters = 1009
+gmres iters = 728
+gmres iters = 1189
+gmres iters = 658
+gmres iters = 802
+gmres iters = 871
+| approx. rel. res. after  14     iterations: 3.128289e-03 |
+gmres iters = 379
+gmres iters = 652
+gmres iters = 624
+gmres iters = 997
+gmres iters = 234
+gmres iters = 504
+gmres iters = 1169
+gmres iters = 822
+gmres iters = 645
+gmres iters = 999
+| approx. rel. res. after  15     iterations: 3.043953e-03 |
+gmres iters = 342
+gmres iters = 330
+gmres iters = 836
+gmres iters = 867
+gmres iters = 1047
+gmres iters = 686
+gmres iters = 1106
+gmres iters = 271
+gmres iters = 1426
+gmres iters = 768
+| approx. rel. res. after  16     iterations: 2.919464e-03 |
+gmres iters = 550
+gmres iters = 398
+gmres iters = 529
+gmres iters = 479
+gmres iters = 2083
+gmres iters = 876
+gmres iters = 752
+gmres iters = 276
+gmres iters = 537
+gmres iters = 1082
+| approx. rel. res. after  17     iterations: 2.760340e-03 |
+gmres iters = 683
+gmres iters = 303
+gmres iters = 744
+gmres iters = 1517
+gmres iters = 698
+gmres iters = 718
+gmres iters = 592
+gmres iters = 831
+gmres iters = 512
+gmres iters = 643
+| approx. rel. res. after  18     iterations: 2.516381e-03 |
+gmres iters = 425
+gmres iters = 454
+gmres iters = 843
+gmres iters = 808
+gmres iters = 880
+gmres iters = 521
+gmres iters = 1248
+gmres iters = 931
+gmres iters = 530
+gmres iters = 900
+| approx. rel. res. after  19     iterations: 2.302492e-03 |
+gmres iters = 941
+gmres iters = 1162
+gmres iters = 643
+gmres iters = 621
+gmres iters = 1212
+gmres iters = 934
+gmres iters = 1095
+gmres iters = 669
+gmres iters = 437
+gmres iters = 913
+| approx. rel. res. after  20     iterations: 2.233443e-03 |
+gmres iters = 142
+gmres iters = 434
+gmres iters = 834
+gmres iters = 449
+gmres iters = 647
+gmres iters = 970
+gmres iters = 576
+gmres iters = 830
+gmres iters = 520
+gmres iters = 981
+| approx. rel. res. after  21     iterations: 2.228804e-03 |
+gmres iters = 100
+gmres iters = 687
+gmres iters = 1554
+gmres iters = 1684
+gmres iters = 357
+gmres iters = 916
+gmres iters = 672
+gmres iters = 981
+gmres iters = 1075
+gmres iters = 551
+| approx. rel. res. after  22     iterations: 2.203653e-03 |
+gmres iters = 385
+gmres iters = 423
+gmres iters = 738
+gmres iters = 783
+gmres iters = 426
+gmres iters = 655
+gmres iters = 1079
+gmres iters = 675
+gmres iters = 491
+gmres iters = 388
+| approx. rel. res. after  23     iterations: 2.177383e-03 |
+gmres iters = 544
+gmres iters = 832
+gmres iters = 643
+gmres iters = 586
+gmres iters = 750
+gmres iters = 386
+gmres iters = 1066
+gmres iters = 776
+gmres iters = 484
+gmres iters = 932
+| approx. rel. res. after  24     iterations: 2.163443e-03 |
+gmres iters = 232
+gmres iters = 298
+gmres iters = 740
+gmres iters = 1745
+gmres iters = 1185
+gmres iters = 681
+gmres iters = 468
+gmres iters = 639
+gmres iters = 963
+gmres iters = 883
+| approx. rel. res. after  25     iterations: 2.070067e-03 |
+gmres iters = 800
+gmres iters = 796
+gmres iters = 96
+gmres iters = 548
+gmres iters = 387
+gmres iters = 589
+gmres iters = 778
+gmres iters = 1077
+gmres iters = 468
+gmres iters = 1987
+| approx. rel. res. after  26     iterations: 1.943999e-03 |
+gmres iters = 307
+gmres iters = 615
+gmres iters = 700
+gmres iters = 1002
+gmres iters = 1341
+gmres iters = 736
+gmres iters = 1534
+gmres iters = 877
+gmres iters = 582
+gmres iters = 649
+| approx. rel. res. after  27     iterations: 1.846003e-03 |
+gmres iters = 300
+gmres iters = 381
+gmres iters = 785
+gmres iters = 728
+gmres iters = 234
+gmres iters = 381
+gmres iters = 717
+gmres iters = 712
+gmres iters = 782
+gmres iters = 278
+| approx. rel. res. after  28     iterations: 1.720118e-03 |
+gmres iters = 220
+gmres iters = 419
+gmres iters = 787
+gmres iters = 971
+gmres iters = 304
+gmres iters = 571
+gmres iters = 693
+gmres iters = 512
+gmres iters = 1140
+gmres iters = 938
+| approx. rel. res. after  29     iterations: 1.608661e-03 |
+gmres iters = 576
+gmres iters = 480
+gmres iters = 476
+gmres iters = 1113
+gmres iters = 788
+gmres iters = 256
+gmres iters = 2069
+gmres iters = 1085
+gmres iters = 1263
+gmres iters = 769
+| approx. rel. res. after  30     iterations: 1.527775e-03 |
+gmres iters = 342
+gmres iters = 329
+gmres iters = 389
+gmres iters = 691
+gmres iters = 1121
+gmres iters = 558
+gmres iters = 418
+gmres iters = 647
+gmres iters = 512
+gmres iters = 1167
+| approx. rel. res. after  31     iterations: 1.386023e-03 |
+gmres iters = 188
+gmres iters = 690
+gmres iters = 870
+gmres iters = 929
+gmres iters = 941
+gmres iters = 1142
+gmres iters = 681
+gmres iters = 430
+gmres iters = 1502
+gmres iters = 669
+| approx. rel. res. after  32     iterations: 1.340128e-03 |
+gmres iters = 727
+gmres iters = 1175
+gmres iters = 1039
+gmres iters = 671
+gmres iters = 601
+gmres iters = 671
+gmres iters = 582
+gmres iters = 797
+gmres iters = 409
+gmres iters = 537
+| approx. rel. res. after  33     iterations: 1.295009e-03 |
+gmres iters = 631
+gmres iters = 517
+gmres iters = 1269
+gmres iters = 184
+gmres iters = 970
+gmres iters = 638
+gmres iters = 326
+gmres iters = 745
+gmres iters = 526
+gmres iters = 636
+| approx. rel. res. after  34     iterations: 1.233331e-03 |
+gmres iters = 679
+gmres iters = 481
+gmres iters = 574
+gmres iters = 1428
+gmres iters = 325
+gmres iters = 866
+gmres iters = 1430
+gmres iters = 246
+gmres iters = 299
+gmres iters = 725
+| approx. rel. res. after  35     iterations: 1.180193e-03 |
+gmres iters = 897
+gmres iters = 516
+gmres iters = 678
+gmres iters = 1094
+gmres iters = 731
+gmres iters = 1046
+gmres iters = 671
+gmres iters = 833
+gmres iters = 561
+gmres iters = 585
+| approx. rel. res. after  36     iterations: 1.104243e-03 |
+gmres iters = 339
+gmres iters = 522
+gmres iters = 827
+gmres iters = 585
+gmres iters = 832
+gmres iters = 590
+gmres iters = 749
+gmres iters = 1141
+gmres iters = 1369
+gmres iters = 916
+| approx. rel. res. after  37     iterations: 1.045332e-03 |
+gmres iters = 589
+gmres iters = 411
+gmres iters = 870
+gmres iters = 1022
+gmres iters = 690
+gmres iters = 635
+gmres iters = 468
+gmres iters = 525
+gmres iters = 1539
+gmres iters = 461
+| approx. rel. res. after  38     iterations: 9.885734e-04 |
+gmres iters = 330
+gmres iters = 584
+gmres iters = 642
+gmres iters = 1253
+gmres iters = 941
+gmres iters = 799
+gmres iters = 1124
+gmres iters = 440
+gmres iters = 749
+gmres iters = 991
+| approx. rel. res. after  39     iterations: 9.512457e-04 |
+gmres iters = 176
+gmres iters = 283
+gmres iters = 428
+gmres iters = 685
+gmres iters = 647
+gmres iters = 503
+gmres iters = 933
+gmres iters = 622
+gmres iters = 619
+gmres iters = 671
+| approx. rel. res. after  40     iterations: 9.094457e-04 |
+gmres iters = 74
+gmres iters = 174
+gmres iters = 778
+gmres iters = 819
+gmres iters = 1169
+gmres iters = 773
+gmres iters = 841
+gmres iters = 1017
+gmres iters = 680
+gmres iters = 723
+| approx. rel. res. after  41     iterations: 9.064767e-04 |
+gmres iters = 136
+gmres iters = 978
+gmres iters = 580
+gmres iters = 1668
+gmres iters = 441
+gmres iters = 1173
+gmres iters = 733
+gmres iters = 859
+gmres iters = 358
+gmres iters = 673
+| approx. rel. res. after  42     iterations: 9.052676e-04 |
+gmres iters = 478
+gmres iters = 440
+gmres iters = 698
+gmres iters = 867
+gmres iters = 581
+gmres iters = 574
+gmres iters = 535
+gmres iters = 523
+gmres iters = 969
+gmres iters = 574
+| approx. rel. res. after  43     iterations: 8.856965e-04 |
+gmres iters = 522
+gmres iters = 586
+gmres iters = 741
+gmres iters = 1018
+gmres iters = 1181
+gmres iters = 496
+gmres iters = 481
+gmres iters = 695
+gmres iters = 744
+gmres iters = 882
+| approx. rel. res. after  44     iterations: 8.836784e-04 |
+gmres iters = 529
+gmres iters = 784
+gmres iters = 1544
+gmres iters = 741
+gmres iters = 1007
+gmres iters = 973
+gmres iters = 429
+gmres iters = 879
+gmres iters = 1568
+gmres iters = 150
+| approx. rel. res. after  45     iterations: 8.680900e-04 |
+gmres iters = 636
+gmres iters = 912
+gmres iters = 224
+gmres iters = 845
+gmres iters = 874
+gmres iters = 569
+gmres iters = 790
+gmres iters = 608
+gmres iters = 1343
+gmres iters = 579
+| approx. rel. res. after  46     iterations: 8.434280e-04 |
+gmres iters = 215
+gmres iters = 649
+gmres iters = 821
+gmres iters = 560
+gmres iters = 1012
+gmres iters = 785
+gmres iters = 434
+gmres iters = 1026
+gmres iters = 1586
+gmres iters = 972
+| approx. rel. res. after  47     iterations: 8.080670e-04 |
+gmres iters = 535
+gmres iters = 334
+gmres iters = 732
+gmres iters = 2500
+gmres iters = 845
+gmres iters = 941
+gmres iters = 634
+gmres iters = 916
+gmres iters = 928
+gmres iters = 436
+| approx. rel. res. after  48     iterations: 7.779092e-04 |
+gmres iters = 566
+gmres iters = 1078
+gmres iters = 743
+gmres iters = 447
+gmres iters = 727
+gmres iters = 844
+gmres iters = 645
+gmres iters = 972
+gmres iters = 683
+gmres iters = 283
+| approx. rel. res. after  49     iterations: 7.572407e-04 |
+gmres iters = 287
+gmres iters = 470
+gmres iters = 1519
+gmres iters = 494
+gmres iters = 1277
+gmres iters = 1265
+gmres iters = 758
+gmres iters = 2500
+gmres iters = 737
+gmres iters = 630
+| approx. rel. res. after  50     iterations: 7.445820e-04 |
+gmres iters = 530
+gmres iters = 190
+gmres iters = 522
+gmres iters = 774
+gmres iters = 970
+gmres iters = 477
+gmres iters = 930
+gmres iters = 885
+gmres iters = 947
+gmres iters = 912
+| approx. rel. res. after  51     iterations: 7.116772e-04 |
+gmres iters = 184
+gmres iters = 579
+gmres iters = 451
+gmres iters = 837
+gmres iters = 2100
+gmres iters = 500
+gmres iters = 760
+gmres iters = 1220
+gmres iters = 1022
+gmres iters = 1215
+| approx. rel. res. after  52     iterations: 6.996113e-04 |
+gmres iters = 326
+gmres iters = 472
+gmres iters = 737
+gmres iters = 883
+gmres iters = 595
+gmres iters = 383
+gmres iters = 1069
+gmres iters = 843
+gmres iters = 469
+gmres iters = 692
+| approx. rel. res. after  53     iterations: 6.895361e-04 |
+gmres iters = 484
+gmres iters = 820
+gmres iters = 198
+gmres iters = 540
+gmres iters = 1080
+gmres iters = 494
+gmres iters = 249
+gmres iters = 484
+gmres iters = 2500
+gmres iters = 1438
+| approx. rel. res. after  54     iterations: 6.702604e-04 |
+gmres iters = 526
+gmres iters = 405
+gmres iters = 846
+gmres iters = 706
+gmres iters = 349
+gmres iters = 769
+gmres iters = 1785
+gmres iters = 402
+gmres iters = 581
+gmres iters = 615
+| approx. rel. res. after  55     iterations: 6.323247e-04 |
+gmres iters = 430
+gmres iters = 584
+gmres iters = 631
+gmres iters = 322
+gmres iters = 868
+gmres iters = 690
+gmres iters = 671
+gmres iters = 1441
+gmres iters = 692
+gmres iters = 1545
+| approx. rel. res. after  56     iterations: 6.124767e-04 |
+gmres iters = 322
+gmres iters = 782
+gmres iters = 352
+gmres iters = 482
+gmres iters = 966
+gmres iters = 583
+gmres iters = 1031
+gmres iters = 831
+gmres iters = 987
+gmres iters = 1287
+| approx. rel. res. after  57     iterations: 5.887347e-04 |
+gmres iters = 266
+gmres iters = 690
+gmres iters = 455
+gmres iters = 530
+gmres iters = 776
+gmres iters = 236
+gmres iters = 845
+gmres iters = 566
+gmres iters = 917
+gmres iters = 550
+| approx. rel. res. after  58     iterations: 5.725401e-04 |
+gmres iters = 102
+gmres iters = 399
+gmres iters = 1294
+gmres iters = 1301
+gmres iters = 579
+gmres iters = 527
+gmres iters = 776
+gmres iters = 875
+gmres iters = 1069
+gmres iters = 523
+| approx. rel. res. after  59     iterations: 5.424895e-04 |
+gmres iters = 383
+gmres iters = 475
+gmres iters = 543
+gmres iters = 634
+gmres iters = 1856
+gmres iters = 280
+gmres iters = 1216
+gmres iters = 1136
+gmres iters = 469
+gmres iters = 715
+| approx. rel. res. after  60     iterations: 5.167078e-04 |
+gmres iters = 180
+gmres iters = 195
+gmres iters = 1224
+gmres iters = 1702
+gmres iters = 438
+gmres iters = 1049
+gmres iters = 1227
+gmres iters = 992
+gmres iters = 680
+gmres iters = 790
+| approx. rel. res. after  61     iterations: 5.153328e-04 |
+gmres iters = 385
+gmres iters = 714
+gmres iters = 977
+gmres iters = 633
+gmres iters = 721
+gmres iters = 534
+gmres iters = 431
+gmres iters = 743
+gmres iters = 628
+gmres iters = 576
+| approx. rel. res. after  62     iterations: 5.074100e-04 |
+gmres iters = 425
+gmres iters = 1225
+gmres iters = 740
+gmres iters = 850
+gmres iters = 891
+gmres iters = 596
+gmres iters = 1076
+gmres iters = 621
+gmres iters = 1067
+gmres iters = 481
+| approx. rel. res. after  63     iterations: 5.021247e-04 |
+gmres iters = 742
+gmres iters = 1071
+gmres iters = 318
+gmres iters = 396
+gmres iters = 720
+gmres iters = 946
+gmres iters = 684
+gmres iters = 1383
+gmres iters = 615
+gmres iters = 856
+| approx. rel. res. after  64     iterations: 4.968228e-04 |
+gmres iters = 742
+gmres iters = 498
+gmres iters = 890
+gmres iters = 881
+gmres iters = 863
+gmres iters = 589
+gmres iters = 502
+gmres iters = 1060
+gmres iters = 934
+gmres iters = 981
+| approx. rel. res. after  65     iterations: 4.912354e-04 |
+gmres iters = 596
+gmres iters = 623
+gmres iters = 782
+gmres iters = 1073
+gmres iters = 816
+gmres iters = 500
+gmres iters = 2500
+gmres iters = 504
+gmres iters = 1074
+gmres iters = 874
+| approx. rel. res. after  66     iterations: 4.767552e-04 |
+gmres iters = 617
+gmres iters = 496
+gmres iters = 727
+gmres iters = 1260
+gmres iters = 816
+gmres iters = 764
+gmres iters = 830
+gmres iters = 987
+gmres iters = 366
+gmres iters = 747
+| approx. rel. res. after  67     iterations: 4.652362e-04 |
+gmres iters = 434
+gmres iters = 678
+gmres iters = 436
+gmres iters = 512
+gmres iters = 1436
+gmres iters = 780
+gmres iters = 1292
+gmres iters = 881
+gmres iters = 770
+gmres iters = 688
+| approx. rel. res. after  68     iterations: 4.429689e-04 |
+gmres iters = 420
+gmres iters = 401
+gmres iters = 579
+gmres iters = 775
+gmres iters = 690
+gmres iters = 740
+gmres iters = 1420
+gmres iters = 1099
+gmres iters = 497
+gmres iters = 1071
+| approx. rel. res. after  69     iterations: 4.375945e-04 |
+gmres iters = 289
+gmres iters = 428
+gmres iters = 720
+gmres iters = 744
+gmres iters = 780
+gmres iters = 395
+gmres iters = 1000
+gmres iters = 528
+gmres iters = 772
+gmres iters = 1051
+| approx. rel. res. after  70     iterations: 4.177340e-04 |
+gmres iters = 441
+gmres iters = 246
+gmres iters = 540
+gmres iters = 841
+gmres iters = 944
+gmres iters = 497
+gmres iters = 673
+gmres iters = 528
+gmres iters = 917
+gmres iters = 684
+| approx. rel. res. after  71     iterations: 3.985230e-04 |
+gmres iters = 173
+gmres iters = 549
+gmres iters = 884
+gmres iters = 1050
+gmres iters = 793
+gmres iters = 627
+gmres iters = 785
+gmres iters = 1025
+gmres iters = 647
+gmres iters = 1031
+| approx. rel. res. after  72     iterations: 3.795827e-04 |
+gmres iters = 607
+gmres iters = 674
+gmres iters = 639
+gmres iters = 618
+gmres iters = 789
+gmres iters = 826
+gmres iters = 490
+gmres iters = 1049
+gmres iters = 582
+gmres iters = 694
+| approx. rel. res. after  73     iterations: 3.604533e-04 |
+gmres iters = 544
+gmres iters = 1344
+gmres iters = 547
+gmres iters = 1072
+gmres iters = 1125
+gmres iters = 800
+gmres iters = 602
+gmres iters = 572
+gmres iters = 1016
+gmres iters = 1085
+| approx. rel. res. after  74     iterations: 3.408564e-04 |
+gmres iters = 578
+gmres iters = 901
+gmres iters = 1048
+gmres iters = 687
+gmres iters = 922
+gmres iters = 526
+gmres iters = 759
+gmres iters = 437
+gmres iters = 1087
+gmres iters = 584
+| approx. rel. res. after  75     iterations: 3.289173e-04 |
+gmres iters = 247
+gmres iters = 523
+gmres iters = 686
+gmres iters = 845
+gmres iters = 795
+gmres iters = 477
+gmres iters = 1230
+gmres iters = 861
+gmres iters = 531
+gmres iters = 494
+| approx. rel. res. after  76     iterations: 3.172908e-04 |
+gmres iters = 224
+gmres iters = 400
+gmres iters = 489
+gmres iters = 676
+gmres iters = 902
+gmres iters = 580
+gmres iters = 1063
+gmres iters = 497
+gmres iters = 804
+gmres iters = 235
+| approx. rel. res. after  77     iterations: 3.056761e-04 |
+gmres iters = 196
+gmres iters = 459
+gmres iters = 787
+gmres iters = 618
+gmres iters = 626
+gmres iters = 412
+gmres iters = 1338
+gmres iters = 1185
+gmres iters = 377
+gmres iters = 638
+| approx. rel. res. after  78     iterations: 2.919405e-04 |
+gmres iters = 232
+gmres iters = 226
+gmres iters = 825
+gmres iters = 815
+gmres iters = 733
+gmres iters = 700
+gmres iters = 583
+gmres iters = 971
+gmres iters = 791
+gmres iters = 570
+| approx. rel. res. after  79     iterations: 2.844466e-04 |
+gmres iters = 140
+gmres iters = 577
+gmres iters = 486
+gmres iters = 757
+gmres iters = 1180
+gmres iters = 439
+gmres iters = 670
+gmres iters = 752
+gmres iters = 948
+gmres iters = 1440
+| approx. rel. res. after  80     iterations: 2.741829e-04 |
+gmres iters = 230
+gmres iters = 556
+gmres iters = 1013
+gmres iters = 810
+gmres iters = 986
+gmres iters = 573
+gmres iters = 1059
+gmres iters = 919
+gmres iters = 433
+gmres iters = 810
+| approx. rel. res. after  81     iterations: 2.734429e-04 |
+gmres iters = 331
+gmres iters = 1070
+gmres iters = 467
+gmres iters = 562
+gmres iters = 990
+gmres iters = 1075
+gmres iters = 991
+gmres iters = 1047
+gmres iters = 524
+gmres iters = 825
+| approx. rel. res. after  82     iterations: 2.729666e-04 |
+gmres iters = 331
+gmres iters = 666
+gmres iters = 1131
+gmres iters = 977
+gmres iters = 864
+gmres iters = 982
+gmres iters = 519
+gmres iters = 888
+gmres iters = 1492
+gmres iters = 961
+| approx. rel. res. after  83     iterations: 2.691610e-04 |
+gmres iters = 953
+gmres iters = 490
+gmres iters = 1390
+gmres iters = 1319
+gmres iters = 522
+gmres iters = 675
+gmres iters = 641
+gmres iters = 867
+gmres iters = 1177
+gmres iters = 548
+| approx. rel. res. after  84     iterations: 2.687412e-04 |
+gmres iters = 437
+gmres iters = 1045
+gmres iters = 1050
+gmres iters = 2500
+gmres iters = 1429
+gmres iters = 1862
+gmres iters = 575
+gmres iters = 685
+gmres iters = 788
+gmres iters = 840
+| approx. rel. res. after  85     iterations: 2.653157e-04 |
+gmres iters = 489
+gmres iters = 583
+gmres iters = 384
+gmres iters = 435
+gmres iters = 962
+gmres iters = 468
+gmres iters = 895
+gmres iters = 1193
+gmres iters = 523
+gmres iters = 741
+| approx. rel. res. after  86     iterations: 2.614715e-04 |
+gmres iters = 328
+gmres iters = 429
+gmres iters = 825
+gmres iters = 1143
+gmres iters = 1792
+gmres iters = 1292
+gmres iters = 552
+gmres iters = 1269
+gmres iters = 469
+gmres iters = 1275
+| approx. rel. res. after  87     iterations: 2.546186e-04 |
+gmres iters = 729
+gmres iters = 629
+gmres iters = 875
+gmres iters = 428
+gmres iters = 638
+gmres iters = 742
+gmres iters = 548
+gmres iters = 519
+gmres iters = 614
+gmres iters = 451
+| approx. rel. res. after  88     iterations: 2.426447e-04 |
+gmres iters = 292
+gmres iters = 386
+gmres iters = 880
+gmres iters = 878
+gmres iters = 764
+gmres iters = 436
+gmres iters = 425
+gmres iters = 725
+gmres iters = 837
+gmres iters = 868
+| approx. rel. res. after  89     iterations: 2.388138e-04 |
+gmres iters = 574
+gmres iters = 784
+gmres iters = 786
+gmres iters = 332
+gmres iters = 749
+gmres iters = 596
+gmres iters = 546
+gmres iters = 1299
+gmres iters = 382
+gmres iters = 1022
+| approx. rel. res. after  90     iterations: 2.327593e-04 |
+gmres iters = 638
+gmres iters = 426
+gmres iters = 843
+gmres iters = 427
+gmres iters = 738
+gmres iters = 625
+gmres iters = 879
+gmres iters = 2500
+gmres iters = 841
+gmres iters = 363
+| approx. rel. res. after  91     iterations: 2.163983e-04 |
+gmres iters = 404
+gmres iters = 675
+gmres iters = 979
+gmres iters = 540
+gmres iters = 867
+gmres iters = 926
+gmres iters = 618
+gmres iters = 718
+gmres iters = 1166
+gmres iters = 967
+| approx. rel. res. after  92     iterations: 1.946462e-04 |
+gmres iters = 794
+gmres iters = 1182
+gmres iters = 548
+gmres iters = 479
+gmres iters = 574
+gmres iters = 499
+gmres iters = 945
+gmres iters = 634
+gmres iters = 790
+gmres iters = 1437
+| approx. rel. res. after  93     iterations: 1.898684e-04 |
+gmres iters = 348
+gmres iters = 599
+gmres iters = 432
+gmres iters = 885
+gmres iters = 620
+gmres iters = 764
+gmres iters = 1198
+gmres iters = 462
+gmres iters = 525
+gmres iters = 809
+| approx. rel. res. after  94     iterations: 1.813449e-04 |
+gmres iters = 526
+gmres iters = 378
+gmres iters = 432
+gmres iters = 1041
+gmres iters = 816
+gmres iters = 540
+gmres iters = 927
+gmres iters = 1036
+gmres iters = 672
+gmres iters = 686
+| approx. rel. res. after  95     iterations: 1.790044e-04 |
+gmres iters = 316
+gmres iters = 385
+gmres iters = 480
+gmres iters = 587
+gmres iters = 728
+gmres iters = 437
+gmres iters = 583
+gmres iters = 927
+gmres iters = 750
+gmres iters = 644
+| approx. rel. res. after  96     iterations: 1.728326e-04 |
+gmres iters = 374
+gmres iters = 765
+gmres iters = 719
+gmres iters = 591
+gmres iters = 728
+gmres iters = 1530
+gmres iters = 1920
+gmres iters = 1039
+gmres iters = 535
+gmres iters = 777
+| approx. rel. res. after  97     iterations: 1.667780e-04 |
+gmres iters = 124
+gmres iters = 333
+gmres iters = 542
+gmres iters = 1419
+gmres iters = 736
+gmres iters = 678
+gmres iters = 935
+gmres iters = 771
+gmres iters = 1076
+gmres iters = 423
+| approx. rel. res. after  98     iterations: 1.618540e-04 |
+gmres iters = 559
+gmres iters = 576
+gmres iters = 727
+gmres iters = 838
+gmres iters = 2500
+gmres iters = 562
+gmres iters = 935
+gmres iters = 635
+gmres iters = 730
+gmres iters = 990
+| approx. rel. res. after  99     iterations: 1.533362e-04 |
+gmres iters = 209
+gmres iters = 618
+gmres iters = 427
+gmres iters = 784
+gmres iters = 967
+gmres iters = 656
+gmres iters = 832
+gmres iters = 1235
+gmres iters = 1195
+gmres iters = 692
+| approx. rel. res. after  100    iterations: 1.505268e-04 |
+gmres iters = 76
+gmres iters = 224
+gmres iters = 364
+gmres iters = 1049
+gmres iters = 822
+gmres iters = 427
+gmres iters = 870
+gmres iters = 1084
+gmres iters = 636
+gmres iters = 1598
+| approx. rel. res. after  101    iterations: 1.496844e-04 |
+gmres iters = 129
+gmres iters = 432
+gmres iters = 702
+gmres iters = 881
+gmres iters = 984
+gmres iters = 520
+gmres iters = 695
+gmres iters = 1184
+gmres iters = 607
+gmres iters = 864
+| approx. rel. res. after  102    iterations: 1.490851e-04 |
+gmres iters = 387
+gmres iters = 309
+gmres iters = 695
+gmres iters = 920
+gmres iters = 1375
+gmres iters = 517
+gmres iters = 400
+gmres iters = 740
+gmres iters = 2500
+gmres iters = 1320
+| approx. rel. res. after  103    iterations: 1.479429e-04 |
+gmres iters = 370
+gmres iters = 266
+gmres iters = 1123
+gmres iters = 1481
+gmres iters = 384
+gmres iters = 575
+gmres iters = 677
+gmres iters = 657
+gmres iters = 675
+gmres iters = 983
+| approx. rel. res. after  104    iterations: 1.473603e-04 |
+gmres iters = 624
+gmres iters = 687
+gmres iters = 1744
+gmres iters = 863
+gmres iters = 780
+gmres iters = 784
+gmres iters = 636
+gmres iters = 608
+gmres iters = 1064
+gmres iters = 1141
+| approx. rel. res. after  105    iterations: 1.423345e-04 |
+gmres iters = 323
+gmres iters = 357
+gmres iters = 718
+gmres iters = 644
+gmres iters = 617
+gmres iters = 538
+gmres iters = 878
+gmres iters = 686
+gmres iters = 663
+gmres iters = 729
+| approx. rel. res. after  106    iterations: 1.389522e-04 |
+gmres iters = 415
+gmres iters = 879
+gmres iters = 276
+gmres iters = 766
+gmres iters = 738
+gmres iters = 876
+gmres iters = 590
+gmres iters = 1190
+gmres iters = 665
+gmres iters = 746
+| approx. rel. res. after  107    iterations: 1.328122e-04 |
+gmres iters = 232
+gmres iters = 579
+gmres iters = 624
+gmres iters = 1066
+gmres iters = 690
+gmres iters = 621
+gmres iters = 782
+gmres iters = 414
+gmres iters = 646
+gmres iters = 644
+| approx. rel. res. after  108    iterations: 1.298771e-04 |
+gmres iters = 170
+gmres iters = 611
+gmres iters = 1139
+gmres iters = 780
+gmres iters = 358
+gmres iters = 524
+gmres iters = 1139
+gmres iters = 600
+gmres iters = 776
+gmres iters = 451
+| approx. rel. res. after  109    iterations: 1.273848e-04 |
+gmres iters = 414
+gmres iters = 277
+gmres iters = 378
+gmres iters = 1131
+gmres iters = 831
+gmres iters = 483
+gmres iters = 1080
+gmres iters = 776
+gmres iters = 892
+gmres iters = 426
+| approx. rel. res. after  110    iterations: 1.250264e-04 |
+gmres iters = 274
+gmres iters = 496
+gmres iters = 623
+gmres iters = 230
+gmres iters = 764
+gmres iters = 640
+gmres iters = 650
+gmres iters = 818
+gmres iters = 889
+gmres iters = 468
+| approx. rel. res. after  111    iterations: 1.192229e-04 |
+gmres iters = 80
+gmres iters = 408
+gmres iters = 424
+gmres iters = 489
+gmres iters = 637
+gmres iters = 565
+gmres iters = 328
+gmres iters = 891
+gmres iters = 830
+gmres iters = 552
+| approx. rel. res. after  112    iterations: 1.138095e-04 |
+gmres iters = 284
+gmres iters = 673
+gmres iters = 233
+gmres iters = 587
+gmres iters = 618
+gmres iters = 724
+gmres iters = 719
+gmres iters = 750
+gmres iters = 1027
+gmres iters = 786
+| approx. rel. res. after  113    iterations: 1.086064e-04 |
+gmres iters = 1078
+gmres iters = 149
+gmres iters = 576
+gmres iters = 1179
+gmres iters = 424
+gmres iters = 543
+gmres iters = 1072
+gmres iters = 537
+gmres iters = 1433
+gmres iters = 1026
+| approx. rel. res. after  114    iterations: 1.040212e-04 |
+gmres iters = 746
+gmres iters = 625
+gmres iters = 582
+gmres iters = 523
+gmres iters = 700
+gmres iters = 887
+gmres iters = 850
+gmres iters = 724
+gmres iters = 544
+gmres iters = 833
+| approx. rel. res. after  115    iterations: 1.015781e-04 |
+gmres iters = 326
+gmres iters = 372
+gmres iters = 696
+gmres iters = 175
+gmres iters = 363
+gmres iters = 311
+gmres iters = 627
+gmres iters = 797
+gmres iters = 786
+gmres iters = 935
+| approx. rel. res. after  116    iterations: 9.906098e-05 |
++----------------------------------------------------------+
+
++----------------------------------------------------------+
+|       FGMRES iterations: 116    coarse average: 7272.22   |
+| exact relative residual: ||r||/||b|| = 9.906098e-05      |
+| elapsed wall clock time: 4167.8830 seconds                |
+|        coarse grid time: 3730.6431 seconds (89.5%)        |
+|        coarsest grid time: 0.0000   seconds (00.0%)        |
+|  consumed core minutes*: 1.11e+04 (solve only)           |
+|    max used mem/MPIproc: 1.83e+01 GB                     |
++----------------------------------------------------------+
+*: only correct if #MPIprocs*#threads == #CPUs
+
+
++----------------------------------------------------------+
+| solver profiling                                         |
++----------------------------------------------------------+
+| depth:   0 / level:   2                time    ( count ) |
++----------------------------------------------------------+
+|          global inner product, double: 1.03e+01(    122) |
+|         process inner product, double: 2.06e+01(    116) |
+|      2 flop vector operations, double: 1.51e+00(     12) |
+|      6 flop vector operations, double: 2.42e-02(      0) |
+|      8 flop vector operations, double: 3.33e+01(    130) |
+|               copy operations, double: 4.75e-03(      0) |
+|                 self coupling, double: 6.31e+00(    121) |
+|             neighbor coupling, double: 3.22e+01(    121) |
+|            operator comm init, double: 2.10e-02(    484) |
+|            operator comm wait, double: 6.45e+00(    484) |
+|                    allreduces, double: 8.20e+00(    238) |
+|          Hessenberg: qr update double: 1.03e-04(   7116) |
+|         Hessenberg: bkwd subst double: 1.30e-04(   1302) |
+|       2 flop vector operations, float: 1.32e+00(     58) |
+|       8 flop vector operations, float: 9.41e+00(    375) |
+|                copy operations, float: 2.91e+00(    163) |
+|           set value operations, float: 6.74e-01( 121568) |
+|  interpolation and restriction, float: 2.02e+01(    232) |
+|                  self coupling, float: 5.08e+10(5097494) |
+|                       smoother, float: 2.86e+02(    464) |
+|             operator comm init, float: 4.03e-02(   3712) |
+|             operator comm wait, float: 3.33e+01(   3712) |
+|      smoother - pt 3, res comm, float: 1.75e+01( 121568) |
+|    smoother - pt 4, solve comm, float: 1.25e+02( 121568) |
++----------------------------------------------------------+
+| depth:   1 / level:   1                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 4.82e+01(   1375) |
+|          process inner product, float: 3.22e+00(   1145) |
+|       2 flop vector operations, float: 1.10e+00(    864) |
+|       6 flop vector operations, float: 3.84e-03(     11) |
+|       8 flop vector operations, float: 2.21e+00(   5027) |
+|                copy operations, float: 4.33e-01(   1958) |
+|           set value operations, float: 3.42e+00(  19159) |
+|  interpolation and restriction, float: 2.69e+01(   2290) |
+|                  self coupling, float: 9.08e+00(   1259) |
+|              neighbor coupling, float: 1.05e+02(   1259) |
+|                       smoother, float: 9.18e+02(   4580) |
+|             operator comm init, float: 3.37e-01(  41676) |
+|             operator comm wait, float: 3.38e+02(  41676) |
+|                     allreduces, float: 7.83e+01(   2520) |
+|      smoother - pt 3, res comm, float: 4.28e+01(  18320) |
+|    smoother - pt 4, solve comm, float: 2.52e+02(  18320) |
+|           Hessenberg: qr update float: 3.08e-04(  20586) |
+|          Hessenberg: bkwd subst float: 8.97e-05(   4576) |
++----------------------------------------------------------+
+| depth:   2 / level:   0                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 3.82e+01(  17347) |
+|          process inner product, float: 9.03e+01( 843578) |
+|       2 flop vector operations, float: 5.50e-01( 102788) |
+|       6 flop vector operations, float: 8.09e-04(    134) |
+|       8 flop vector operations, float: 2.26e+01(2588923) |
+|                copy operations, float: 9.27e-04(    134) |
+|           set value operations, float: 2.35e+01(1289670) |
+|                  self coupling, float: 8.68e+01( 859780) |
+|              neighbor coupling, float: 1.06e+03( 859780) |
+|             operator comm init, float: 1.02e+01(3439120) |
+|             operator comm wait, float: 5.47e+02(3439120) |
+|                     allreduces, float: 6.36e+02( 860925) |
+| data re-distribution comm init, float: 3.48e-01(   2290) |
+| data re-distribution comm wait, float: 1.07e+01(   2290) |
+|           Hessenberg: qr update float: 4.30e-01(1.3e+08) |
+|          Hessenberg: bkwd subst float: 8.93e-02(2.2e+07) |
++----------------------------------------------------------+
+| flop/lattice site:  2.84e+09                             |
+| flop/s/MPIprocess:  4.52e+11                             |
++----------------------------------------------------------+
+
+avg coarsest iters = 0.000000
+solution vector norm: 4.967941e-01
+solution vector norm: 4.967941e-01
+solution vector norm: 4.967941e-01
+solution vector norm: 4.967941e-01
+[aicomp04:90692] *** An error occurred in MPI_Comm_free
+[aicomp04:90692] *** reported by process [1745682433,7]
+[aicomp04:90692] *** on communicator MPI_COMM_WORLD
+[aicomp04:90692] *** MPI_ERR_COMM: invalid communicator
+[aicomp04:90692] *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+[aicomp04:90692] ***    and potentially your MPI job)
+solution vector norm: 4.967941e-01
+solution vector norm: 4.967941e-01
+solution vector norm: 4.967941e-01
+solution vector norm: 4.967941e-01
+solution vector norm: 4.967941e-01
+solution vector norm: 4.967941e-01
+[aicomp04:90679] 7 more processes have sent help message help-mpi-errors.txt / mpi_errors_are_fatal
+[aicomp04:90679] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages

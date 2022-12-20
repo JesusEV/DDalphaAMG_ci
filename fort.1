@@ -1,0 +1,88 @@
+L U Solver for unsymmetric matrices
+Type of parallelism: Working host
+
+ ****** ANALYSIS STEP ********
+
+ Estimated INTEGER space for factors         :           93235
+ INFO(3), est. complex space to store factors:        16364160
+ Estimated number of entries in factors      :        16364160
+ Current value of space relaxation parameter :              20
+ Estimated size of IS (In Core factorization):          167015
+ Estimated size of S  (In Core factorization):        53255588
+ Estimated size of S  (OOC factorization)    :        41535592
+
+ MEMORY ESTIMATIONS ... 
+ Estimations with standard Full-Rank (FR) factorization:
+ Estimated space in MBytes for IC factorization   (INFO(15)):         472
+
+
+****** FACTORIZATION STEP ********
+
+
+ Local redistrib: data local/sent           =         1331744         1381120
+
+ Allocated buffers
+ ------------------
+ Size of reception buffer in bytes ...... =   26533393
+ Size of async. emission buffer (bytes).. =   26798727
+ Small emission buffer (bytes) .......... =        280
+ STATISTICS PRIOR NUMERICAL FACTORIZATION ...
+ Size of internal working array S           =        44314232
+ Size of internal working array IS          =          167015
+ Minimum (ICNTL(14)=0) size of S            =        44379648
+ Minimum (ICNTL(14)=0) size of IS           =          104375
+ Real space for original matrix             =         2134326
+ Integer space for original matrix          =         2149014
+ INFO(3) Real space for factors (estimated) =        16364160
+ INFO(4) Integer space for factors (estim.) =           93235
+ Maximum frontal size (estimated)           =            4608
+
+ LEAVING FACTORIZATION PHASE WITH ...
+ INFO (1)                                      =              0
+  --- (2)                                      =              0
+           Number of nodes in the tree         =            147
+ INFO (9)  Real space for factors              =       16331957
+  --- (10) Integer space for factors           =          93305
+  --- (11) Maximum size of frontal matrices    =           4608
+  --- (12) Number of off diagonal pivots       =              0
+  --- (13) Number of delayed pivots            =              0
+  --- (14) Number of memory compresses         =              0
+ RINFO(2)  Operations during node assembly     = 4.219D+07
+ -----(3)  Operations during node elimination  = 4.993D+10
+ ** Eff. min. Space MBYTES for facto             (INFO(16)):         545
+
+
+ ****** SOLVE & CHECK STEP ********
+
+
+ Local statistics
+ Time to build/scatter RHS        =       0.000288
+ Time in solution step (fwd/bwd)  =       0.134353
+  .. Time in forward (fwd) step   =          0.072065
+  .. Time in backward (bwd) step  =          0.062284
+ Time to gather solution(cent.sol)=       0.000057
+ Time to copy/scale dist. solution=       0.000000
+ with total estimated flops RINFOG(1) / Average per MPI proc    =  9.986D+10 /  4.993D+10
+
+ LEAVING FACTORIZATION PHASE WITH ...
+ INFO (1)                                      =              0
+  --- (2)                                      =              0
+           Number of nodes in the tree         =            147
+ INFO (9)  Real space for factors              =       19495296
+  --- (10) Integer space for factors           =         134777
+  --- (11) Maximum size of frontal matrices    =           4464
+  --- (12) Number of off diagonal pivots       =              0
+  --- (13) Number of delayed pivots            =              0
+  --- (14) Number of memory compresses         =              0
+ RINFO(2)  Operations during node assembly     = 7.012D+07
+ -----(3)  Operations during node elimination  = 4.993D+10
+ ** Eff. min. Space MBYTES for facto             (INFO(16)):         628
+
+***********CONTROL PARAMETERS (ICNTL)**************
+
+ CNTL(1)   Threshold for numerical pivoting        =      0.1000D-01
+ CNTL(3)   Null pivot detection threshold          =      0.0000D+00
+ CNTL(4)   Threshold for static pivoting           =     -0.1000D+01
+ CNTL(5)   Fixation for null pivots                =      0.0000D+00
+ CNTL(7)   Dropping threshold for BLR compression  =      0.1000D-04
+ICNTL(1)   Output stream for error messages        =         6
