@@ -121,7 +121,42 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               g.coarsest_time -= MPI_Wtime();
               END_MASTER(threading)
 
-              coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
+                  // solve: Ax = b using 
+		  // x = l->next_level->p_PRECISION->x, 
+		  // A = l->next_level->oe_op_PRECISION, 
+		  // b = l->next_level->p_PRECISION->b
+              coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION),
+		      &(l->next_level->oe_op_PRECISION), l->next_level, threading );
+
+                  // apply operator to "undo" the solve for comparison
+	          // w = A x using the same A and x as above, in addition:
+	          // w = l->next_level->p_PRECISION->w
+              coarse_apply_oddeven_operator_PRECISION( l->next_level->p_PRECISION.w,
+		      l->next_level->p_PRECISION.x, &(l->next_level->oe_op_PRECISION),
+		      l->next_level, threading); 
+
+	          // w =  w - b
+	          // "2" in v_end because of odd-even. 
+	          // a = v_start, b = v_end, c = 2 * v_end
+	          // |--------|--------|
+	          // a        b        c
+              vector_PRECISION_minus( l->next_level->p_PRECISION.w, l->next_level->p_PRECISION.w,
+		      l->next_level->p_PRECISION.b, l->next_level->p_PRECISION.v_start,
+		      2*l->next_level->p_PRECISION.v_end, l->next_level );
+	     
+	          // computing some norms for relative residual 
+              PRECISION beta1 = global_norm_PRECISION( l->next_level->p_PRECISION.w,
+		      l->next_level->p_PRECISION.v_start, 2*l->next_level->p_PRECISION.v_end,
+		      l->next_level, threading );
+              PRECISION beta2 = global_norm_PRECISION( l->next_level->p_PRECISION.b,
+		      l->next_level->p_PRECISION.v_start, 2*l->next_level->p_PRECISION.v_end,
+		      l->next_level, threading );
+
+	      printf("\n relative error %f\n", beta1/beta2);
+	      exit(0);
+
+
+
 
               START_MASTER(threading)
               g.coarsest_time += MPI_Wtime();
