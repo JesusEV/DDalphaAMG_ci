@@ -1748,3 +1748,57 @@ void coarse_odd_even_PRECISION_test( vector_PRECISION out, vector_PRECISION in, 
     PUBLIC_FREE( buf1, complex_PRECISION, 2*l->vector_size );
   }
 }
+
+void coarse_apply_oddeven_operator_PRECISION(vector_PRECISION out,
+                                                vector_PRECISION in,
+                                                operator_PRECISION_struct *op,
+                                                level_struct *l,
+                                                struct Thread *threading){
+    /* applies coarsest operator using different function calls (4 in total)
+D = /D_ee D_eo\
+    \D_oe D_oo/ 
+
+    out_e = D_ee in_e + D_eo in_o
+    out_o = D_oo in_o + D_oe in_e
+
+*/
+
+  //sets output to 0s
+  vector_PRECISION_define(out, 0, l->p_PRECISION.v_start, 2* l->p_PRECISION.v_end, l);
+
+  // start and end indices for vector functions depending on thread
+  int start;
+  int end;
+  // compute start and end indices for core
+  // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
+  compute_core_start_end(op->num_even_sites*l->num_lattice_site_var, l->inner_vector_size, &start, &end, l, threading);
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+  PROF_PRECISION_START( _SC, threading );
+  coarse_diag_ee_PRECISION( out, in, op, l, threading ); // out_e = D_ee in_e
+  PROF_PRECISION_STOP( _SC, 0, threading );
+
+  SYNC_CORES(threading)
+
+  PROF_PRECISION_START( _NC, threading );
+  coarse_hopping_term_PRECISION( out, in, op, _EVEN_SITES, l, threading ); //out += D_eo in_o	will touch only the part out_e
+  PROF_PRECISION_STOP( _NC, 1, threading );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+
+  PROF_PRECISION_START( _SC, threading );
+  coarse_diag_oo_PRECISION( out, in, op, l, threading ); // out = D_oo in_o will touch only out_o
+  PROF_PRECISION_STOP( _SC, 0, threading );
+
+  SYNC_CORES(threading)
+
+  PROF_PRECISION_START( _NC, threading );
+  coarse_hopping_term_PRECISION( out, in, op, _ODD_SITES, l, threading ); //out += D_oe in_e will touch only out_o
+  PROF_PRECISION_STOP( _NC, 1, threading );
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
+}

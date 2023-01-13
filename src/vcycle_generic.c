@@ -121,8 +121,24 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               g.coarsest_time -= MPI_Wtime();
               END_MASTER(threading)
 
-              coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
+	      //using entire vetorlength for fgmres_PRECISION()
+	      int old_v_end = l->next_level->p_PRECISION.v_end;
+              l->next_level->p_PRECISION.v_end *=2;
 
+	          //assign new operator function handle
+	      l->next_level->p_PRECISION.eval_operator = coarse_apply_oddeven_operator_PRECISION;
+
+		  // solve: Ax = b using 
+		  // x = l->next_level->p_PRECISION->x, 
+		  // A = l->next_level->oe_op_PRECISION, 
+		  // b = l->next_level->p_PRECISION->b
+              fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
+
+                  //restore old operator function handle
+	      l->next_level->p_PRECISION.eval_operator = coarse_apply_schur_complement_PRECISION;
+		
+	      //restoring old v_end
+              l->next_level->p_PRECISION.v_end = old_v_end;  
               START_MASTER(threading)
               g.coarsest_time += MPI_Wtime();
               END_MASTER(threading)
