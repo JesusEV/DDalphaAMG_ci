@@ -62,6 +62,35 @@ DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -
 # DEVEL_VERSION_FLAGS += -DBLOCK_JACOBI -DPERS_COMMS
 
 #---------------------------------------------------
+
+# Integration of MUMPS within DDalphaAMG
+
+MUMPSDIR = /usr/local/sw/mumps-5.4.1/
+MUMPS_LIBS = $(MUMPSDIR)lib/
+
+LMETISDIR = /usr/local/sw/metis-5.1.0/install/lib/
+LMETIS=-L$(LMETISDIR) -lmetis
+LPMETISDIR = /usr/local/sw/parmetis-4.0.3/install/lib/
+LPMETIS=-L$(LPMETISDIR) -lparmetis
+
+LSCOTCHDIR = /usr/local/sw/scotch-6.1.1/lib/
+LSCOTCH = -L$(LSCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lscotch -lscotcherr
+
+LPORD=-L$(MUMPS_LIBS) -lpord
+LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
+
+LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
+
+# Enable the following three to activate MUMPS within DDalphaAMG
+ LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
+ OPT_VERSION_FLAGS += -DMUMPS_ADDS
+ DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
+
+
+#---------------------------------------------------
+
+# lapack and scalapack linkages
+
 LAPACK_DIR = dependencies/lapack-3.9.0
 LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
 LAPACKE_INCLUDE = $(LAPACKE_DIR)/include
@@ -92,7 +121,7 @@ install: copy
 .SECONDARY:
 
 $(BINDIR)/DDalphaAMG : $(OBJ) 
-	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
+	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
 
 DDalphaAMG : $(BINDIR)/DDalphaAMG
 	ln -sf $(BINDIR)/$@ $@
@@ -114,7 +143,7 @@ $(LIBDIR)/libDDalphaAMG_devel.a: $(OBJDB)
 	ranlib $@
 
 $(TSTDIR)/%: $(LIB) $(TSTDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) -I$(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
+	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) -I$(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
 
 $(DOCDIR)/user_doc.pdf: $(DOCDIR)/user_doc.tex $(DOCDIR)/user_doc.bib
 	( cd $(DOCDIR); pdflatex user_doc; bibtex user_doc; pdflatex user_doc; pdflatex user_doc; )
@@ -123,10 +152,10 @@ $(INCDIR)/%: $(SRCDIR)/%
 	cp $(SRCDIR)/`basename $@` $@
 
 $(BUILDDIR)/%.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) $(OPT_VERSION_FLAGS) -I$(LAPACKE_INCLUDE) -c $< -o $@
+	$(CC) $(OPT_VERSION_FLAGS) -I$(LAPACKE_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
 
 $(BUILDDIR)/%_devel.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) -g $(DEVEL_VERSION_FLAGS) -I$(LAPACKE_INCLUDE) -c $< -o $@
+	$(CC) -g $(DEVEL_VERSION_FLAGS) -I$(LAPACKE_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
 
 $(GSRCDIR)/%.h: $(SRCDIR)/%.h $(firstword $(MAKEFILE_LIST))
 	cp $< $@
