@@ -460,6 +460,9 @@
     MPI_Request* pers_comms_recvrs_minus[8];
     MPI_Request* pers_comms_sendrs_minus[8];
 #endif
+#ifdef MUMPS_ADDS
+    CMUMPS_STRUC_C mumps_id;
+#endif
 
   } global_struct;
 

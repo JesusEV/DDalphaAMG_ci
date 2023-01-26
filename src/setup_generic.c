@@ -328,7 +328,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
       re_setup_PRECISION( l->next_level, threading );
     }
   }
-#if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI)
+#if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI) || defined(MUMPS_ADDS)
   else {
     // this runs on level 0 only
 #ifdef POLYPREC
@@ -342,6 +342,26 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 #ifdef BLOCK_JACOBI
     l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
     l->p_PRECISION.block_jacobi_PRECISION.BJ_usable = 0;
+#endif
+#ifdef MUMPS_ADDS_deativated
+    //TODO change ifdef flag back to "MUMPS_ADDS" if you want to use mumps in setup as well
+
+    // setting up mumps data formatting
+    mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
+
+    // (timing of) factorization
+    double t0,t1;
+    START_MASTER(threading)
+    t0 = MPI_Wtime();
+    END_MASTER(threading)
+    g.mumps_id.job = 2;	//factorize
+    // call to factorize
+    cmumps_c(&(g.mumps_id));
+    START_MASTER(threading)
+    t1 = MPI_Wtime();
+    printf0("MUMPS factorize time (seconds) : %f\n",t1-t0);
+    END_MASTER(threading)
+    SYNC_CORES(threading)
 #endif
   }
 #endif

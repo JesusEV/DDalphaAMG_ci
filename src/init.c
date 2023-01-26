@@ -90,6 +90,23 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
       next_level_float_setup( l );
       END_LOCKED_MASTER(threading)
 
+#ifdef MUMPS_ADDS
+      if (l->level == 1){	//TODO: use correct number of processes
+	//			site_var 			no. of nodes
+        int mumps_n = l->next_level->num_lattice_site_var * l->next_level->num_inner_lattice_sites * g.num_processes;        //order of Matrix
+        int nnz = SQUARE(l->next_level->num_lattice_site_var) *l->next_level->num_inner_lattice_sites *9 * g.num_processes; //number of nonzero elements
+        int nnz_loc = SQUARE(l->next_level->num_lattice_site_var) * l->next_level->num_inner_lattice_sites *9;
+        int rhs_len = l->next_level->p_float.v_end-l->next_level->p_float.v_start;
+	
+	// fill mumps data structure with values
+        mumps_init_float(&(l->next_level->p_float), mumps_n, nnz_loc, rhs_len, threading);
+
+      }
+#endif
+
+
+
+
       if ( l->depth == 0 ) {
         START_LOCKED_MASTER(threading)
         interpolation_float_alloc( l );
@@ -141,6 +158,13 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   
   START_LOCKED_MASTER(threading)
   g.in_setup = 1;
+
+#ifdef MUMPS_ADDS
+  // a timer and counter to measure MUMPS performance
+  g.mumps_solve_time = 0;
+  g.mumps_solve_number = 0;
+#endif
+
   if ( g.vt.evaluation ) {
     l->level = g.num_levels-1;
   }
@@ -1031,6 +1055,12 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   save_pt = &(g.local_polyprec_d); g.local_polyprec_d = 5;
   read_parameter( &save_pt, "coarse grid local_polyprec_d:", "%d", 1, in, _DEFAULT_SET );
   g.local_polyprec_d++;
+#endif
+
+#ifdef MUMPS_ADDS
+  // using mumps_drop_tol from input file as accuracy for solves
+  save_pt = &(g.mumps_drop_tol); g.mumps_drop_tol = 1.0e-3;
+  read_parameter( &save_pt, "coarse grid mumps_drop_tol:", "%le", 1, in, _DEFAULT_SET );
 #endif
 
   save_pt = &(g.low_level_meas); g.low_level_meas = 0;
