@@ -91,15 +91,15 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
       END_LOCKED_MASTER(threading)
 
 #ifdef MUMPS_ADDS
-      if (l->level == 1){	//TODO: use correct number of processes
+      if (l->level == 1){   
 	//			site_var 			no. of nodes
-        int mumps_n = l->next_level->num_lattice_site_var * l->next_level->num_inner_lattice_sites * g.num_processes;        //order of Matrix
+        int mumps_n = l->next_level->num_lattice_site_var * l->next_level->num_inner_lattice_sites * l->next_level->num_processes;        //order of Matrix
         int nnz = SQUARE(l->next_level->num_lattice_site_var) *l->next_level->num_inner_lattice_sites *9 * g.num_processes; //number of nonzero elements
         int nnz_loc = SQUARE(l->next_level->num_lattice_site_var) * l->next_level->num_inner_lattice_sites *9;
         int rhs_len = l->next_level->p_float.v_end-l->next_level->p_float.v_start;
 	
 	// fill mumps data structure with values
-        mumps_init_float(&(l->next_level->p_float), mumps_n, nnz_loc, rhs_len, threading);
+        mumps_init_float(&(l->next_level->p_float), mumps_n, nnz_loc, rhs_len, l->next_level, threading);
 
       }
 #endif

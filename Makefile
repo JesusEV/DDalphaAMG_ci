@@ -1,9 +1,10 @@
 # --- COMPILER ----------------------------------------
 #CC = mpiicc 
-CC = mpicc
+#CC = mpicc
+CC = /usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/bin/mpicc
 
 # --- CFLAGS -----------------------------------------
-CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -msse4.2 -fopenmp 
+CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -lblas -llapack 
 #CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
 #CFLAGS = $(CFLAGS_intel)
 CFLAGS = $(CFLAGS_gnu)
@@ -49,13 +50,13 @@ LIMELIB = $(LIMEDIR)/lib64/liblime.a
 # -DSINGLE_ALLREDUCE_ARNOLDI
 # -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DDEBUG
 
-OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES -DSSE -DOPENMP -DPROFILING
+OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES -DOPENMP -DPROFILING -DSSE -msse4.2
 # OPT_VERSION_FLAGS += -DGCRODR
 # OPT_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
 # OPT_VERSION_FLAGS += -DPOLYPREC
 # OPT_VERSION_FLAGS += -DBLOCK_JACOBI -DPERS_COMMS
 
-DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DSSE -DOPENMP
+DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DOPENMP
 # DEVEL_VERSION_FLAGS += -DGCRODR
 # DEVEL_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
 # DEVEL_VERSION_FLAGS += -DPOLYPREC
@@ -99,13 +100,9 @@ LAPACKLIB    = $(LAPACK_DIR)/liblapack.a
 LAPACKELIB   = $(LAPACK_DIR)/liblapacke.a
 LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
 
-#SCALAPACK_DIR = /usr/local/sw/intel/composer_xe_2013.0.079/mkl
-#SCALAPACK_INCLUDE = /usr/local/sw/intel/composer_xe_2013.0.079/mkl/include
-#SCALAPACK_LIBRARIES  =
-#SCALAPACK_LIBRARIES += -L/home/ramirez/Documents/DDalphaAMG_ci/dependencies/scalapack/lib -lscalapack
-SCALAPACK_DIR = 
-SCALAPACK_INCLUDE = 
-SCALAPACK_LIBRARIES =
+SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi3/scalapack/2.0.2/
+SCALAPACK_INCLUDE = -I$(SCALAPACK_DIR)/include/
+SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib64/ -lscalapack -lblacs
 #---------------------------------------------------
 
 
@@ -130,7 +127,7 @@ DDalphaAMG_devel: $(BINDIR)/DDalphaAMG_devel
 	ln -sf $(BINDIR)/$@ $@
 
 $(BINDIR)/DDalphaAMG_devel : $(OBJDB)
-	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
+	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
 
 $(LIBDIR)/libDDalphaAMG.a: $(OBJ)
 	ar rc $@ $(OBJ)

@@ -15,6 +15,6 @@ void mumps_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 // this function will initialize the cmumps instance, set control parameter,
 // general values and link arrays
 void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc,
-                          int rhs_len, Thread *threading);
+                          int rhs_len, level_struct *l, Thread *threading);
 
 #endif

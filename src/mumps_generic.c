@@ -171,11 +171,11 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   complex_PRECISION *buff_d_send[4], *buff_d_recv[4]; // will contain mu- coupling
 
   int buffer_i_pt, buffer_d_pt; // hold the sweeping index in buffer
-  MPI_Request r;
+  MPI_Request req;
   MPI_Status s;
 
-  int i_start = g.my_rank * l->num_inner_lattice_sites * site_var, 
-      j_start = g.my_rank * l->num_inner_lattice_sites * site_var; //contains own global row and col. start indices
+  i_start = g.my_rank * l->num_inner_lattice_sites * site_var; 
+  j_start = g.my_rank * l->num_inner_lattice_sites * site_var; //contains own global row and col. start indices
   int neighbors_j_start; //contains column start index of neighboring process
   
   int *boundary_table; // boundary table holds the neighboring lattice sites in each direction? 
@@ -317,8 +317,10 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 
     // sending both buffers:
     if (comm_nr[dir] > 0){
-      MPI_Isend(buff_d_send[dir], comm_nr[dir] * num_link_var, MPI_COMPLEX_PRECISION, l->neighbor_rank[2*dir], dir, g.comm_cart, &r);
-      MPI_Isend(buff_i_send[dir], 2 * comm_nr[dir], MPI_INT, l->neighbor_rank[2*dir], dir, g.comm_cart, &r);
+      MPI_Isend(buff_d_send[dir], comm_nr[dir] * num_link_var, MPI_COMPLEX_PRECISION,
+	      l->neighbor_rank[2*dir], dir, g.comm_cart, &req);
+      MPI_Isend(buff_i_send[dir], 2 * comm_nr[dir], MPI_INT, l->neighbor_rank[2*dir], dir,
+	      g.comm_cart, &req);
 
       // HOW TO FIND NEIGHBOR?
       // int l.neighbor_rank[8] contains ranks of neighbors
@@ -430,8 +432,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     }	//loop over nodes
   }	//loop over directions
 
-  } //TODO: what is this bracket for? Therefore a exit is inserted here:
-  exit(0);
   // increase global indices by 1 to match fortran indexing.
   // spmv doesn't work then anymore
   int nnz_loc = SQUARE(site_var) * nr_nodes *9;
@@ -496,14 +496,14 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
 }
 
 
-void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, int rhs_len, Thread *threading)
+void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, int rhs_len, level_struct *lx, Thread *threading)
 {
   
     // configure MUMPS_struct
     g.mumps_id.job = JOB_INIT;
     g.mumps_id.par = 1;
     g.mumps_id.sym = 0;
-    g.mumps_id.comm_fortran = USE_COMM_WORLD;
+    g.mumps_id.comm_fortran = (MUMPS_INT) MPI_Comm_c2f(lx->gs_double.level_comm);
     
     START_MASTER(threading)
     cmumps_c(&(g.mumps_id));

@@ -108,6 +108,18 @@
   //#define MKL_double MKL_Complex16
 #endif
 
+#ifdef MUMPS_ADDS
+#include "/home/leemhuis/installs/MUMPS_5.4.0/include/cmumps_c.h"
+#include "/home/leemhuis/installs/MUMPS_5.4.0/include/dmumps_c.h"
+//  #include "cmumps_c.h"
+//  #include "dmumps_c.h"
+
+#define JOB_INIT -1
+#define JOB_END -2
+#define USE_COMM_WORLD -987654
+#define ICNTL(I)                                                               \
+  icntl[(I)-1] // macro according to docu //bridges from fortran indices to c
+#endif
 
 #ifdef SSE
   #define MALLOC( variable, kind, length ) do{ if ( variable != NULL ) { \
@@ -204,34 +216,70 @@
   printf0( TMPSTRING, A ); }while(0)
   #else
   #define DEBUGOUTPUT( A, FORMAT )
-  #endif
+#endif
 
-  #include "vectorization_control.h"
-  #include "threading.h"
+#include "vectorization_control.h"
+#include "threading.h"
 
-  // enumerations
-  enum { _EVEN, _ODD };
-  enum { _NO_DEFAULT_SET, _DEFAULT_SET };
-  enum { _NO_REORDERING, _REORDER };
-  enum { _ADD, _COPY };
-  enum { _ORDINARY, _SCHWARZ, _ODDEVEN };
-  enum { _RES, _NO_RES };
-  enum { _STANDARD, _LIME }; //formats
-  enum { _READ, _WRITE };
-  enum { _NO_SHIFT };
-  enum { _BTWN_ORTH = 20 };
-  enum { _GLOBAL_FGMRES, _K_CYCLE, _COARSE_GMRES, _SMOOTHER };
-  enum { _COARSE_GLOBAL };
-  enum { _FULL_SYSTEM, _EVEN_SITES, _ODD_SITES };
-  enum { _LEFT, _RIGHT, _NOTHING };
-  enum { _PERIODIC, _ANTIPERIODIC, _TWISTED, _DIRICHLET };
-  enum { _GIP, _PIP, _LA2, _LA6, _LA8, _LA, _CPY, _SET, _PR, _SC, _NC, _SM, _OP_COMM, _OP_IDLE, _ALLR, _GD_COMM, _GD_IDLE, _GRAM_SCHMIDT, _GRAM_SCHMIDT_ON_AGGREGATES,
-      _SM1, _SM2, _SM3, _SM4, _SMALL1, _SMALL2, _NUM_PROF }; // _NUM_PROF has always to be the last constant!
-  enum { _VTS = 20 };
-  enum { _TRCKD_VAL, _STP_TIME, _SLV_ITER, _SLV_TIME, _CRS_ITER, _CRS_TIME, _SLV_ERR, _CGNR_ERR, _NUM_OPTB };
-  
-  typedef struct block_struct {
-    int start, color, no_comm, *bt;
+// enumerations
+enum { _EVEN, _ODD };
+enum { _NO_DEFAULT_SET, _DEFAULT_SET };
+enum { _NO_REORDERING, _REORDER };
+enum { _ADD, _COPY };
+enum { _ORDINARY, _SCHWARZ, _ODDEVEN };
+enum { _RES, _NO_RES };
+enum { _STANDARD, _LIME }; // formats
+enum { _READ, _WRITE };
+enum { _NO_SHIFT };
+enum { _BTWN_ORTH = 20 };
+enum { _GLOBAL_FGMRES, _K_CYCLE, _COARSE_GMRES, _SMOOTHER };
+enum { _COARSE_GLOBAL };
+enum { _FULL_SYSTEM, _EVEN_SITES, _ODD_SITES };
+enum { _LEFT, _RIGHT, _NOTHING };
+enum { _PERIODIC, _ANTIPERIODIC, _TWISTED, _DIRICHLET };
+enum {
+  _GIP,
+  _PIP,
+  _LA2,
+  _LA6,
+  _LA8,
+  _LA,
+  _CPY,
+  _SET,
+  _PR,
+  _SC,
+  _NC,
+  _SM,
+  _OP_COMM,
+  _OP_IDLE,
+  _ALLR,
+  _GD_COMM,
+  _GD_IDLE,
+  _GRAM_SCHMIDT,
+  _GRAM_SCHMIDT_ON_AGGREGATES,
+  _SM1,
+  _SM2,
+  _SM3,
+  _SM4,
+  _SMALL1,
+  _SMALL2,
+  _NUM_PROF
+}; // _NUM_PROF has always to be the last constant!
+enum { _VTS = 20 };
+enum {
+  _TRCKD_VAL,
+  _STP_TIME,
+  _SLV_ITER,
+  _SLV_TIME,
+  _CRS_ITER,
+  _CRS_TIME,
+  _SLV_ERR,
+  _CGNR_ERR,
+  _NUM_OPTB
+};
+
+typedef struct block_struct {
+  int start, color, no_comm, *bt;
   } block_struct;
   
   #include "main_pre_def_float.h"
@@ -405,7 +453,11 @@
 #ifdef BLOCK_JACOBI
     int local_polyprec_d;
 #endif
-
+#ifdef MUMPS_ADDS
+    double mumps_solve_time;
+    int mumps_solve_number;
+    double mumps_drop_tol;
+#endif
     // profiling, analysis, output
     int coarse_iter_count, iter_count, iterator, print, conf_flag, setup_flag, in_setup;
     double coarse_time, prec_time, *output_table[8], cur_storage, max_storage, total_time,
