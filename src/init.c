@@ -91,7 +91,7 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
       END_LOCKED_MASTER(threading)
 
 #ifdef MUMPS_ADDS
-      if (l->level == 1){   
+      if (l->level == 1 && !l->next_level->idle){   
 	//			site_var 			no. of nodes
         int mumps_n = l->next_level->num_lattice_site_var * l->next_level->num_inner_lattice_sites * l->next_level->num_processes;        //order of Matrix
         int nnz = SQUARE(l->next_level->num_lattice_site_var) *l->next_level->num_inner_lattice_sites *9 * g.num_processes; //number of nonzero elements
@@ -164,7 +164,7 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   g.mumps_solve_time = 0;
   g.mumps_solve_number = 0;
 #endif
-
+   
   if ( g.vt.evaluation ) {
     l->level = g.num_levels-1;
   }

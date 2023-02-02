@@ -483,7 +483,7 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
 
   // distributing the solution to all processes. Must be stored in px->x
   int send_count = (lx->p_PRECISION.v_end-lx->p_PRECISION.v_start);
-  MPI_Scatter(px->mumps_SOL, send_count, MPI_COMPLEX_PRECISION, phi, send_count, MPI_COMPLEX_PRECISION, 0, MPI_COMM_WORLD);
+  MPI_Scatter(px->mumps_SOL, send_count, MPI_COMPLEX_PRECISION, phi, send_count, MPI_COMPLEX_PRECISION, 0, lx->gs_PRECISION.level_comm); // lx->gs_PRECISION.level_comm
 
   // counting solves and measure time not only for mumps_solve but also distributing solution to
   // processes.
