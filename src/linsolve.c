@@ -295,6 +295,8 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
     if ( g.coarse_time > 0 ) 
       printf0("|        coarse grid time: %-8.4lf seconds (%04.1lf%%)        |\n",
               g.coarse_time, 100*(g.coarse_time/(t1-t0)) );
+    printf0("|        coarsest grid time: %-8.4lf seconds (%04.1lf%%)        |\n",
+              g.coarsest_time, 100*(g.coarsest_time/(t1-t0)) );
     printf0("|  consumed core minutes*: %-8.2le (solve only)           |\n", ((t1-t0)*g.num_processes*MAX(1,threading->n_core))/60.0 );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");
