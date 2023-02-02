@@ -503,7 +503,7 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, i
     g.mumps_id.job = JOB_INIT;
     g.mumps_id.par = 1;
     g.mumps_id.sym = 0;
-    g.mumps_id.comm_fortran = (MUMPS_INT) MPI_Comm_c2f(lx->gs_double.level_comm);
+    g.mumps_id.comm_fortran = (MUMPS_INT) MPI_Comm_c2f(lx->gs_PRECISION.level_comm);
     
     START_MASTER(threading)
     cmumps_c(&(g.mumps_id));

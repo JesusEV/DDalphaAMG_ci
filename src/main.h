@@ -702,3 +702,8 @@ typedef struct block_struct {
   #include "polyprec_double.h"
   #include "polyprec_float.h"
 #endif
+
+#ifdef MUMPS_ADDS
+#include "mumps_double.h"
+#include "mumps_float.h"
+#endif

@@ -172,6 +172,11 @@ void next_level_PRECISION_setup( level_struct *l ) {
       //                                g.method==6?(g.odd_even?g5D_coarse_apply_schur_complement_PRECISION:g5D_apply_coarse_operator_PRECISION)
       //                                :(g.odd_even?coarse_apply_schur_complement_PRECISION:apply_coarse_operator_PRECISION),
       //                                &(l->next_level->p_PRECISION), l->next_level );
+#elif MUMPS_ADDS
+      fgmres_PRECISION_struct_alloc( g.coarse_iter, g.coarse_restart, l->next_level->vector_size, g.coarse_tol, 
+                                     _COARSE_GMRES, _NOTHING, NULL,
+                                     g.on_solve?mumps_solve_PRECISION:apply_coarse_operator_PRECISION,
+                                     &(l->next_level->p_PRECISION), l->next_level );
 #else
       fgmres_PRECISION_struct_alloc( g.coarse_iter, g.coarse_restart, l->next_level->vector_size, g.coarse_tol, 
                                      _COARSE_GMRES, _NOTHING, NULL,
