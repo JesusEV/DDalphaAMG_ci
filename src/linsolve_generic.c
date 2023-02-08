@@ -1898,8 +1898,11 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   }
 #endif
 
+  START_MASTER(threading)
+
 #if defined(GCRODR) || defined(POLYPREC)
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
+
   //int jx = j-1;
   int jx;
   if ( j==0 ) {
@@ -1932,6 +1935,8 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     memset( p->polyprec_PRECISION.eigslvr.Hc[jx]+jx+2, 0.0, sizeof(complex_PRECISION)*(p->restart_length + 1 - (jx+2)) );
   }
 #endif
+
+  END_MASTER(threading)
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)

@@ -249,6 +249,12 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 
 #ifdef POLYPREC
   {
+
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
+
+    START_MASTER(threading)
+
     // setting flag to re-update lejas
     level_struct *lx = l;
     while (1) {
@@ -265,6 +271,12 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       }
       else { lx = lx->next_level; }
     }
+
+    END_MASTER(threading)
+
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
+
   }
 #endif
 

@@ -330,6 +330,12 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
   }
 #if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI)
   else {
+
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
+
+    START_MASTER(threading)
+
     // this runs on level 0 only
 #ifdef POLYPREC
     l->p_PRECISION.polyprec_PRECISION.update_lejas = 1;
@@ -343,6 +349,12 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
     l->p_PRECISION.block_jacobi_PRECISION.BJ_usable = 0;
 #endif
+
+    END_MASTER(threading)
+
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
+
   }
 #endif
 }
