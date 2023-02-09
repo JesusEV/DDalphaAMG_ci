@@ -1457,15 +1457,6 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   }
 #endif
 
-#ifdef POLYPREC
-  START_MASTER(threading)
-  p->preconditioner = p->polyprec_PRECISION.preconditioner;
-  END_MASTER(threading)
-
-  SYNC_MASTER_TO_ALL(threading)
-  SYNC_CORES(threading)
-#endif
-
   if (g.low_level_meas == 1) {
     START_MASTER(threading)
     if ( p->preconditioner==NULL ) { printf0("NULL !!\n"); }
@@ -1479,6 +1470,22 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
     vector_PRECISION_copy( p->block_jacobi_PRECISION.b_backup, p->b, start, end, l );
     block_jacobi_apply_PRECISION( p->b, p->block_jacobi_PRECISION.b_backup, p, l, threading );
   }
+#endif
+
+#ifdef POLYPREC
+  if ( l->level==0 && l->p_PRECISION.polyprec_PRECISION.update_lejas == 1 ) {
+    // re-construct Lejas
+    re_construct_lejas_PRECISION( l, threading );
+  }
+#endif
+
+#ifdef POLYPREC
+  START_MASTER(threading)
+  p->preconditioner = p->polyprec_PRECISION.preconditioner;
+  END_MASTER(threading)
+
+  SYNC_MASTER_TO_ALL(threading)
+  SYNC_CORES(threading)
 #endif
 
 #ifdef GCRODR
@@ -1509,15 +1516,6 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   START_MASTER(threading)
   printf0("fgmres iters = %d\n", fgmres_iters);
   END_MASTER(threading)
-
-#ifdef POLYPREC
-  if ( l->level==0 && l->p_PRECISION.polyprec_PRECISION.update_lejas == 1 ) {
-    if ( fgmres_iters >= 1.5*p->polyprec_PRECISION.d_poly ) {
-      // re-construct Lejas
-      re_construct_lejas_PRECISION( l, threading );
-    }
-  }
-#endif
 
   if (g.low_level_meas == 1) {
     p->eval_operator( p->w, p->x, p->op, l, threading ); // compute w = D*x
