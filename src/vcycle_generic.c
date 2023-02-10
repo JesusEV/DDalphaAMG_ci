@@ -146,7 +146,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
             }
           } else {
 #ifdef MUMPS_ADDS
-	    if (g.on_solve) { //deactivate mumps during set up
+	    if (!g.on_solve) { //deactivate mumps during set up
               l->next_level->p_PRECISION.preconditioner = NULL;
 	    }
 #endif
@@ -161,9 +161,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 	    END_MASTER(threading)
 
 #ifdef MUMPS_ADDS
-	    if (g.on_solve) {
               l->next_level->p_PRECISION.preconditioner = mumps_solve_PRECISION;
-	    }
 #endif
 	    START_MASTER(threading)
             printf0("gmres iters = %d\n", fgmres_iters);
