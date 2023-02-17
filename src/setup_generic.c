@@ -486,8 +486,8 @@ void test_vector_PRECISION_update( int i, level_struct *l, struct Thread *thread
   
   if ( l->level > 1 )
     test_vector_PRECISION_update( i, l->next_level, threading );
-  
-  if ( !l->idle )
+
+  if ( !l->idle && i<l->num_eig_vect )
     vector_PRECISION_real_scale( l->is_PRECISION.test_vector[i], l->p_PRECISION.x,
                                  1.0/global_norm_PRECISION( l->p_PRECISION.x, 0, l->inner_vector_size, l, threading ),
                                  threading->start_index[l->depth], threading->end_index[l->depth], l );

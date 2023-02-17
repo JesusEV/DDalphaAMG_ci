@@ -1214,8 +1214,8 @@ void validate_parameters( int ls, level_struct *l ) {
 #endif
   
   //TODO: Could work without, but you need to fix the setup phase.    
-  for ( i=0; i<g.num_levels-2; i++ )
-    ASSERT( g.num_eig_vect[i] <= g.num_eig_vect[i+1] );
+  //for ( i=0; i<g.num_levels-2; i++ )
+  //  ASSERT( g.num_eig_vect[i] <= g.num_eig_vect[i+1] );
 
   //TODO: for some reason g.mixed_precision=0 do not work with g.num_levels>2
   if ( g.num_levels>2 && g.interpolation )
