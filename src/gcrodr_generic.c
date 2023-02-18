@@ -561,8 +561,23 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     END_MASTER(threading);
     SYNC_MASTER_TO_ALL(threading);
 
+    double buff1x = p->tol;
+    double buff2x = g.coarse_tol;
+
+    START_MASTER(threading)
+    if ( g.on_solve==1 ) {
+      p->tol = 1.0e-20;
+      g.coarse_tol = 1.0e-20;
+    }
+    END_MASTER(threading)
+
     m = fgmresx_PRECISION(p, l, threading);
     fgmresx_iter += m;
+
+    START_MASTER(threading)
+    p->tol = buff1x;
+    g.coarse_tol = buff2x;
+    END_MASTER(threading)    
 
     START_MASTER(threading)
     l->dup_H = 0;

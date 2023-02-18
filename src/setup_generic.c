@@ -344,6 +344,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 #ifdef GCRODR
     l->p_PRECISION.gcrodr_PRECISION.update_CU = 1;
     l->p_PRECISION.gcrodr_PRECISION.upd_ctr = 0;
+    l->p_PRECISION.gcrodr_PRECISION.CU_usable = 0;
 #endif
 #ifdef BLOCK_JACOBI
     l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
