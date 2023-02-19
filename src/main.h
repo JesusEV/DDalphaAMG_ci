@@ -461,6 +461,14 @@
     MPI_Request* pers_comms_sendrs_minus[8];
 #endif
 
+    double matmul_time;
+#ifdef BLOCK_JACOBI
+    double bj_time;
+#endif
+#ifdef GCRODR
+    double gcrodr_LSP_time, gcrodr_buildAB_time, gcrodr_buildCU_time;
+#endif
+
   } global_struct;
 
   extern global_struct g;

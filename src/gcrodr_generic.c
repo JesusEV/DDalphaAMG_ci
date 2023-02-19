@@ -656,7 +656,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     memset(bf, 0.0, sizeof(complex_PRECISION)*(k+m+1));
     bf[k] = beta;
 
+    g.gcrodr_LSP_time -= MPI_Wtime();
     gels_PRECISION( LAPACK_COL_MAJOR, 'N', k+m+1, k+m, 1, p->gcrodr_PRECISION.G[0], k+p->restart_length+1, bf, k+p->restart_length+1);
+    g.gcrodr_LSP_time += MPI_Wtime();
 
     // restoring G from Gc
     {
@@ -708,13 +710,26 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     if ( p->gcrodr_PRECISION.upd_ctr < g.gcrodr_upd_itrs ) {
       // build the matrices A and B used for generalized-eigensolving
+
+      START_MASTER(threading)
+      g.gcrodr_buildAB_time -= MPI_Wtime();
+      END_MASTER(threading)
       gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.Gc,
                              p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, k+m, p, l, threading );
+      START_MASTER(threading)
+      g.gcrodr_buildAB_time += MPI_Wtime();
+      END_MASTER(threading)
 
       SYNC_MASTER_TO_ALL(threading);
 
       // build C and U
+      START_MASTER(threading)
+      g.gcrodr_buildCU_time -= MPI_Wtime();
+      END_MASTER(threading)
       build_CU_PRECISION( p->gcrodr_PRECISION.Gc, p->gcrodr_PRECISION.hatW, p->gcrodr_PRECISION.hatZ, p, l, threading, k+m );
+      START_MASTER(threading)
+      g.gcrodr_buildCU_time += MPI_Wtime();
+      END_MASTER(threading)
 
       START_MASTER(threading)
       p->gcrodr_PRECISION.upd_ctr++;

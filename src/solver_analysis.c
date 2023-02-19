@@ -117,7 +117,13 @@ void test_routine( level_struct *l, struct Thread *threading ) {
 
 
 void prof_init( level_struct *l ) {
-  if ( l->depth == 0 ) { g.coarse_time=0; g.coarse_iter_count=0; g.coarsest_time=0; }
+  if ( l->depth == 0 ) { g.coarse_time=0; g.coarse_iter_count=0; g.coarsest_time=0; g.matmul_time=0; }
+#ifdef BLOCK_JACOBI
+  if ( l->depth == 0 ) { g.bj_time=0; }
+#endif
+#ifdef GCRODR
+  if ( l->depth == 0 ) { g.gcrodr_buildAB_time=0; g.gcrodr_buildCU_time=0; g.gcrodr_LSP_time=0; }
+#endif
   prof_double_init( l );
   prof_float_init( l );
   if ( l->next_level != NULL )
