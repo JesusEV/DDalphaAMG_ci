@@ -768,7 +768,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     if ( g.on_solve==1 ) { upd_itrs = g.gcrodr_upd_itrs_solve; }
     else { upd_itrs = g.gcrodr_upd_itrs_setup; }
 
-    if ( (m>15) && (p->gcrodr_PRECISION.upd_ctr < upd_itrs) ) {
+    if ( (m>20) && (p->gcrodr_PRECISION.upd_ctr < upd_itrs) ) {
       // build the matrices A and B used for generalized-eigensolving
 
       START_MASTER(threading)
@@ -986,14 +986,30 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
       //printf0("WITHIN INNER GMRES, inner rel res = %.8f ***\n", cabs( p->gamma[j+1] )/norm_r0);
 
-      // check if the residual hasn't changed in 5 steps
+      // check if the two most significant digits of the residual haven't changed
       if ( j%5==0 ) {
         prev_res = curr_res;
         curr_res = cabs( p->gamma[j+1] )/norm_r0;
 
-        // if the residual hasn't changed, exit
-        if ( curr_res == prev_res ) {
-          finish = 1;
+        if ( j>0 ) {
+          // extract the three most significant digits of prev_res and curr_res
+          int nr1_i, nr2_i;
+          {
+            PRECISION nr1_f = prev_res, nr2_f = curr_res;
+            int fctr = 1;
+            while ( nr1_f<100 ) {
+              nr1_f *= 10;
+              fctr *= 10;
+            }
+            nr2_f *= fctr;
+            nr1_i = (int)nr1_f;
+            nr2_i = (int)nr2_f;
+          }
+
+          // if the residual hasn't changed, exit
+          if ( nr1_i == nr2_i ) {
+            finish = 1;
+          }
         }
       }
 
