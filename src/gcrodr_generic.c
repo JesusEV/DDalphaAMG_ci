@@ -341,7 +341,7 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
 int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ){
 
   // in this context, <m> changes! It is not (necessarily) p->restart_length
-  int fgmresx_iter=0, m, j, ol, k=p->gcrodr_PRECISION.k, i, g_ln, start, end;
+  int fgmresx_iter=0, m=0, j, ol, k=p->gcrodr_PRECISION.k, i, g_ln, start, end;
   PRECISION beta=0;
 
   g_ln = p->restart_length + p->gcrodr_PRECISION.k;
@@ -516,6 +516,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     if ( m>15 && m<k ) {
 
+      // TODO : setting this to zero is clearly inconsistent with what follows
+      vector_PRECISION_define( p->x, 0, start, end, l );
+
       int buff_init_guess = p->initial_guess_zero;
       p->initial_guess_zero = 0;
 
@@ -533,14 +536,16 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       double buff2x = g.coarse_tol;
       START_MASTER(threading)
       //if ( g.on_solve==1 ) {
-        p->tol = 1.0e-20;
-        g.coarse_tol = 1.0e-20;
+        p->tol = 1.0e-5;
+        g.coarse_tol = 1.0e-5;
       //}
       l->dup_H = 1;
       END_MASTER(threading)
 
       m = fgmresx_PRECISION(p, l, threading);
       fgmresx_iter += m;
+
+      //printf0("OUT OF (SECOND) INITIAL GMRES, m = %d ***\n", m);
 
       START_MASTER(threading)
       p->tol = buff1x;
@@ -928,6 +933,8 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
   }
 #endif
 
+  PRECISION prev_res=-1.0, curr_res=-1.0;
+
 //#ifdef BLOCK_JACOBI
 //  int rewinder = p->restart_length/10;
 //  if (rewinder<6) rewinder = 6;
@@ -965,17 +972,30 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 #endif
 
     SYNC_MASTER_TO_ALL(threading)
-    SYNC_CORES(threading)
-      
+
+    //printf0("WITHIN INNER GMRES, H[x][x] = %f ***\n", cabs( p->H[j][j+1] ));
+
     if ( cabs( p->H[j][j+1] ) > p->tol/10 ) {
       qr_update_PRECISION( p->H, p->s, p->c, p->gamma, j, l, threading );
       SYNC_MASTER_TO_ALL(threading)
-      SYNC_CORES(threading)
       gamma_jp1 = cabs( p->gamma[j+1] );
 
       START_MASTER(threading)
       //printf0("g (proc=%d,j=%d) rel residual (gcro-dr) = %f\n\n", g.my_rank, j, gamma_jp1/norm_r0);
       END_MASTER(threading)
+
+      //printf0("WITHIN INNER GMRES, inner rel res = %.8f ***\n", cabs( p->gamma[j+1] )/norm_r0);
+
+      // check if the residual hasn't changed in 5 steps
+      if ( j%5==0 ) {
+        prev_res = curr_res;
+        curr_res = cabs( p->gamma[j+1] )/norm_r0;
+
+        // if the residual hasn't changed, exit
+        if ( curr_res == prev_res ) {
+          finish = 1;
+        }
+      }
 
       if( gamma_jp1/norm_r0 < p->tol || gamma_jp1/norm_r0 > 1E+5 ) { // if satisfied ... stop
 
@@ -992,14 +1012,13 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
       }
     } else {
-      //START_MASTER(threading)
+      START_MASTER(threading)
       //printf0("from gcrodr : depth: %d, iter: %d, p->H(%d,%d) = %+lf+%lfi\n", l->depth, iter, j+1, j, CSPLIT( p->H[j][j+1] ) );
-      //END_MASTER(threading)
+      END_MASTER(threading)
       finish = 1;
-      break;
     }
   } // end of the (only and) single restart
-  
+
   if ( l->level == 0 ) {
     START_LOCKED_MASTER(threading)
     g.coarse_iter_count += iter;
