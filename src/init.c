@@ -1017,8 +1017,13 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
 #ifdef GCRODR
   save_pt = &(g.gcrodr_k); g.gcrodr_k = 15;
   read_parameter( &save_pt, "coarse grid gcrodr_k:", "%d", 1, in, _DEFAULT_SET );
-  save_pt = &(g.gcrodr_upd_itrs); g.gcrodr_upd_itrs = 5;
-  read_parameter( &save_pt, "coarse grid gcrodr_upd_itrs:", "%d", 1, in, _DEFAULT_SET );
+
+  save_pt = &(g.gcrodr_upd_itrs_setup); g.gcrodr_upd_itrs_setup = 5;
+  read_parameter( &save_pt, "coarse grid gcrodr_upd_itrs_setup:", "%d", 1, in, _DEFAULT_SET );
+
+  save_pt = &(g.gcrodr_upd_itrs_solve); g.gcrodr_upd_itrs_solve = 5;
+  read_parameter( &save_pt, "coarse grid gcrodr_upd_itrs_solve:", "%d", 1, in, _DEFAULT_SET );
+
 #endif
 
 #ifdef POLYPREC
@@ -1214,8 +1219,8 @@ void validate_parameters( int ls, level_struct *l ) {
 #endif
   
   //TODO: Could work without, but you need to fix the setup phase.    
-  for ( i=0; i<g.num_levels-2; i++ )
-    ASSERT( g.num_eig_vect[i] <= g.num_eig_vect[i+1] );
+  //for ( i=0; i<g.num_levels-2; i++ )
+  //  ASSERT( g.num_eig_vect[i] <= g.num_eig_vect[i+1] );
 
   //TODO: for some reason g.mixed_precision=0 do not work with g.num_levels>2
   if ( g.num_levels>2 && g.interpolation )

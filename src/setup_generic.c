@@ -330,6 +330,12 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
   }
 #if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI)
   else {
+
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
+
+    START_MASTER(threading)
+
     // this runs on level 0 only
 #ifdef POLYPREC
     l->p_PRECISION.polyprec_PRECISION.update_lejas = 1;
@@ -338,11 +344,20 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 #ifdef GCRODR
     l->p_PRECISION.gcrodr_PRECISION.update_CU = 1;
     l->p_PRECISION.gcrodr_PRECISION.upd_ctr = 0;
+    l->p_PRECISION.gcrodr_PRECISION.CU_usable = 0;
 #endif
 #ifdef BLOCK_JACOBI
     l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
     l->p_PRECISION.block_jacobi_PRECISION.BJ_usable = 0;
 #endif
+
+    //printf0("RESET OF FLAGS FOR : BJ, POLYPREC AND GCRO-DR ***\n");
+
+    END_MASTER(threading)
+
+    SYNC_MASTER_TO_ALL(threading)
+    SYNC_CORES(threading)
+
   }
 #endif
 }
@@ -474,8 +489,8 @@ void test_vector_PRECISION_update( int i, level_struct *l, struct Thread *thread
   
   if ( l->level > 1 )
     test_vector_PRECISION_update( i, l->next_level, threading );
-  
-  if ( !l->idle )
+
+  if ( !l->idle && i<l->num_eig_vect )
     vector_PRECISION_real_scale( l->is_PRECISION.test_vector[i], l->p_PRECISION.x,
                                  1.0/global_norm_PRECISION( l->p_PRECISION.x, 0, l->inner_vector_size, l, threading ),
                                  threading->start_index[l->depth], threading->end_index[l->depth], l );
