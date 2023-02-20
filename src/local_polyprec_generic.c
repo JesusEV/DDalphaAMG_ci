@@ -1053,16 +1053,15 @@ void local_re_construct_lejas_PRECISION( level_struct *l, struct Thread *threadi
 
   local_update_lejas_PRECISION(&(l->p_PRECISION.block_jacobi_PRECISION.local_p), l, threading);
 
-  local_gmres_PRECISION_struct *p = &(l->p_PRECISION.block_jacobi_PRECISION.local_p);
-
-  START_MASTER(threading)
-  int d_poly = p->polyprec_PRECISION.d_poly;
-  printf0("lejas (proc=%d) =  ", g.my_rank);
-  for ( int i=0; i<d_poly; i++ ) {
-    printf0( "%f+%fj  ", creal(p->polyprec_PRECISION.lejas[i]), cimag(p->polyprec_PRECISION.lejas[i]) );
-  }
-  printf0("\n");
-  END_MASTER(threading)
+  //local_gmres_PRECISION_struct *p = &(l->p_PRECISION.block_jacobi_PRECISION.local_p);
+  //START_MASTER(threading)
+  //int d_poly = p->polyprec_PRECISION.d_poly;
+  //printf0("lejas (proc=%d) =  ", g.my_rank);
+  //for ( int i=0; i<d_poly; i++ ) {
+  //  printf0( "%f+%fj  ", creal(p->polyprec_PRECISION.lejas[i]), cimag(p->polyprec_PRECISION.lejas[i]) );
+  //}
+  //printf0("\n");
+  //END_MASTER(threading)
 
   SYNC_MASTER_TO_ALL(threading);
   SYNC_CORES(threading)

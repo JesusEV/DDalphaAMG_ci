@@ -222,6 +222,71 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       }
 #endif
 
+      // calling the coarsest-level solver once on setup
+#if defined(GCRODR) || defined(POLYPREC) || defined(BLOCK_JACOBI)
+      {
+        level_struct *lx = l;
+
+        printf0( "\nPre-constructing coarsest-level data ...\n" );
+
+        while (1) {
+          if ( lx->level==0 ) {
+            if ( g.mixed_precision==0 ) {
+
+              gmres_double_struct* px = &(lx->p_double);
+
+              // set RHS to random
+              START_MASTER(threading)
+              vector_double_define_random( px->b, px->v_start, px->v_end, lx );
+              END_MASTER(threading)
+
+              g.gcrodr_calling_from_setup = 1;
+
+              double buff1x = px->tol;
+              double buff2x = g.coarse_tol;
+              px->tol = 1.0e-20;
+              g.coarse_tol = 1.0e-20;
+              // call the coarsest-level solver
+              coarse_solve_odd_even_double( px, &(lx->oe_op_double), lx, threading );
+              px->tol = buff1x;
+              g.coarse_tol = buff2x;
+
+              g.gcrodr_calling_from_setup = 0;
+
+            }
+            else {
+
+              gmres_float_struct* px = &(lx->p_float);
+
+              // set RHS to random
+              START_MASTER(threading)
+              vector_float_define_random( px->b, px->v_start, px->v_end, lx );
+              END_MASTER(threading)
+
+              g.gcrodr_calling_from_setup = 1;
+
+              double buff1x = px->tol;
+              double buff2x = g.coarse_tol;
+              px->tol = 1.0e-20;
+              g.coarse_tol = 1.0e-20;
+              // call the coarsest-level solver
+              coarse_solve_odd_even_float( px, &(lx->oe_op_float), lx, threading );
+              px->tol = buff1x;
+              g.coarse_tol = buff2x;
+
+              g.gcrodr_calling_from_setup = 0;
+
+            }
+            break;
+          }
+          else { lx = lx->next_level; }
+        }
+
+        printf0( "... done\n\n" );
+
+      }
+#endif
+
       START_MASTER(threading)
       g.avg_b1 = 0.0;
       g.avg_b2 = 0.0;
@@ -322,6 +387,71 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       else { lx = lx->next_level; }
     }
   }
+#endif
+
+      // calling the coarsest-level solver once on setup
+#if defined(GCRODR) || defined(POLYPREC) || defined(BLOCK_JACOBI)
+      {
+        level_struct *lx = l;
+
+        printf0( "\nPre-constructing coarsest-level data ...\n" );
+
+        while (1) {
+          if ( lx->level==0 ) {
+            if ( g.mixed_precision==0 ) {
+
+              gmres_double_struct* px = &(lx->p_double);
+
+              // set RHS to random
+              START_MASTER(threading)
+              vector_double_define_random( px->b, px->v_start, px->v_end, lx );
+              END_MASTER(threading)
+
+              g.gcrodr_calling_from_setup = 1;
+
+              double buff1x = px->tol;
+              double buff2x = g.coarse_tol;
+              px->tol = 1.0e-20;
+              g.coarse_tol = 1.0e-20;
+              // call the coarsest-level solver
+              coarse_solve_odd_even_double( px, &(lx->oe_op_double), lx, threading );
+              px->tol = buff1x;
+              g.coarse_tol = buff2x;
+
+              g.gcrodr_calling_from_setup = 0;
+
+            }
+            else {
+
+              gmres_float_struct* px = &(lx->p_float);
+
+              // set RHS to random
+              START_MASTER(threading)
+              vector_float_define_random( px->b, px->v_start, px->v_end, lx );
+              END_MASTER(threading)
+
+              g.gcrodr_calling_from_setup = 1;
+
+              double buff1x = px->tol;
+              double buff2x = g.coarse_tol;
+              px->tol = 1.0e-20;
+              g.coarse_tol = 1.0e-20;
+              // call the coarsest-level solver
+              coarse_solve_odd_even_float( px, &(lx->oe_op_float), lx, threading );
+              px->tol = buff1x;
+              g.coarse_tol = buff2x;
+
+              g.gcrodr_calling_from_setup = 0;
+
+            }
+            break;
+          }
+          else { lx = lx->next_level; }
+        }
+
+        printf0( "... done\n\n" );
+
+      }
 #endif
 
   START_MASTER(threading)

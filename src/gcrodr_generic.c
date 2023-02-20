@@ -409,10 +409,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     // IMPORTANT : this if statement is not being accessed at the moment ...
     if ( p->gcrodr_PRECISION.update_CU == 1 ) {
 
-      START_MASTER(threading)
-      printf0("\nUPDATING C AND U .. !!\n\n");
-      END_MASTER(threading)
-
       // Yk = copy(Uk)
       START_MASTER(threading);
       complex_PRECISION **tmp_ptr = p->gcrodr_PRECISION.U;
@@ -464,6 +460,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       p->gcrodr_PRECISION.recompute_DPCk_poly = 1;
       p->gcrodr_PRECISION.recompute_DPCk_plain = 1;
 #endif
+
+      //printf0("UPDATED C AND U (INITIAL, USABLE ALREADY) ***\n");
     }
 
     // x  +=  Uk * Ck^{H} * r
@@ -505,25 +503,57 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     if ( p->initial_guess_zero == 1 )
       vector_PRECISION_define( p->x, 0, start, end, l );
 
-    double buff1x = p->tol;
-    double buff2x = g.coarse_tol;
     START_MASTER(threading)
-    if ( g.on_solve==1 ) {
-      p->tol = 1.0e-20;
-      g.coarse_tol = 1.0e-20;
-    }
     l->dup_H = 1;
     END_MASTER(threading)
-
     m = fgmresx_PRECISION(p, l, threading);
-    fgmresx_iter += m;
-
     START_MASTER(threading)
-    p->tol = buff1x;
-    g.coarse_tol = buff2x;
     l->dup_H = 0;
     END_MASTER(threading)
     SYNC_MASTER_TO_ALL(threading);
+
+    //printf0("OUT OF INITIAL GMRES, m = %d ***\n", m);
+
+    if ( m>15 && m<k ) {
+
+      int buff_init_guess = p->initial_guess_zero;
+      p->initial_guess_zero = 0;
+
+      apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+      vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+
+      beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
+
+      START_MASTER(threading);
+      // setting the following line for the upcoming call to fgmresx_PRECISION(...)
+      p->gamma[0] = beta;
+      END_MASTER(threading);
+
+      double buff1x = p->tol;
+      double buff2x = g.coarse_tol;
+      START_MASTER(threading)
+      //if ( g.on_solve==1 ) {
+        p->tol = 1.0e-20;
+        g.coarse_tol = 1.0e-20;
+      //}
+      l->dup_H = 1;
+      END_MASTER(threading)
+
+      m = fgmresx_PRECISION(p, l, threading);
+      fgmresx_iter += m;
+
+      START_MASTER(threading)
+      p->tol = buff1x;
+      g.coarse_tol = buff2x;
+      l->dup_H = 0;
+      END_MASTER(threading)
+      SYNC_MASTER_TO_ALL(threading);
+
+      p->initial_guess_zero = buff_init_guess;
+    }
+    else {
+      fgmresx_iter += m;
+    }
 
     // update the solution p->x (this, from the inside, applies back-substitution on p->y)
     compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
@@ -539,9 +569,16 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
       PRECISION betaxx = global_norm_PRECISION( p->gcrodr_PRECISION.r_aux, start, end, l, threading );
 
-      if ( betaxx/norm_r0xx > p->tol ) {
+      //printf0("OUT OF INITIAL GMRES, rel res = %f, finish = %d, tol = %f, marg tol = %f ***\n", betaxx/norm_r0xx, p->gcrodr_PRECISION.finish, p->tol, p->tol+0.2*p->tol);
+
+      // hardcoding a 20% marging here
+      if ( (betaxx/norm_r0xx) > (p->tol + 0.2*p->tol) ) {
         p->gcrodr_PRECISION.finish = 0;
+      } else {
+        p->gcrodr_PRECISION.finish = 1;
       }
+
+      //printf0("OUT OF INITIAL GMRES, finish = %d ***\n", p->gcrodr_PRECISION.finish);
     }
 
     if ( l->level==0 && p->block_jacobi_PRECISION.BJ_usable==1 ) {
@@ -586,6 +623,14 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       // build C and U
       build_CU_PRECISION( p->gcrodr_PRECISION.eigslvr.Hc, p->V, p->Z, p, l, threading, m );
+
+      // IMPORTANT : this is an unconventional use of GCRO-DR, tailored to our case
+      START_MASTER(threading)
+      p->gcrodr_PRECISION.update_CU = 0;
+      //printf0("SETTING FLAG TO NOT UPDATE C AND U ***\n");
+      END_MASTER(threading)
+
+      //printf0("COMPLETED INITIAL CONSTRUCTION OF C AND U ***\n");
     }
 
     // FIXME : issue when disabling this ...
@@ -604,17 +649,14 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       return m;
     }
 
-    // IMPORTANT : this is an unconventional use of GCRO-DR, tailored to our case
-    START_MASTER(threading)
-    p->gcrodr_PRECISION.update_CU = 0;
-    END_MASTER(threading)
-
     SYNC_MASTER_TO_ALL(threading);
   } else{ error0("Invalid value for p->gcrodr_PRECISION.CU_usable \n"); }
 
 #ifdef BLOCK_JACOBI
   PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
 #endif
+
+  if ( g.gcrodr_calling_from_setup==1 ) { return m; }
 
   for ( ol=0; ol < p->num_restart; ol++ )  {
 
@@ -631,6 +673,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     // NOTE the value of m from here onwards
     m = fgmresx_PRECISION(p, l, threading);
     fgmresx_iter += m;
+
+    //printf0("OUT OF INNER GMRES, m = %d ***\n", m);
 
     complex_PRECISION *bf = p->gcrodr_PRECISION.Bbuff[0];
 
@@ -688,9 +732,16 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       PRECISION betaxx = global_norm_PRECISION( p->gcrodr_PRECISION.r_aux, start, end, l, threading );
 
-      if ( betaxx/norm_r0xx > p->tol ) {
+      //printf0("OUT OF INNER GMRES, rel res = %f, finish = %d, tol = %f, marg tol = %f ***\n", betaxx/norm_r0xx, p->gcrodr_PRECISION.finish, p->tol, p->tol+0.2*p->tol);
+
+      // hardcoding a 20% marging here
+      if ( (betaxx/norm_r0xx) > (p->tol + 0.2*p->tol) ) {
         p->gcrodr_PRECISION.finish = 0;
+      } else { 
+        p->gcrodr_PRECISION.finish = 1;
       }
+
+      //printf0("OUT OF INNER GMRES, finish = %d ***\n", p->gcrodr_PRECISION.finish);
     }
 
     if ( l->level==0 && p->block_jacobi_PRECISION.BJ_usable==1 ) {
@@ -708,7 +759,11 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
 #endif
 
-    if ( p->gcrodr_PRECISION.upd_ctr < g.gcrodr_upd_itrs ) {
+    int upd_itrs;
+    if ( g.on_solve==1 ) { upd_itrs = g.gcrodr_upd_itrs_solve; }
+    else { upd_itrs = g.gcrodr_upd_itrs_setup; }
+
+    if ( (m>15) && (p->gcrodr_PRECISION.upd_ctr < upd_itrs) ) {
       // build the matrices A and B used for generalized-eigensolving
 
       START_MASTER(threading)
@@ -734,6 +789,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       START_MASTER(threading)
       p->gcrodr_PRECISION.upd_ctr++;
       END_MASTER(threading)
+
+      //printf0("UPDATED C AND U (INNER, USABLE ALREADY) ***\n");
     }
 
     SYNC_MASTER_TO_ALL(threading);
@@ -871,15 +928,16 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
   }
 #endif
 
-#ifdef BLOCK_JACOBI
-  int rewinder = p->restart_length/10;
-  if (rewinder<6) rewinder = 6;
-  if (rewinder>10) rewinder = 10;
-  // two more iterations might be enough to cover the difference between 'real' and 'fake' residuals
-  for( il=0; (il < rewinder) || (il<p->restart_length && finish==0); il++) {
-#else
+//#ifdef BLOCK_JACOBI
+//  int rewinder = p->restart_length/10;
+//  if (rewinder<6) rewinder = 6;
+//  if (rewinder>10) rewinder = 10;
+//  // two more iterations might be enough to cover the difference between 'real' and 'fake' residuals
+//  for( il=0; (il < rewinder) || (il<p->restart_length && finish==0); il++) {
+//#else
   for( il=0; il<p->restart_length && finish==0; il++) {
-#endif
+//#endif
+
     j = il; iter++;
 
     //START_MASTER(threading)
@@ -934,9 +992,9 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
       }
     } else {
-      START_MASTER(threading)
-      printf0("from gcrodr : depth: %d, iter: %d, p->H(%d,%d) = %+lf+%lfi\n", l->depth, iter, j+1, j, CSPLIT( p->H[j][j+1] ) );
-      END_MASTER(threading)
+      //START_MASTER(threading)
+      //printf0("from gcrodr : depth: %d, iter: %d, p->H(%d,%d) = %+lf+%lfi\n", l->depth, iter, j+1, j, CSPLIT( p->H[j][j+1] ) );
+      //END_MASTER(threading)
       finish = 1;
       break;
     }

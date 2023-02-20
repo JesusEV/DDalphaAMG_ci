@@ -1454,6 +1454,7 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   if ( l->level==0 && l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas == 1 ) {
     // re-construct Lejas
     local_re_construct_lejas_PRECISION( l, threading );
+    //printf0("UPDATED LEJAS FOR BJ ***\n");
   }
 #endif
 
@@ -1476,6 +1477,7 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   if ( l->level==0 && l->p_PRECISION.polyprec_PRECISION.update_lejas == 1 ) {
     // re-construct Lejas
     re_construct_lejas_PRECISION( l, threading );
+    //printf0("UPDATED LEJAS FOR POLYPREC ***\n");
   }
 #endif
 
@@ -1485,7 +1487,6 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   END_MASTER(threading)
 
   SYNC_MASTER_TO_ALL(threading)
-  SYNC_CORES(threading)
 #endif
 
 #ifdef GCRODR
@@ -1511,10 +1512,9 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 #endif
 
   SYNC_MASTER_TO_ALL(threading)
-  SYNC_CORES(threading)
 
   START_MASTER(threading)
-  printf0("fgmres iters = %d\n", fgmres_iters);
+  printf0("coarsest gmres iters = %d\n", fgmres_iters);
   END_MASTER(threading)
 
   if (g.low_level_meas == 1) {
