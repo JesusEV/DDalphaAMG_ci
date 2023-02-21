@@ -520,7 +520,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       vector_PRECISION_define( p->x, 0, start, end, l );
 
       int buff_init_guess = p->initial_guess_zero;
+      START_MASTER(threading)
       p->initial_guess_zero = 0;
+      END_MASTER(threading)
+      SYNC_MASTER_TO_ALL(threading)
 
       apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
       vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
@@ -554,7 +557,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       END_MASTER(threading)
       SYNC_MASTER_TO_ALL(threading);
 
+      START_MASTER(threading)
       p->initial_guess_zero = buff_init_guess;
+      END_MASTER(threading)
+      SYNC_MASTER_TO_ALL(threading)
     }
     else {
       fgmresx_iter += m;
@@ -576,12 +582,15 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       //printf0("OUT OF INITIAL GMRES, rel res = %f, finish = %d, tol = %f, marg tol = %f ***\n", betaxx/norm_r0xx, p->gcrodr_PRECISION.finish, p->tol, p->tol+0.2*p->tol);
 
+      START_MASTER(threading)
       // hardcoding a 20% marging here
       if ( (betaxx/norm_r0xx) > (p->tol + 0.2*p->tol) ) {
         p->gcrodr_PRECISION.finish = 0;
       } else {
         p->gcrodr_PRECISION.finish = 1;
       }
+      END_MASTER(threading)
+      SYNC_MASTER_TO_ALL(threading)
 
       //printf0("OUT OF INITIAL GMRES, finish = %d ***\n", p->gcrodr_PRECISION.finish);
     }
@@ -740,11 +749,14 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       //printf0("OUT OF INNER GMRES, rel res = %f, finish = %d, tol = %f, marg tol = %f ***\n", betaxx/norm_r0xx, p->gcrodr_PRECISION.finish, p->tol, p->tol+0.2*p->tol);
 
       // hardcoding a 20% marging here
+      START_MASTER(threading)
       if ( (betaxx/norm_r0xx) > (p->tol + 0.2*p->tol) ) {
         p->gcrodr_PRECISION.finish = 0;
       } else { 
         p->gcrodr_PRECISION.finish = 1;
       }
+      END_MASTER(threading)
+      SYNC_MASTER_TO_ALL(threading)
 
       //printf0("OUT OF INNER GMRES, finish = %d ***\n", p->gcrodr_PRECISION.finish);
     }
