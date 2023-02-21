@@ -347,7 +347,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     //TODO change ifdef flag back to "MUMPS_ADDS" if you want to use mumps in setup as well
 
     // setting up mumps data formatting
-    mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
+    if (!l->idle) mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
 
     // (timing of) factorization
     double t0,t1;

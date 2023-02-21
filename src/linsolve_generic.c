@@ -425,14 +425,13 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 #endif
 
 #ifdef MUMPS_ADDS
-  if (l->level==0) {
-
+  if (l->level==0 && !l->idle) {
     // Allocate memory for cmumps data format
     int site_var = l->num_lattice_site_var;
     int nr_nodes = l->num_inner_lattice_sites;
-    MALLOC( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes * 9);
-    MALLOC( p->mumps_Is,int,SQUARE(site_var)*nr_nodes * 9); // nr. of el per node * nr. of nodes * 9 	//9 = self + T+ + T- + Z+ + Z- + Y+ ...
-    MALLOC(p->mumps_Js,int,SQUARE(site_var)*nr_nodes * 9);
+    MALLOC( p->mumps_vals, complex_PRECISION, SQUARE(site_var)*nr_nodes * 9);
+    MALLOC( p->mumps_Is, int, SQUARE(site_var)*nr_nodes * 9); // nr. of el per node * nr. of nodes * 9 	//9 = self + T+ + T- + Z+ + Z- + Y+ ...
+    MALLOC(p->mumps_Js, int, SQUARE(site_var)*nr_nodes * 9);
     // initializing with 0s
     memset(l->p_PRECISION.mumps_Is, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(int));
     memset(l->p_PRECISION.mumps_Js, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(int));
@@ -572,17 +571,19 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
 
 #ifdef MUMPS_ADDS
   // free cmumps instance
-  g.mumps_id.job = JOB_END;
-  cmumps_c(&(g.mumps_id));
-  int site_var = l->num_lattice_site_var;
-  int nr_nodes = l->num_inner_lattice_sites;
-  FREE( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes *9 );
-  FREE( p->mumps_Is,int,SQUARE(site_var)*nr_nodes *9);
-  FREE( p->mumps_Js,int,SQUARE(site_var)*nr_nodes *9);
-  //in case of odd even -> use 2*(v_end - v_start)? 
-  FREE( p->mumps_irhs_loc, int, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
-  FREE( p->mumps_rhs_loc, complex_PRECISION, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
-  FREE( p->mumps_SOL, complex_PRECISION, site_var * nr_nodes * l->num_processes);	//order of Matrix
+  if (l->level == 0 && !l->idle){
+      g.mumps_id.job = JOB_END;
+      cmumps_c(&(g.mumps_id));
+      int site_var = l->num_lattice_site_var;
+      int nr_nodes = l->num_inner_lattice_sites;
+      FREE( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes *9 );
+      FREE( p->mumps_Is,int,SQUARE(site_var)*nr_nodes *9);
+      FREE( p->mumps_Js,int,SQUARE(site_var)*nr_nodes *9);
+      //in case of odd even -> use 2*(v_end - v_start)? 
+      FREE( p->mumps_irhs_loc, int, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
+      FREE( p->mumps_rhs_loc, complex_PRECISION, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
+      FREE( p->mumps_SOL, complex_PRECISION, site_var * nr_nodes * l->num_processes);	//order of Matrix
+  }
 #endif
 
 }
