@@ -161,14 +161,14 @@ void leja_ordering_PRECISION( gmres_PRECISION_struct *p )
 
 
 
-void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading )
+int update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading )
 {
   int start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
   vector_PRECISION random_rhs, buff0;
   random_rhs = p->polyprec_PRECISION.random_rhs;
-  PRECISION buff3;
+  PRECISION buff3, buff5;
   vector_PRECISION buff4;
 
   int buff1, buff2;
@@ -179,6 +179,7 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
   buff1 = p->restart_length;
   buff3 = p->tol;
   buff4 = p->x;
+  buff5 = g.coarse_tol;
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
@@ -189,6 +190,7 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
   p->restart_length = p->polyprec_PRECISION.d_poly;
   p->preconditioner = NULL;
   p->tol = 1E-20;
+  g.coarse_tol = 1E-20;
   p->x = p->polyprec_PRECISION.xtmp;
   l->dup_H = 1;
   vector_PRECISION_define_random( random_rhs, p->v_start, p->v_end, l );
@@ -199,6 +201,8 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
 
   fgmres_itersx = fgmres_PRECISION(p, l, threading);
 
+  //printf0( "FROM WITHIN POLYPREC SETUP : %d\n",fgmres_itersx );
+
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
@@ -208,6 +212,7 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
   p->num_restart = buff2;
   p->restart_length = buff1;
   p->tol = buff3;
+  g.coarse_tol = buff5;
   p->x = buff4;
   END_MASTER(threading)
 
@@ -223,7 +228,7 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
     SYNC_MASTER_TO_ALL(threading);
     SYNC_CORES(threading);
 
-  } else { return; }
+  } else { return -1; }
 
   START_MASTER(threading)
   harmonic_ritz_PRECISION(p);
@@ -232,13 +237,15 @@ void update_lejas_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct 
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
+
+  return 1;
 }
 
 
 
-void re_construct_lejas_PRECISION( level_struct *l, struct Thread *threading ) {
+int re_construct_lejas_PRECISION( level_struct *l, struct Thread *threading ) {
 
-  update_lejas_PRECISION(&(l->p_PRECISION), l, threading);
+  return update_lejas_PRECISION(&(l->p_PRECISION), l, threading);
 }
 
 

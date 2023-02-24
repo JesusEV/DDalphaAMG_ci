@@ -83,7 +83,16 @@ int wilson_driver( vector_double solution, vector_double source, level_struct *l
   if ( g.method == -1 ) {
     cgn_double( &(g.p), l, threading );
   } else if ( g.mixed_precision == 2 ) {
+
+    //double t0x=0, t1x=0, elap_time=0;
+    //t0x = MPI_Wtime();
+
     iter = fgmres_MP( &(g.p_MP), l, threading );
+
+    //t1x = MPI_Wtime();
+    //elap_time = t1x-t0x;
+    //if (g.my_rank==0) printf("elapsed time (solve phase): %-8.4lf seconds\n", elap_time);
+
   } else {
     iter = fgmres_double( &(g.p), l, threading );
   }
@@ -231,6 +240,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 
         while (1) {
           if ( lx->level==0 ) {
+
+            if ( !(lx->idle) ) {
+
             if ( g.mixed_precision==0 ) {
 
               gmres_double_struct* px = &(lx->p_double);
@@ -240,7 +252,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               vector_double_define_random( px->b, px->v_start, px->v_end, lx );
               END_MASTER(threading)
 
+#ifdef GCRODR
               g.gcrodr_calling_from_setup = 1;
+#endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
@@ -251,7 +265,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               px->tol = buff1x;
               g.coarse_tol = buff2x;
 
+#ifdef GCRODR
               g.gcrodr_calling_from_setup = 0;
+#endif
 
             }
             else {
@@ -263,7 +279,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               vector_float_define_random( px->b, px->v_start, px->v_end, lx );
               END_MASTER(threading)
 
+#ifdef GCRODR
               g.gcrodr_calling_from_setup = 1;
+#endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
@@ -274,9 +292,14 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               px->tol = buff1x;
               g.coarse_tol = buff2x;
 
+#ifdef GCRODR
               g.gcrodr_calling_from_setup = 0;
+#endif
 
             }
+
+            } // end of !idle if
+
             break;
           }
           else { lx = lx->next_level; }
@@ -398,6 +421,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 
         while (1) {
           if ( lx->level==0 ) {
+
+            if ( !(lx->idle) ) {
+
             if ( g.mixed_precision==0 ) {
 
               gmres_double_struct* px = &(lx->p_double);
@@ -407,7 +433,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               vector_double_define_random( px->b, px->v_start, px->v_end, lx );
               END_MASTER(threading)
 
+#ifdef GCRODR
               g.gcrodr_calling_from_setup = 1;
+#endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
@@ -418,7 +446,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               px->tol = buff1x;
               g.coarse_tol = buff2x;
 
+#ifdef GCRODR
               g.gcrodr_calling_from_setup = 0;
+#endif
 
             }
             else {
@@ -430,7 +460,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               vector_float_define_random( px->b, px->v_start, px->v_end, lx );
               END_MASTER(threading)
 
+#ifdef GCRODR
               g.gcrodr_calling_from_setup = 1;
+#endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
@@ -441,9 +473,14 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               px->tol = buff1x;
               g.coarse_tol = buff2x;
 
+#ifdef GCRODR
               g.gcrodr_calling_from_setup = 0;
+#endif
 
             }
+
+            } // end of !idle if
+
             break;
           }
           else { lx = lx->next_level; }
@@ -459,7 +496,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
   g.avg_b2 = 0.0;
   g.avg_crst = 0.0;
   END_MASTER(threading)
+
   solve( solution, source, l, threading );
+
   START_MASTER(threading)
   printf0( "avg coarsest iters = %f\n",g.avg_crst );
   END_MASTER(threading)
