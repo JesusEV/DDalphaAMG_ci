@@ -94,6 +94,79 @@ void dirctslvr_PRECISION(dirctslvr_PRECISION_struct* dirctslvr)
 }
 
 #ifdef GCRODR
+
+// c is the solution, b is ultimately the output
+void gels_via_givens_PRECISION( int ida, int idb, complex_PRECISION* a, int lda, complex_PRECISION* b, int ldb, complex_PRECISION* c, int k, int m, gmres_PRECISION_struct *p ) {
+
+  int i,j;
+
+  //gels_PRECISION( LAPACK_COL_MAJOR, 'N', ida, idb, 1, a, lda, b, ldb );
+
+  // solve via Givens rotations
+
+  complex_PRECISION *Gii = p->gcrodr_PRECISION.lsp_diag_G;
+
+  complex_PRECISION **Hc = p->gcrodr_PRECISION.eigslvr.Hc;
+  complex_PRECISION **H  = p->gcrodr_PRECISION.lsp_H;
+  for ( j=0;j<m;j++ ) {
+    memcpy( H[j], Hc[j], sizeof(complex_PRECISION)*(m+1) );
+  }
+
+  complex_PRECISION **B  = p->gcrodr_PRECISION.ort_B;
+  complex_PRECISION *x   = c;
+
+  // apply Givens over the Hessenberg part to turn it into triangular
+  complex_PRECISION si, ci, denom, bbuff;
+  complex_PRECISION *bH = b+k;
+  complex_PRECISION Hloc[2];
+
+  for ( i=0;i<m;i++ ) {
+
+    // compute Givens coefficients
+    denom = sqrt( cabs_PRECISION(H[i][i+1])*cabs_PRECISION(H[i][i+1]) + cabs_PRECISION(H[i][i])*cabs_PRECISION(H[i][i]) );
+    si = H[i][i+1] / denom;
+    ci = H[i][i] / denom;
+
+    // modify rhs
+    bbuff  = bH[i];
+    bH[i]   = conj_PRECISION(ci)*bbuff;
+    bH[i+1] = -si*bbuff;
+
+    // modify Hessenberg matrix
+    for ( j=i;j<m;j++ ) {
+      Hloc[0] = H[j][i];
+      Hloc[1] = H[j][i+1];
+      // modification of H
+      H[j][i]   =  conj_PRECISION(ci)*Hloc[0] + conj_PRECISION(si)*Hloc[1];
+      H[j][i+1] = -si*Hloc[0] + ci*Hloc[1];
+    }
+
+  }
+
+  // do triangular solve, first due to the Hessenberg matrix
+  complex_PRECISION *xH = x+k;
+  for ( i=(m-1);i>-1;--i ) {
+    complex_PRECISION part_sum = 0.0;
+    for ( j=(i+1);j<m;j++ ) {
+      part_sum -= H[j][i]*xH[j];
+    }
+    part_sum += bH[i];
+    xH[i] = part_sum/H[i][i];
+  }
+
+  // then, continue the triangular solve with the B and diagonal parts
+  for ( i=(k-1);i>-1;--i ) {
+    complex_PRECISION part_sum = 0.0;
+    for ( j=0;j<m;j++ ) {
+      part_sum -= B[j][i]*xH[j];
+    }
+    part_sum += b[i];
+    x[i] = part_sum/Gii[i];
+  }
+
+  memcpy( b, x, sizeof(complex_PRECISION)*ldb );
+}
+
 // IMPORTANT NOTE : not a general call to p?geqr2(...)
 void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **R, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading )
 {

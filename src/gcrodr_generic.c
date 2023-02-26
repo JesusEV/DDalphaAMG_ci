@@ -58,6 +58,9 @@ void flgcrodr_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->gcrodr_PRECISION.eigslvr.vl = NULL;
   p->gcrodr_PRECISION.eigslvr.vr = NULL;
   p->gcrodr_PRECISION.eigslvr.qr_tau = NULL;
+  p->gcrodr_PRECISION.lsp_x = NULL;
+  p->gcrodr_PRECISION.lsp_diag_G = NULL;
+  p->gcrodr_PRECISION.lsp_H = NULL;
 
   p->gcrodr_PRECISION.Yk = NULL;
   p->gcrodr_PRECISION.Pk = NULL;
@@ -103,6 +106,15 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
     int i;
 
     MALLOC( p->gcrodr_PRECISION.Bbuff, complex_PRECISION*, g_ln );
+
+    // for large LSP
+    MALLOC( p->gcrodr_PRECISION.lsp_x, complex_PRECISION, g_ln+1 );
+    MALLOC( p->gcrodr_PRECISION.lsp_diag_G, complex_PRECISION, p->gcrodr_PRECISION.k );
+    MALLOC( p->gcrodr_PRECISION.lsp_H, complex_PRECISION*, p->restart_length );
+    MALLOC( p->gcrodr_PRECISION.lsp_H[0], complex_PRECISION, (p->restart_length+1)*p->restart_length );
+    for ( i=1;i<m;i++ ) {
+      p->gcrodr_PRECISION.lsp_H[i] = p->gcrodr_PRECISION.lsp_H[0] + i*(p->restart_length+1);
+    }
 
     p->gcrodr_PRECISION.Bbuff[0] = NULL;
     MALLOC( p->gcrodr_PRECISION.Bbuff[0], complex_PRECISION, g_ln*(g_ln+1)*2 );
@@ -321,6 +333,12 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
     FREE( p->gcrodr_PRECISION.eigslvr.vr, complex_PRECISION, g_ln*g_ln );
     FREE( p->gcrodr_PRECISION.eigslvr.w, complex_PRECISION, g_ln );
     FREE( p->gcrodr_PRECISION.eigslvr.beta, complex_PRECISION, g_ln );
+
+    // for large LSP
+    FREE( p->gcrodr_PRECISION.lsp_x, complex_PRECISION, g_ln+1 );
+    FREE( p->gcrodr_PRECISION.lsp_diag_G, complex_PRECISION, p->gcrodr_PRECISION.k );
+    FREE( p->gcrodr_PRECISION.lsp_H[0], complex_PRECISION, (p->restart_length+1)*p->restart_length );
+    FREE( p->gcrodr_PRECISION.lsp_H, complex_PRECISION*, p->restart_length );
 
     // ints - ordering
     FREE( p->gcrodr_PRECISION.eigslvr.ordr_idxs, int, g_ln );
@@ -716,12 +734,14 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     }
 
     // and, the last ingredient for the least squares problem is : <bf> as the rhs, <G> as the matrix
-    
     memset(bf, 0.0, sizeof(complex_PRECISION)*(k+m+1));
     bf[k] = beta;
 
+    for ( i=0; i<k; i++ ) { p->gcrodr_PRECISION.lsp_diag_G[i] = p->gcrodr_PRECISION.G[i][i]; }
+
     g.gcrodr_LSP_time -= MPI_Wtime();
-    gels_PRECISION( LAPACK_COL_MAJOR, 'N', k+m+1, k+m, 1, p->gcrodr_PRECISION.G[0], k+p->restart_length+1, bf, k+p->restart_length+1);
+    //gels_PRECISION( LAPACK_COL_MAJOR, 'N', k+m+1, k+m, 1, p->gcrodr_PRECISION.G[0], k+p->restart_length+1, bf, k+p->restart_length+1);
+    gels_via_givens_PRECISION( k+m+1, k+m, p->gcrodr_PRECISION.G[0], k+p->restart_length+1, bf, k+p->restart_length+1, p->gcrodr_PRECISION.lsp_x, k, m, p );
     g.gcrodr_LSP_time += MPI_Wtime();
 
     // restoring G from Gc

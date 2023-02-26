@@ -115,6 +115,7 @@
     vector_PRECISION r_aux;
 #endif
     // Gc is used to copy G
+    complex_PRECISION *lsp_x, *lsp_diag_G, **lsp_H;
     complex_PRECISION **gev_A, **gev_B, **Bbuff, **QR, **Q, **R, **Rinv, **ort_B, **G, **Gc;
 
     eigslvr_PRECISION_struct eigslvr;
