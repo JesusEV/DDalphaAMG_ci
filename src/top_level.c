@@ -236,7 +236,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       {
         level_struct *lx = l;
 
+        START_MASTER(threading)
         printf0( "\nPre-constructing coarsest-level data ...\n" );
+        END_MASTER(threading)
 
         while (1) {
           if ( lx->level==0 ) {
@@ -253,20 +255,32 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
 
 #ifdef GCRODR
+              START_MASTER(threading)
               g.gcrodr_calling_from_setup = 1;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 #endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
+              START_MASTER(threading)
               px->tol = 1.0e-20;
               g.coarse_tol = 1.0e-20;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
               // call the coarsest-level solver
               coarse_solve_odd_even_double( px, &(lx->oe_op_double), lx, threading );
+              START_MASTER(threading)
               px->tol = buff1x;
               g.coarse_tol = buff2x;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 
 #ifdef GCRODR
+              START_MASTER(threading)
               g.gcrodr_calling_from_setup = 0;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 #endif
 
             }
@@ -280,20 +294,32 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
 
 #ifdef GCRODR
+              START_MASTER(threading)
               g.gcrodr_calling_from_setup = 1;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 #endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
+              START_MASTER(threading)
               px->tol = 1.0e-20;
               g.coarse_tol = 1.0e-20;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
               // call the coarsest-level solver
               coarse_solve_odd_even_float( px, &(lx->oe_op_float), lx, threading );
+              START_MASTER(threading)
               px->tol = buff1x;
               g.coarse_tol = buff2x;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 
 #ifdef GCRODR
+              START_MASTER(threading)
               g.gcrodr_calling_from_setup = 0;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 #endif
 
             }
@@ -305,7 +331,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
           else { lx = lx->next_level; }
         }
 
+        START_MASTER(threading)
         printf0( "... done\n\n" );
+        END_MASTER(threading)
 
       }
 #endif
@@ -417,7 +445,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       {
         level_struct *lx = l;
 
+        START_MASTER(threading)
         printf0( "\nPre-constructing coarsest-level data ...\n" );
+        END_MASTER(threading)
 
         while (1) {
           if ( lx->level==0 ) {
@@ -434,20 +464,32 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
 
 #ifdef GCRODR
+              START_MASTER(threading)
               g.gcrodr_calling_from_setup = 1;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 #endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
+              START_MASTER(threading)
               px->tol = 1.0e-20;
               g.coarse_tol = 1.0e-20;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
               // call the coarsest-level solver
               coarse_solve_odd_even_double( px, &(lx->oe_op_double), lx, threading );
+              START_MASTER(threading)
               px->tol = buff1x;
               g.coarse_tol = buff2x;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 
 #ifdef GCRODR
+              START_MASTER(threading)
               g.gcrodr_calling_from_setup = 0;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 #endif
 
             }
@@ -461,20 +503,32 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
 
 #ifdef GCRODR
+              START_MASTER(threading)
               g.gcrodr_calling_from_setup = 1;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 #endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
+              START_MASTER(threading)
               px->tol = 1.0e-20;
               g.coarse_tol = 1.0e-20;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
               // call the coarsest-level solver
               coarse_solve_odd_even_float( px, &(lx->oe_op_float), lx, threading );
+              START_MASTER(threading)
               px->tol = buff1x;
               g.coarse_tol = buff2x;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 
 #ifdef GCRODR
+              START_MASTER(threading)
               g.gcrodr_calling_from_setup = 0;
+              END_MASTER(threading)
+              SYNC_MASTER_TO_ALL(threading)
 #endif
 
             }
@@ -486,7 +540,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
           else { lx = lx->next_level; }
         }
 
+        START_MASTER(threading)
         printf0( "... done\n\n" );
+        END_MASTER(threading)
 
       }
 #endif
