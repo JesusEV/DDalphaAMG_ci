@@ -37,4 +37,7 @@
   // parallel QR
   void pqr_PRECISION( int mx, int nx, complex_PRECISION **Ax, complex_PRECISION **R, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
 
+  // LSP
+  void gels_via_givens_PRECISION( int ida, int idb, complex_PRECISION* a, int lda, complex_PRECISION* b, int ldb, complex_PRECISION* c, int k, int m, gmres_PRECISION_struct *p );
+
 #endif

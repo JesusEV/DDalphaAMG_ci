@@ -58,6 +58,9 @@ void flgcrodr_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->gcrodr_PRECISION.eigslvr.vl = NULL;
   p->gcrodr_PRECISION.eigslvr.vr = NULL;
   p->gcrodr_PRECISION.eigslvr.qr_tau = NULL;
+  p->gcrodr_PRECISION.lsp_x = NULL;
+  p->gcrodr_PRECISION.lsp_diag_G = NULL;
+  p->gcrodr_PRECISION.lsp_H = NULL;
 
   p->gcrodr_PRECISION.Yk = NULL;
   p->gcrodr_PRECISION.Pk = NULL;
@@ -103,6 +106,15 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
     int i;
 
     MALLOC( p->gcrodr_PRECISION.Bbuff, complex_PRECISION*, g_ln );
+
+    // for large LSP
+    MALLOC( p->gcrodr_PRECISION.lsp_x, complex_PRECISION, g_ln+1 );
+    MALLOC( p->gcrodr_PRECISION.lsp_diag_G, complex_PRECISION, p->gcrodr_PRECISION.k );
+    MALLOC( p->gcrodr_PRECISION.lsp_H, complex_PRECISION*, p->restart_length );
+    MALLOC( p->gcrodr_PRECISION.lsp_H[0], complex_PRECISION, (p->restart_length+1)*p->restart_length );
+    for ( i=1;i<m;i++ ) {
+      p->gcrodr_PRECISION.lsp_H[i] = p->gcrodr_PRECISION.lsp_H[0] + i*(p->restart_length+1);
+    }
 
     p->gcrodr_PRECISION.Bbuff[0] = NULL;
     MALLOC( p->gcrodr_PRECISION.Bbuff[0], complex_PRECISION, g_ln*(g_ln+1)*2 );
@@ -322,6 +334,12 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
     FREE( p->gcrodr_PRECISION.eigslvr.w, complex_PRECISION, g_ln );
     FREE( p->gcrodr_PRECISION.eigslvr.beta, complex_PRECISION, g_ln );
 
+    // for large LSP
+    FREE( p->gcrodr_PRECISION.lsp_x, complex_PRECISION, g_ln+1 );
+    FREE( p->gcrodr_PRECISION.lsp_diag_G, complex_PRECISION, p->gcrodr_PRECISION.k );
+    FREE( p->gcrodr_PRECISION.lsp_H[0], complex_PRECISION, (p->restart_length+1)*p->restart_length );
+    FREE( p->gcrodr_PRECISION.lsp_H, complex_PRECISION*, p->restart_length );
+
     // ints - ordering
     FREE( p->gcrodr_PRECISION.eigslvr.ordr_idxs, int, g_ln );
     FREE( p->gcrodr_PRECISION.eigslvr.ordr_keyscpy, complex_PRECISION, g_ln );
@@ -503,12 +521,15 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     if ( p->initial_guess_zero == 1 )
       vector_PRECISION_define( p->x, 0, start, end, l );
 
+    int buff1x = p->restart_length;
     START_MASTER(threading)
     l->dup_H = 1;
+    p->restart_length = k+1;
     END_MASTER(threading)
     m = fgmresx_PRECISION(p, l, threading);
     START_MASTER(threading)
     l->dup_H = 0;
+    p->restart_length = buff1x;
     END_MASTER(threading)
     SYNC_MASTER_TO_ALL(threading);
 
@@ -520,7 +541,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       vector_PRECISION_define( p->x, 0, start, end, l );
 
       int buff_init_guess = p->initial_guess_zero;
+      START_MASTER(threading)
       p->initial_guess_zero = 0;
+      END_MASTER(threading)
+      SYNC_MASTER_TO_ALL(threading)
 
       apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
       vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
@@ -534,10 +558,12 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       double buff1x = p->tol;
       double buff2x = g.coarse_tol;
+      int buff3x = p->restart_length;
       START_MASTER(threading)
       //if ( g.on_solve==1 ) {
         p->tol = 1.0e-5;
         g.coarse_tol = 1.0e-5;
+        p->restart_length = k+1;
       //}
       l->dup_H = 1;
       END_MASTER(threading)
@@ -550,11 +576,15 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       START_MASTER(threading)
       p->tol = buff1x;
       g.coarse_tol = buff2x;
+      p->restart_length = buff3x;
       l->dup_H = 0;
       END_MASTER(threading)
       SYNC_MASTER_TO_ALL(threading);
 
+      START_MASTER(threading)
       p->initial_guess_zero = buff_init_guess;
+      END_MASTER(threading)
+      SYNC_MASTER_TO_ALL(threading)
     }
     else {
       fgmresx_iter += m;
@@ -576,12 +606,15 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       //printf0("OUT OF INITIAL GMRES, rel res = %f, finish = %d, tol = %f, marg tol = %f ***\n", betaxx/norm_r0xx, p->gcrodr_PRECISION.finish, p->tol, p->tol+0.2*p->tol);
 
+      START_MASTER(threading)
       // hardcoding a 20% marging here
-      if ( (betaxx/norm_r0xx) > (p->tol + 0.2*p->tol) ) {
+      if ( (betaxx/norm_r0xx) > (p->tol + 0.5*p->tol) ) {
         p->gcrodr_PRECISION.finish = 0;
       } else {
         p->gcrodr_PRECISION.finish = 1;
       }
+      END_MASTER(threading)
+      SYNC_MASTER_TO_ALL(threading)
 
       //printf0("OUT OF INITIAL GMRES, finish = %d ***\n", p->gcrodr_PRECISION.finish);
     }
@@ -701,12 +734,14 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     }
 
     // and, the last ingredient for the least squares problem is : <bf> as the rhs, <G> as the matrix
-    
     memset(bf, 0.0, sizeof(complex_PRECISION)*(k+m+1));
     bf[k] = beta;
 
+    for ( i=0; i<k; i++ ) { p->gcrodr_PRECISION.lsp_diag_G[i] = p->gcrodr_PRECISION.G[i][i]; }
+
     g.gcrodr_LSP_time -= MPI_Wtime();
-    gels_PRECISION( LAPACK_COL_MAJOR, 'N', k+m+1, k+m, 1, p->gcrodr_PRECISION.G[0], k+p->restart_length+1, bf, k+p->restart_length+1);
+    //gels_PRECISION( LAPACK_COL_MAJOR, 'N', k+m+1, k+m, 1, p->gcrodr_PRECISION.G[0], k+p->restart_length+1, bf, k+p->restart_length+1);
+    gels_via_givens_PRECISION( k+m+1, k+m, p->gcrodr_PRECISION.G[0], k+p->restart_length+1, bf, k+p->restart_length+1, p->gcrodr_PRECISION.lsp_x, k, m, p );
     g.gcrodr_LSP_time += MPI_Wtime();
 
     // restoring G from Gc
@@ -740,11 +775,14 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       //printf0("OUT OF INNER GMRES, rel res = %f, finish = %d, tol = %f, marg tol = %f ***\n", betaxx/norm_r0xx, p->gcrodr_PRECISION.finish, p->tol, p->tol+0.2*p->tol);
 
       // hardcoding a 20% marging here
+      START_MASTER(threading)
       if ( (betaxx/norm_r0xx) > (p->tol + 0.2*p->tol) ) {
         p->gcrodr_PRECISION.finish = 0;
       } else { 
         p->gcrodr_PRECISION.finish = 1;
       }
+      END_MASTER(threading)
+      SYNC_MASTER_TO_ALL(threading)
 
       //printf0("OUT OF INNER GMRES, finish = %d ***\n", p->gcrodr_PRECISION.finish);
     }
@@ -986,7 +1024,7 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
       //printf0("WITHIN INNER GMRES, inner rel res = %.8f ***\n", cabs( p->gamma[j+1] )/norm_r0);
 
-      // check if the two most significant digits of the residual haven't changed
+      // check if the four most significant digits of the residual haven't changed
       if ( j%5==0 ) {
         prev_res = curr_res;
         curr_res = cabs( p->gamma[j+1] )/norm_r0;
@@ -997,7 +1035,7 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
           {
             PRECISION nr1_f = prev_res, nr2_f = curr_res;
             int fctr = 1;
-            while ( nr1_f<100 ) {
+            while ( nr1_f<1000 ) {
               nr1_f *= 10;
               fctr *= 10;
             }
@@ -1008,6 +1046,9 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
           // if the residual hasn't changed, exit
           if ( nr1_i == nr2_i ) {
+
+            printf0( "STAGNATION ***\n" );
+
             finish = 1;
           }
         }
@@ -1028,9 +1069,9 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
       }
     } else {
-      START_MASTER(threading)
+      //START_MASTER(threading)
       //printf0("from gcrodr : depth: %d, iter: %d, p->H(%d,%d) = %+lf+%lfi\n", l->depth, iter, j+1, j, CSPLIT( p->H[j][j+1] ) );
-      END_MASTER(threading)
+      //END_MASTER(threading)
       finish = 1;
     }
   } // end of the (only and) single restart

@@ -168,7 +168,7 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
   
   // start and end indices for vector functions depending on thread
   ASSERT( g.mixed_precision );
-  
+
   int start;
   int end;
   

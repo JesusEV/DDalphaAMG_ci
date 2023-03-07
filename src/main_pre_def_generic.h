@@ -115,6 +115,7 @@
     vector_PRECISION r_aux;
 #endif
     // Gc is used to copy G
+    complex_PRECISION *lsp_x, *lsp_diag_G, **lsp_H;
     complex_PRECISION **gev_A, **gev_B, **Bbuff, **QR, **Q, **R, **Rinv, **ort_B, **G, **Gc;
 
     eigslvr_PRECISION_struct eigslvr;
@@ -260,7 +261,8 @@
 
   #define GET_MACRO2(_1,_2,NAME,...) NAME
   #define GET_MACRO3(_1,_2,_3,NAME,...) NAME
+
   #define PROF_PRECISION_START(...) GET_MACRO2(__VA_ARGS__, PROF_PRECISION_START_THREADED, PROF_PRECISION_START_UNTHREADED, padding)(__VA_ARGS__)
   #define PROF_PRECISION_STOP(...) GET_MACRO3(__VA_ARGS__, PROF_PRECISION_STOP_THREADED, PROF_PRECISION_STOP_UNTHREADED, padding)(__VA_ARGS__)
-  
+
 #endif

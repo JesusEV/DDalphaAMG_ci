@@ -381,7 +381,7 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, s
     
     if ( g.odd_even && l->next_level->level == 0 ){
       gmres.v_end = l->next_level->oe_op_PRECISION.num_even_sites*l->next_level->num_lattice_site_var;
-      printf0("FIXME ASAP !\n");
+      //printf0("FIXME ASAP !\n");
     }
     END_LOCKED_MASTER(threading)
     
