@@ -103,7 +103,7 @@
     for(int i=start; i<end; i++) {
       for(int j=0; j<site_size; j++)
         eta[i*site_size+j] = 0.0;
-      cgemv(site_size, clover+i*2*site_size*lda, lda, (float *)(phi+i*site_size), (float *)(eta+i*site_size));
+      cgemv_custom(site_size, clover+i*2*site_size*lda, lda, (float *)(phi+i*site_size), (float *)(eta+i*site_size));
     }
 #endif
   }

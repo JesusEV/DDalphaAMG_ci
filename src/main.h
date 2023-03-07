@@ -109,10 +109,10 @@
 #endif
 
 #ifdef MUMPS_ADDS
-#include "/home/leemhuis/installs/MUMPS_5.4.0/include/cmumps_c.h"
-#include "/home/leemhuis/installs/MUMPS_5.4.0/include/dmumps_c.h"
-//  #include "cmumps_c.h"
-//  #include "dmumps_c.h"
+// #include "/home/leemhuis/installs/MUMPS_5.4.0/include/cmumps_c.h"
+// #include "/home/leemhuis/installs/MUMPS_5.4.0/include/dmumps_c.h"
+  #include "cmumps_c.h"
+  #include "dmumps_c.h"
 
 #define JOB_INIT -1
 #define JOB_END -2
@@ -686,6 +686,10 @@ typedef struct block_struct {
   #include "local_polyprec_double.h"
   #include "local_polyprec_float.h"
 #endif
+
+  #include <mkl.h>
+  #include <mkl_scalapack.h>
+  #include <mkl_blacs.h>
 
 #if defined(GCRODR) || defined(POLYPREC)
   #include <lapacke.h>

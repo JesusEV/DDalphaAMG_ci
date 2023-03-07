@@ -49,7 +49,7 @@
     for(int i=start; i<end; i++) {
       for(int j=0; j<site_size; j++)
         out[i*site_size+j] = 0.0;
-      cgemv(site_size, clover+i*2*site_size*lda, lda, (float *)(in+i*site_size), (float *)(out+i*site_size));
+      cgemv_custom(site_size, clover+i*2*site_size*lda, lda, (float *)(in+i*site_size), (float *)(out+i*site_size));
     }
   }
 

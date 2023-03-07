@@ -1,0 +1,9 @@
+module load Stages/2020
+module load GCC/10.3.0
+module load ParaStationMPI/5.4.10-1
+module load SCOTCH/6.1.0
+module load METIS/5.1.0
+module load ParMETIS/4.0.3
+module load MUMPS/5.3.4
+
+export LD_LIBRARY_PATH=/p/software/juwels/stages/2020/software/imkl/2021.2.0-gpsmpi-2021/compiler/2021.2.0/linux/lib64/:/p/software/juwels/stages/2020/software/imkl/2021.2.0-gpsmpi-2021/mkl/2021.2.0/lib/intel64/:/p/software/juwels/stages/2020/software/MUMPS/5.3.4-gpsmkl-2021/lib64/:/p/software/juwels/stages/2020/software/METIS/5.1.0-GCC-10.3.0/lib64/:/p/software/juwels/stages/2020/software/ParMETIS/4.0.3-gpsmpi-2021/lib64/:/p/software/juwels/stages/2020/software/psmpi/5.4.10-1-GCC-10.3.0/lib64/:/p/software/juwels/stages/2020/software/pscom/5.4.7-1/lib64/:/p/software/juwels/stages/2020/software/GCCcore/10.3.0/lib64/
