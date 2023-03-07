@@ -81,12 +81,26 @@ int main( int argc, char **argv ) {
     struct Thread threading;
     setup_threading(&threading, commonthreaddata, &l);
     setup_no_threading(no_threading, &l);
-    
+
+    //double t0x=0, t1x=0, elap_time=0;
+
+    //t0x = MPI_Wtime();
+
     // setup up initial MG hierarchy
     method_setup( NULL, &l, &threading );
-    
+
+    //t1x = MPI_Wtime();
+    //elap_time = t1x-t0x;
+    //if (g.my_rank==0) printf("elapsed time (init setup phase): %-8.4lf seconds\n", elap_time);
+
+    //t0x = MPI_Wtime();
+
     // iterative phase
     method_update( l.setup_iter, &l, &threading );
+
+    //t1x = MPI_Wtime();
+    //elap_time = t1x-t0x;
+    //if (g.my_rank==0) printf("elapsed time (iterative setup phase): %-8.4lf seconds\n", elap_time);
 
     g.on_solve = 1;
 

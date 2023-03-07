@@ -622,9 +622,9 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
   // this puts zero for all other hyperthreads, so we can call functions below with all hyperthreads
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
-  START_MASTER(threading)
-  if (l->level==0) printf0( "g ---> start=%d, end=%d, diff=%d, m0=%f, op=%p\n", p->v_start, p->v_end, p->v_end-p->v_start, p->op->m0, p->op );
-  END_MASTER(threading)
+  //START_MASTER(threading)
+  //if (l->level==0) printf0( "g ---> start=%d, end=%d, diff=%d, m0=%f, op=%p\n", p->v_start, p->v_end, p->v_end-p->v_start, p->op->m0, p->op );
+  //END_MASTER(threading)
 
   for( ol=0; ol<p->num_restart && finish==0; ol++ )  {
   
@@ -801,6 +801,20 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
               g.coarse_time, 100*(g.coarse_time/(t1-t0)) );
     printf0("|        coarsest grid time: %-8.4lf seconds (%04.1lf%%)        |\n",
               g.coarsest_time, 100*(g.coarsest_time/(t1-t0)) );
+    printf0("| coarsest grid matmul time: %-8.4lf seconds (%04.1lf%%)        |\n",
+              g.matmul_time, 100*(g.matmul_time/(t1-t0)) );
+#ifdef BLOCK_JACOBI
+    printf0("|     coarsest grid BJ time: %-8.4lf seconds (%04.1lf%%)        |\n",
+              g.bj_time, 100*(g.bj_time/(t1-t0)) );
+#endif
+#ifdef GCRODR
+    printf0("| coarsest grid GCRODR LSP time: %-8.4lf seconds (%04.1lf%%)        |\n",
+              g.gcrodr_LSP_time, 100*(g.gcrodr_LSP_time/(t1-t0)) );
+    printf0("| coarsest grid GCRODR AB time: %-8.4lf seconds (%04.1lf%%)        |\n",
+              g.gcrodr_buildAB_time, 100*(g.gcrodr_buildAB_time/(t1-t0)) );
+    printf0("| coarsest grid GCRODR CU time: %-8.4lf seconds (%04.1lf%%)        |\n",
+              g.gcrodr_buildCU_time, 100*(g.gcrodr_buildCU_time/(t1-t0)) );
+#endif
     printf0("|  consumed core minutes*: %-8.2le (solve only)           |\n", ((t1-t0)*g.num_processes*MAX(1,threading->n_core))/60.0 );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");
@@ -1965,8 +1979,11 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
   }
 #endif
 
+  START_MASTER(threading)
+
 #if defined(GCRODR) || defined(POLYPREC)
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
+
   //int jx = j-1;
   int jx;
   if ( j==0 ) {
@@ -1999,6 +2016,8 @@ int arnoldi_step_PRECISION( vector_PRECISION *V, vector_PRECISION *Z, vector_PRE
     memset( p->polyprec_PRECISION.eigslvr.Hc[jx]+jx+2, 0.0, sizeof(complex_PRECISION)*(p->restart_length + 1 - (jx+2)) );
   }
 #endif
+
+  END_MASTER(threading)
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)

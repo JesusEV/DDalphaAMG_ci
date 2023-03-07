@@ -443,7 +443,9 @@ typedef struct block_struct {
     double tol, coarse_tol, kcycle_tol, csw, rho, *relax_fac;
 #ifdef GCRODR
     int gcrodr_k;
-    int gcrodr_upd_itrs;
+    int gcrodr_upd_itrs_solve;
+    int gcrodr_upd_itrs_setup;
+    int gcrodr_calling_from_setup;
 #endif
 
 #ifdef POLYPREC
@@ -514,6 +516,14 @@ typedef struct block_struct {
 #endif
 #ifdef MUMPS_ADDS
     CMUMPS_STRUC_C mumps_id;
+#endif
+
+    double matmul_time;
+#ifdef BLOCK_JACOBI
+    double bj_time;
+#endif
+#ifdef GCRODR
+    double gcrodr_LSP_time, gcrodr_buildAB_time, gcrodr_buildCU_time;
 #endif
 
   } global_struct;
