@@ -269,7 +269,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
               // call the coarsest-level solver
-              coarse_solve_odd_even_double( px, &(lx->oe_op_double), lx, threading );
+              while ( px->gcrodr_double.CU_usable==0 ) {
+                coarse_solve_odd_even_double( px, &(lx->oe_op_double), lx, threading );
+              }
               START_MASTER(threading)
               px->tol = buff1x;
               g.coarse_tol = buff2x;
@@ -308,7 +310,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
               // call the coarsest-level solver
-              coarse_solve_odd_even_float( px, &(lx->oe_op_float), lx, threading );
+              while ( px->gcrodr_float.CU_usable==0 ) {
+                coarse_solve_odd_even_float( px, &(lx->oe_op_float), lx, threading );
+              }
               START_MASTER(threading)
               px->tol = buff1x;
               g.coarse_tol = buff2x;
@@ -478,7 +482,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
               // call the coarsest-level solver
-              coarse_solve_odd_even_double( px, &(lx->oe_op_double), lx, threading );
+              while ( px->gcrodr_double.CU_usable==0 ) {
+                coarse_solve_odd_even_double( px, &(lx->oe_op_double), lx, threading );
+              }
               START_MASTER(threading)
               px->tol = buff1x;
               g.coarse_tol = buff2x;
@@ -517,7 +523,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
               // call the coarsest-level solver
-              coarse_solve_odd_even_float( px, &(lx->oe_op_float), lx, threading );
+              while ( px->gcrodr_float.CU_usable==0 ) {
+                coarse_solve_odd_even_float( px, &(lx->oe_op_float), lx, threading );
+              }
               START_MASTER(threading)
               px->tol = buff1x;
               g.coarse_tol = buff2x;

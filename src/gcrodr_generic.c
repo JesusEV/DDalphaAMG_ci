@@ -608,7 +608,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       START_MASTER(threading)
       // hardcoding a 20% marging here
-      if ( (betaxx/norm_r0xx) > (p->tol + 0.2*p->tol) ) {
+      if ( (betaxx/norm_r0xx) > (p->tol + 0.5*p->tol) ) {
         p->gcrodr_PRECISION.finish = 0;
       } else {
         p->gcrodr_PRECISION.finish = 1;
