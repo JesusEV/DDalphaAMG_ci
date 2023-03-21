@@ -358,9 +358,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     SYNC_MASTER_TO_ALL(threading)
     SYNC_CORES(threading)
 
-#ifdef MUMPS_ADDS_deativated
-    //TODO change ifdef flag back to "MUMPS_ADDS" if you want to use mumps in setup as well
-
+#ifdef MUMPS_ADDS
     // setting up mumps data formatting
     if (!l->idle) mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
 

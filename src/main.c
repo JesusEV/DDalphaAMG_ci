@@ -86,6 +86,7 @@ int main( int argc, char **argv ) {
 
     //t0x = MPI_Wtime();
 
+
     // setup up initial MG hierarchy
     method_setup( NULL, &l, &threading );
 
@@ -95,16 +96,8 @@ int main( int argc, char **argv ) {
 
     //t0x = MPI_Wtime();
 
-    // iterative phase
-    method_update( l.setup_iter, &l, &threading );
-
-    //t1x = MPI_Wtime();
-    //elap_time = t1x-t0x;
-    //if (g.my_rank==0) printf("elapsed time (iterative setup phase): %-8.4lf seconds\n", elap_time);
-
-    g.on_solve = 1;
-
-
+    
+    
 #ifdef MUMPS_ADDS
     level_struct *lx = &l;
     int i;
@@ -141,6 +134,52 @@ int main( int argc, char **argv ) {
     
     
       printf0("factorize done\n");
+      END_MASTER(threadx)
+      SYNC_CORES(threadx)
+    }
+#endif
+
+    // iterative phase
+    method_update( l.setup_iter, &l, &threading );
+
+    //t1x = MPI_Wtime();
+    //elap_time = t1x-t0x;
+    //if (g.my_rank==0) printf("elapsed time (iterative setup phase): %-8.4lf seconds\n", elap_time);
+
+    g.on_solve = 1;
+
+
+#ifdef MUMPS_ADDS
+    //level_struct *lx = &l;
+      lx = &l;
+//    int i;
+    for (i = 1; i<g.num_levels; i++){
+	lx = lx->next_level;
+    }
+    if (!lx->idle){ 
+      printf0("call to mumps_setup\n");
+      mumps_setup_float(lx, &threading);        //setup vals, Is, Js
+      struct Thread* threadx = &threading;
+      double t0,t1;
+      START_MASTER(threadx)
+      t0 = MPI_Wtime();
+      END_MASTER(threadx)
+      SYNC_CORES(threadx)
+
+      printf0("starting analyze\n");
+//    g.mumps_id.job = 4; //analyze and factorize
+      g.mumps_id.job = 1; //analyze
+      START_MASTER(threadx)
+      cmumps_c(&(g.mumps_id));
+      END_MASTER(threadx)
+      SYNC_CORES(threadx);
+      printf0("analyze done, starting factorize using multithreading\n");
+      g.mumps_id.job = 2; //factorize
+      cmumps_c(&(g.mumps_id));
+
+      START_MASTER(threadx)
+      t1 = MPI_Wtime();
+      if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f\n",t1-t0); 
       END_MASTER(threadx)
       SYNC_CORES(threadx)
     }

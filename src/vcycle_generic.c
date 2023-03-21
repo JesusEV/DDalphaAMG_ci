@@ -155,7 +155,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 
             }
           } else {
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_deactivated
 	    if (!g.on_solve) { //deactivate mumps during set up
               l->next_level->p_PRECISION.preconditioner = NULL;
 	    }
