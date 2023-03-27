@@ -414,12 +414,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 
     local_fgmres_PRECISION_struct_alloc( g.local_polyprec_d, 1, vl, g.coarse_tol, 
                                          _COARSE_GMRES, _NOTHING, NULL,
-#ifdef MUMPS_ADDS
-					 local_apply_coarse_operator_PRECISION,
-#else
-                                         g.odd_even?coarse_local_apply_schur_complement_PRECISION:
-					 local_apply_coarse_operator_PRECISION,
-#endif
+                                         coarse_local_apply_schur_complement_PRECISION,
                                          &(p->block_jacobi_PRECISION.local_p), l );
   }
 #endif
