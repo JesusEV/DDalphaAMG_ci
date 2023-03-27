@@ -98,8 +98,6 @@ coarse grid local_polyprec_d: 2
 coarse grid gcrodr_k: 400
 coarse grid polyprec_d: 20
 
-low level meas: 0
-
 #general_param
 print mode: 1
 method: 2
