@@ -55,14 +55,17 @@ void swap_order(double* data_pt, int tot_size, int fixed_size, int n_ind_to_swap
   tmp=(double*)malloc(fixed_size*(n_ind_to_swap/2)*sizeof(double));
   
   for(i=0; i<bins; i++) {
+
     for(j=0; j< n_ind_to_swap/2; j++)
       for(k=0; k<fixed_size; k++) {
         tmp[j*fixed_size + k]=data_pt[i*bin_size + j*fixed_size + k];
         data_pt[i*bin_size + j*fixed_size + k] = data_pt[(i+1)*bin_size-(j+1)*fixed_size+k];
       }
-      for(j=0; j< n_ind_to_swap/2; j++)
-        for(k=0; k<fixed_size; k++) 
-          data_pt[(i+1)*bin_size - (j+1)*fixed_size + k] = tmp[j*fixed_size + k]; 
+
+    for(j=0; j< n_ind_to_swap/2; j++)
+      for(k=0; k<fixed_size; k++) 
+        data_pt[(i+1)*bin_size - (j+1)*fixed_size + k] = tmp[j*fixed_size + k]; 
+
   }
   free(tmp);
 }
@@ -317,16 +320,17 @@ void lime_read_conf( double *input_data, char *input_name, double *conf_plaq ) {
           
           k = (k+1)%10000;
         }
-        fclose( fin );
-        if ( g.my_rank == 0 ) {
-          FREE( buffer[0].data, double, read_size );
-          FREE( buffer[1].data, double, read_size );
-          if (precision==32)
-            FREE( float_buffer, float, read_size );
-        }
-        #else
-        error0("Lime not enabled. Use -DHAVE_LIME during compilation. Aborting...");
-        #endif
+
+  fclose( fin );
+  if ( g.my_rank == 0 ) {
+    FREE( buffer[0].data, double, read_size );
+    FREE( buffer[1].data, double, read_size );
+    if (precision==32)
+      FREE( float_buffer, float, read_size );
+  }
+  #else
+  error0("Lime not enabled. Use -DHAVE_LIME during compilation. Aborting...");
+  #endif
         
 }
 
@@ -420,24 +424,24 @@ void lime_read_vector( double *phi, char *filename ) {
             buffer_pt = buffer_pt->next;
           }
         }
+
+  if ( g.my_rank == 0 ){
+    fclose( file );
+  }
         
-        if ( g.my_rank == 0 ){
-          fclose( file );
-        }
+  t1 = MPI_Wtime();
         
-        t1 = MPI_Wtime();
+  if ( g.my_rank == 0 ) {
+    FREE( buffer[0].data, double, bar_size );
+    FREE( buffer[1].data, double, bar_size );
+    if (precision==32)
+      FREE( float_buffer, float, bar_size );
+  }
         
-        if ( g.my_rank == 0 ) {
-          FREE( buffer[0].data, double, bar_size );
-          FREE( buffer[1].data, double, bar_size );
-          if (precision==32)
-            FREE( float_buffer, float, bar_size );
-        }
-        
-        printf0("...done (%lf seconds)\n\n", t1-t0 ); 
-        #else
-        error0("Lime not enabled. Use -DHAVE_LIME during compilation. Aborting...");
-        #endif
+  printf0("...done (%lf seconds)\n\n", t1-t0 ); 
+  #else
+  error0("Lime not enabled. Use -DHAVE_LIME during compilation. Aborting...");
+  #endif
 }
 
 void lime_write_vector( double *phi, char *filename ) {

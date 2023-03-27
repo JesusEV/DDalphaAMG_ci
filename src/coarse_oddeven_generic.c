@@ -1476,13 +1476,7 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 #ifdef POLYPREC
   if ( l->level==0 && l->p_PRECISION.polyprec_PRECISION.update_lejas == 1 ) {
     // re-construct Lejas
-    int polyprec_stat = re_construct_lejas_PRECISION( l, threading );
-    //if ( polyprec_stat==-1 ) {
-    //  printf0("DID NOT UPDATE LEJAS FOR POLYPREC ***\n");
-    //}
-    //else {
-    //  printf0("UPDATED LEJAS FOR POLYPREC ***\n");
-    //}
+    re_construct_lejas_PRECISION( l, threading );
   }
 #endif
 
