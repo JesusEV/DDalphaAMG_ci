@@ -6,11 +6,8 @@
 | 1 - LIME                                     |
 |----------------------------------------------|
 
-configuration: /home/ramirez/Documents/configs/conf.1255
- // configuration: ../../../../../../project/chwu29/ramirez1/configs/tm/conf.1255
+configuration: ../../../../../project/chwu29/ramirez1/configs/tm/for_testing/cB96/conf.1000
 format: 1
-// conf/8x8x8x8b6.0000id3n1
-// conf/4x4x4x4b6.0000id3n1
 
 |----------------------------------------------|
 |----------- Select right hand side -----------|
@@ -19,7 +16,7 @@ format: 1
 | 1 - first unit vector                        |
 | 2 - random                                   |
 |----------------------------------------------|
-right hand side: 2
+right hand side: 0
 
 |----------------------------------------------|
 |--- Information about the lattice geometry ---|
@@ -39,62 +36,72 @@ twisted boundary conditions: 1 0 0 0
 number of levels: 3
 number of openmp threads: 1
 
-|--- depth 0 ----------------------------------|
-d0 global lattice: 96 48 48 48  // global lattice size
-d0 local lattice: 6 24 48 48   // lattice size on each process
+
+
+d0 global lattice: 192 96 96 96  // global lattice size
+d0 local lattice: 8 8 8 16  // lattice size on each process
                              // nproc = prod(global lattice)/prod(local lattice)
-d0 block lattice: 3 3 3 3    // Schwarz blocks
+d0 block lattice: 4 4 4 4    // Schwarz blocks
 d0 post smooth iter: 4      // number of Schwarz cycles per MG iteration
 d0 block iter: 4
-d0 test vectors: 28          // number of test vectors used to construct the interpolation
-d0 setup iter: 5             // number of bootstrap setup iteration (excluding the initial step)
+d0 test vectors: 32          // number of test vectors used to construct the interpolation
+d0 setup iter: 4             // number of bootstrap setup iteration (excluding the initial step)
 
-d1 global lattice: 32 16 16 16  // global lattice size
-d1 local lattice: 2 8 16 16   // lattice size on each process
-d1 block lattice: 2 2 2 2    // Schwarz blocks
+d1 global lattice: 48 24 24 24  // global lattice size
+d1 local lattice: 2 2 2 4   // lattice size on each process
+d1 block lattice: 2 2 2 2   // Schwarz blocks
 d1 post smooth iter: 3       // number of Schwarz cycles per MG iteration
 d1 block iter: 4
 d1 test vectors: 32          // number of test vectors used to construct the interpolation
-d1 setup iter: 3             // number of bootstrap setup iteration (excluding the initial step)
+d1 setup iter: 4             // number of bootstrap setup iteration (excluding the initial step)
 d1 mu factor: 1.0
 
-d2 global lattice: 16 8 8 8 // global lattice size
-d2 local lattice: 1 4 8 8   // lattice size on each process
-d2 mu factor: 6.0
+d2 global lattice: 24 12 12 12  // global lattice size
+d2 local lattice: 1 1 1 2   // lattice size on each process
+d2 mu factor: 1.0
+
+
 
 #wilson_param                // parameters for the inverter
-csw: 1.57551
 
-kappa: 0.137290
+m0: -0.41388114884
 
-mu: 0.0009
-
-setup mu: 0.0009
+csw: 1.69
+mu: 0.00072
+setup mu: 0.00072
   mu odd shift: 0.0
   mu even shift: 0.0
+epsbar: 0.00
   epsbar odd shift: 0.0
   epsbar even shift: 0.0
-addDownPropagator: 1
+addDownPropagator: 0
 
 tolerance for relative residual: 1E-10
-iterations between restarts: 20
+iterations between restarts: 10
 maximum of restarts: 50
 
-coarse grid tolerance: 1E-1
-coarse grid iterations: 50
-coarse grid restarts: 20
-coarse grid gcrodr_k: 30
-coarse grid polyprec_d: 3
-coarse grid local_polyprec_d: 5
+kcycle: 1
+kcycle length: 5
+kcycle restarts: 2
+kcycle tolerance: 1.0E-1
 
-low level meas: 0
+coarse grid tolerance: 0.1
+coarse grid iterations: 420
+coarse grid restarts: 10
+
+coarse grid gcrodr_upd_itrs_solve: 0
+coarse grid gcrodr_upd_itrs_setup: 10
+
+coarse grid local_polyprec_d: 2
+coarse grid gcrodr_k: 400
+coarse grid polyprec_d: 20
 
 #general_param
 print mode: 1
 method: 2
 interpolation: 2
-mixed precision: 1
-randomize test vectors: 0             // initialize random number generator with time(0) ? 0=no/1=yes
+mixed precision: 2
+randomize test vectors: 1               // initialize random number generator with time(0) ? 0=no/1=yes
 odd even preconditioning: 1
 
 // for further information, please read the user documentation in doc/

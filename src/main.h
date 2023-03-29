@@ -443,7 +443,6 @@
     // mostly useful, as of now, for PP and GCRODR
     int on_solve;
 
-    int low_level_meas;
     double avg_b1;
     double avg_b2;
     double avg_crst;

@@ -1438,31 +1438,17 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   coarse_n_hopping_term_PRECISION( p->b, p->x, op, _EVEN_SITES, l, threading );
   PROF_PRECISION_STOP( _NC, 0, threading );
 
-  //PRECISION nrmx = global_norm_PRECISION( p->b, p->v_start, p->v_end, l, threading );
-  //printf0("norm of rhs = %f\n", nrmx);
-
   int start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
   PRECISION norm_r0=1.0;
-  if (g.low_level_meas == 1) {
-    vector_PRECISION_copy( p->r, p->b, start, end, l ); // compute r = b - w
-    norm_r0 = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading );
-  }
 
 #ifdef BLOCK_JACOBI
   if ( l->level==0 && l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas == 1 ) {
     // re-construct Lejas
     local_re_construct_lejas_PRECISION( l, threading );
-    //printf0("UPDATED LEJAS FOR BJ ***\n");
   }
 #endif
-
-  if (g.low_level_meas == 1) {
-    START_MASTER(threading)
-    if ( p->preconditioner==NULL ) { printf0("NULL !!\n"); }
-    END_MASTER(threading)
-  }
 
 #ifdef BLOCK_JACOBI
   // if Block Jacobi is enabled, solve the problem : M^{-1}Ax = M^{-1}b
@@ -1476,13 +1462,7 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 #ifdef POLYPREC
   if ( l->level==0 && l->p_PRECISION.polyprec_PRECISION.update_lejas == 1 ) {
     // re-construct Lejas
-    int polyprec_stat = re_construct_lejas_PRECISION( l, threading );
-    //if ( polyprec_stat==-1 ) {
-    //  printf0("DID NOT UPDATE LEJAS FOR POLYPREC ***\n");
-    //}
-    //else {
-    //  printf0("UPDATED LEJAS FOR POLYPREC ***\n");
-    //}
+    re_construct_lejas_PRECISION( l, threading );
   }
 #endif
 
@@ -1521,15 +1501,6 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   START_MASTER(threading)
   if (g.my_rank==0) printf("coarsest gmres iters = %d\n", fgmres_iters);
   END_MASTER(threading)
-
-  if (g.low_level_meas == 1) {
-    p->eval_operator( p->w, p->x, p->op, l, threading ); // compute w = D*x
-    vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
-    PRECISION beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading );
-    START_MASTER(threading)
-    printf0("g (proc=%d) rel residual right after bicho = %f\n", g.my_rank, beta/norm_r0);
-    END_MASTER(threading)
-  }
 
   // even to odd
   PROF_PRECISION_START( _NC, threading );

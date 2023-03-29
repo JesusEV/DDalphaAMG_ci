@@ -102,10 +102,6 @@ void leja_ordering_PRECISION( gmres_PRECISION_struct *p )
   complex_PRECISION** L;
   complex_PRECISION* col_prods;
 
-  if (g.low_level_meas == 1) {
-    print_vector_PRECISION("Eigenvalues", p->polyprec_PRECISION.h_ritz, p->polyprec_PRECISION.eigslvr.N);
-  }
-
   d_poly = p->polyprec_PRECISION.d_poly;
   L = p->polyprec_PRECISION.L;
   col_prods = p->polyprec_PRECISION.col_prods;
@@ -154,9 +150,6 @@ void leja_ordering_PRECISION( gmres_PRECISION_struct *p )
   }
 
   memcpy( p->polyprec_PRECISION.lejas, p->polyprec_PRECISION.L[d_poly], sizeof(complex_PRECISION)*(d_poly) );
-  if (g.low_level_meas == 1) {
-    print_vector_PRECISION("lejas", p->polyprec_PRECISION.lejas, d_poly);
-  }
 }
 
 

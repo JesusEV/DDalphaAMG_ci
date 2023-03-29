@@ -1099,8 +1099,8 @@ static inline void DDalphaAMG_ms_driver( double **vector1_out, double *vector1_i
   double phase[4] = {_COMPLEX_double_ZERO, _COMPLEX_double_ZERO, _COMPLEX_double_ZERO, _COMPLEX_double_ZERO},
     vmin=1, vmax=EPS_float, vtmp, nrhs, nrhs2;
   gmres_double_struct *p = g.mixed_precision==2?&(g.p_MP.dp):&(g.p);
-  vector_double vb, rhs = p->b;
-  vector_double vx, sol = p->x;
+  vector_double vb = NULL, rhs = p->b;
+  vector_double vx = NULL, sol = p->x;
   vector_double source = NULL, solution = NULL, solution2 = NULL;
   DDalphaAMG_status tmp_status;
 

@@ -758,7 +758,7 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
 #ifdef COARSE_RES
   if ( l->depth > 0 ) {
     START_MASTER(threading)
-    char number[3]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
+    char number[20]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
     printf0(" - depth: %d, gmres iter: %2d, approx rel res: %le |", l->depth, iter, gamma_jp1/norm_r0 );
     printf0("\033[0m\n"); fflush(0);
     END_MASTER(threading)
