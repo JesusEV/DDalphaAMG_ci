@@ -401,7 +401,7 @@
 #endif
 
 #ifdef POLYPREC
-    int polyprec_d;
+    int polyprec_d, polyprec_d_setup, polyprec_d_solve;
 #endif
 
 #ifdef BLOCK_JACOBI

@@ -306,8 +306,9 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 #endif
 
 #ifdef POLYPREC
-  p->polyprec_PRECISION.d_poly = g.polyprec_d;
-  int d_poly=p->polyprec_PRECISION.d_poly;
+  int d_max = (g.polyprec_d_setup>g.polyprec_d_solve)?g.polyprec_d_setup:g.polyprec_d_solve;
+  p->polyprec_PRECISION.d_poly = d_max;
+  int d_poly = p->polyprec_PRECISION.d_poly;
 
   MALLOC( p->polyprec_PRECISION.col_prods, complex_PRECISION, d_poly);
   MALLOC( p->polyprec_PRECISION.h_ritz, complex_PRECISION, d_poly);

@@ -362,6 +362,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   int fgmresx_iter=0, m=0, j, ol, k=p->gcrodr_PRECISION.k, i, g_ln, start, end;
   PRECISION beta=0;
 
+  int buff_init_guess = p->initial_guess_zero;
+
   g_ln = p->restart_length + p->gcrodr_PRECISION.k;
 
   START_MASTER(threading)
@@ -535,34 +537,45 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     //printf0("OUT OF INITIAL GMRES, m = %d ***\n", m);
 
-    if ( m>15 && m<k ) {
+    if ( m>30 && m<k ) {
 
-      // TODO : setting this to zero is clearly inconsistent with what follows
-      vector_PRECISION_define( p->x, 0, start, end, l );
+      printf0("Quite a lot of iterations. Let's try and construct a deflation/recycling subspace\n");
 
-      int buff_init_guess = p->initial_guess_zero;
-      START_MASTER(threading)
-      p->initial_guess_zero = 0;
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
+      {
 
-      apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
-      vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+        p->initial_guess_zero = 0;
 
-      beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
+        vector_PRECISION_define_random( p->x, start, end, l );
 
-      START_MASTER(threading);
-      // setting the following line for the upcoming call to fgmresx_PRECISION(...)
-      p->gamma[0] = beta;
-      END_MASTER(threading);
+        // compute initial residual
+        apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+        vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+
+        beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
+
+        START_MASTER(threading);
+        p->gcrodr_PRECISION.norm_r0 = beta;
+        // setting the following line for the upcoming call to fgmresx_PRECISION(...)
+        p->gamma[0] = beta;
+        END_MASTER(threading);
+
+        beta = global_norm_PRECISION( p->b, p->v_start, p->v_end, l, threading );
+
+        START_MASTER(threading)                                                                                                                                                      p->gcrodr_PRECISION.b_norm = beta;
+        p->gcrodr_PRECISION.finish = 0;
+        END_MASTER(threading);
+
+        SYNC_MASTER_TO_ALL(threading);
+
+      }
 
       double buff1x = p->tol;
       double buff2x = g.coarse_tol;
       int buff3x = p->restart_length;
       START_MASTER(threading)
       //if ( g.on_solve==1 ) {
-        p->tol = 1.0e-5;
-        g.coarse_tol = 1.0e-5;
+        p->tol = 1.0e-20;
+        g.coarse_tol = 1.0e-20;
         p->restart_length = k+1;
       //}
       l->dup_H = 1;
@@ -570,8 +583,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       m = fgmresx_PRECISION(p, l, threading);
       fgmresx_iter += m;
-
-      //printf0("OUT OF (SECOND) INITIAL GMRES, m = %d ***\n", m);
 
       START_MASTER(threading)
       p->tol = buff1x;
@@ -581,10 +592,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       END_MASTER(threading)
       SYNC_MASTER_TO_ALL(threading);
 
-      START_MASTER(threading)
-      p->initial_guess_zero = buff_init_guess;
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
     }
     else {
       fgmresx_iter += m;
@@ -638,6 +645,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     // if m<k, there's not enough information to build the recycling subspace
     if ( m<k ) {
+      p->initial_guess_zero = buff_init_guess;
       return m;
     }
 
@@ -684,6 +692,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     // check if this first call to fgmresx_PRECISION was enough
     if ( p->gcrodr_PRECISION.finish==1 ) {
+      p->initial_guess_zero = buff_init_guess;
       return m;
     }
 
@@ -694,7 +703,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
 #endif
 
-  if ( g.gcrodr_calling_from_setup==1 ) { return m; }
+  if ( g.gcrodr_calling_from_setup==1 ) {
+    p->initial_guess_zero = buff_init_guess;
+    return m;
+  }
 
   for ( ol=0; ol < p->num_restart; ol++ )  {
 
@@ -840,6 +852,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     // check if tolerance has been reached
     if ( p->gcrodr_PRECISION.finish==1 ) {
+      p->initial_guess_zero = buff_init_guess;
       return fgmresx_iter;
     }
 
@@ -848,6 +861,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
   SYNC_MASTER_TO_ALL(threading);
 
+  p->initial_guess_zero = buff_init_guess;
   return fgmresx_iter;
 }
 

@@ -95,12 +95,18 @@ int main( int argc, char **argv ) {
 
     //t0x = MPI_Wtime();
 
+    l.p_double.polyprec_double.d_poly = g.polyprec_d_setup;
+    l.p_float.polyprec_float.d_poly = g.polyprec_d_setup;
+
     // iterative phase
     method_update( l.setup_iter, &l, &threading );
 
     //t1x = MPI_Wtime();
     //elap_time = t1x-t0x;
     //if (g.my_rank==0) printf("elapsed time (iterative setup phase): %-8.4lf seconds\n", elap_time);
+
+    l.p_double.polyprec_double.d_poly = g.polyprec_d_solve;
+    l.p_float.polyprec_float.d_poly = g.polyprec_d_solve;
 
     g.on_solve = 1;
     solve_driver( &l, &threading );
