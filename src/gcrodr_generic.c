@@ -537,7 +537,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     //printf0("OUT OF INITIAL GMRES, m = %d ***\n", m);
 
-    if ( m>30 && m<k ) {
+    if ( m>20 && m<k ) {
+
+      double t0, t1;
+      t0 = MPI_Wtime();
 
       printf0("Quite a lot of iterations. Let's try and construct a deflation/recycling subspace\n");
 
@@ -561,7 +564,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
         beta = global_norm_PRECISION( p->b, p->v_start, p->v_end, l, threading );
 
-        START_MASTER(threading)                                                                                                                                                      p->gcrodr_PRECISION.b_norm = beta;
+        START_MASTER(threading)
+        p->gcrodr_PRECISION.b_norm = beta;
         p->gcrodr_PRECISION.finish = 0;
         END_MASTER(threading);
 
@@ -591,6 +595,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       l->dup_H = 0;
       END_MASTER(threading)
       SYNC_MASTER_TO_ALL(threading);
+
+      t1 = MPI_Wtime();
+      printf0("Arnoldi time : %.10f seconds\n", t1-t0);
 
     }
     else {
@@ -649,6 +656,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       return m;
     }
 
+    double t0, t1;
+    t0 = MPI_Wtime();
+
     if ( p->preconditioner==NULL ) {
       // build the matrices A and B used for generalized-eigensolving
       gev_buildAB_PRECISION( p->gcrodr_PRECISION.gev_A, p->gcrodr_PRECISION.gev_B, p->gcrodr_PRECISION.eigslvr.Hc,
@@ -678,6 +688,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       //printf0("COMPLETED INITIAL CONSTRUCTION OF C AND U ***\n");
     }
+
+    t1 = MPI_Wtime();
+    printf0("GEVP time : %.10f\n", t1-t0);
 
     // FIXME : issue when disabling this ...
     START_MASTER(threading)
@@ -961,6 +974,8 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
   // start and end indices for vector functions depending on thread
   int start, end, j=-1, finish=0, iter=0, il;
 
+  //int was_there_stagnation = 0;
+
   PRECISION norm_r0=1, gamma_jp1=1;
 
   START_LOCKED_MASTER(threading)
@@ -1061,9 +1076,10 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
           // if the residual hasn't changed, exit
           if ( nr1_i == nr2_i ) {
 
-            printf0( "STAGNATION ***\n" );
-
+            printf0( "WARNING : stagnation to three significant digits in the residual\n" );
             finish = 1;
+
+            //was_there_stagnation = 1;
           }
         }
       }
@@ -1098,6 +1114,8 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
+
+  //if ( was_there_stagnation==1 ) printf0("WARNING : there was stagnation of the residual\n");
 
   return iter;
 }

@@ -6,7 +6,7 @@
 | 1 - LIME                                     |
 |----------------------------------------------|
 
-configuration: /home/ramirez/projects/lqcd_configs/tm/160x80to3/conf.1400
+configuration: ../../../../../project/chwu29/ramirez1/configs/tm/160x80to3/rhs_cC80_example/conf.1400
 format: 1
 
 |----------------------------------------------|
@@ -52,7 +52,7 @@ d1 block lattice: 2 2 2 2   // Schwarz blocks
 d1 post smooth iter: 3       // number of Schwarz cycles per MG iteration
 d1 block iter: 4
 d1 test vectors: 32          // number of test vectors used to construct the interpolation
-d1 setup iter: 4             // number of bootstrap setup iteration (excluding the initial step)
+d1 setup iter: 3             // number of bootstrap setup iteration (excluding the initial step)
 d1 mu factor: 1.0
 
 d2 global lattice: 20 10 10 10  // global lattice size
@@ -88,15 +88,23 @@ kcycle restarts: 2
 kcycle tolerance: 1.0E-1
 
 coarse grid tolerance: 0.1
-coarse grid iterations: 420
-coarse grid restarts: 10
+coarse grid iterations: 620
+coarse grid restarts: 2
 
+coarse grid gcrodr_upd_itrs_setup: 0
 coarse grid gcrodr_upd_itrs_solve: 0
-coarse grid gcrodr_upd_itrs_setup: 10
 
 coarse grid local_polyprec_d: 2
-coarse grid gcrodr_k: 400
+
+coarse grid gcrodr_k: 600
+coarse grid gcrodr_k_setup: 600
+coarse grid gcrodr_k_solve: 600
+
 coarse grid polyprec_d: 20
+coarse grid polyprec_d_setup: 20
+coarse grid polyprec_d_solve: 20
+
+low level meas: 0
 
 #general_param
 print mode: 1

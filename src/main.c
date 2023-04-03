@@ -95,8 +95,23 @@ int main( int argc, char **argv ) {
 
     //t0x = MPI_Wtime();
 
-    l.p_double.polyprec_double.d_poly = g.polyprec_d_setup;
-    l.p_float.polyprec_float.d_poly = g.polyprec_d_setup;
+    {
+      level_struct *lx = &l;
+      while (1) {
+        if ( lx->level==0 ) {
+          if ( g.mixed_precision==0 ) {
+            lx->p_double.gcrodr_double.k = g.gcrodr_k_setup;
+            lx->p_float.polyprec_float.d_poly = g.polyprec_d_setup;
+          }
+          else {
+            lx->p_float.gcrodr_float.k = g.gcrodr_k_setup;
+            lx->p_float.polyprec_float.d_poly = g.polyprec_d_setup;
+          }
+          break;
+        }
+        else { lx = lx->next_level; }
+      }
+    }
 
     // iterative phase
     method_update( l.setup_iter, &l, &threading );
@@ -105,8 +120,23 @@ int main( int argc, char **argv ) {
     //elap_time = t1x-t0x;
     //if (g.my_rank==0) printf("elapsed time (iterative setup phase): %-8.4lf seconds\n", elap_time);
 
-    l.p_double.polyprec_double.d_poly = g.polyprec_d_solve;
-    l.p_float.polyprec_float.d_poly = g.polyprec_d_solve;
+    {
+      level_struct *lx = &l;
+      while (1) {
+        if ( lx->level==0 ) {
+          if ( g.mixed_precision==0 ) {
+            lx->p_double.polyprec_double.d_poly = g.polyprec_d_solve;
+            lx->p_double.gcrodr_double.k = g.gcrodr_k_solve;
+          }
+          else {
+            lx->p_float.polyprec_float.d_poly = g.polyprec_d_solve;
+            lx->p_float.gcrodr_float.k = g.gcrodr_k_solve;
+          }
+          break;
+        }
+        else { lx = lx->next_level; }
+      }
+    }
 
     g.on_solve = 1;
     solve_driver( &l, &threading );
