@@ -6,7 +6,7 @@
 | 1 - LIME                                     |
 |----------------------------------------------|
 
-configuration: ../../../../../project/chwu29/ramirez1/configs/tm/160x80to3/rhs_cC80_example/conf.1400
+configuration: ../../../../../project/chwu29/ramirez1/configs/tm/for_testing/cB96/conf.1000
 format: 1
 
 |----------------------------------------------|
@@ -37,7 +37,8 @@ number of levels: 3
 number of openmp threads: 1
 
 
-d0 global lattice: 160 80 80 80  // global lattice size
+
+d0 global lattice: 192 96 96 96  // global lattice size
 d0 local lattice: 8 8 8 16  // lattice size on each process
                              // nproc = prod(global lattice)/prod(local lattice)
 d0 block lattice: 4 4 4 4    // Schwarz blocks
@@ -46,7 +47,7 @@ d0 block iter: 4
 d0 test vectors: 32          // number of test vectors used to construct the interpolation
 d0 setup iter: 4             // number of bootstrap setup iteration (excluding the initial step)
 
-d1 global lattice: 40 20 20 20  // global lattice size
+d1 global lattice: 48 24 24 24  // global lattice size
 d1 local lattice: 2 2 2 4   // lattice size on each process
 d1 block lattice: 2 2 2 2   // Schwarz blocks
 d1 post smooth iter: 3       // number of Schwarz cycles per MG iteration
@@ -55,22 +56,19 @@ d1 test vectors: 32          // number of test vectors used to construct the int
 d1 setup iter: 3             // number of bootstrap setup iteration (excluding the initial step)
 d1 mu factor: 1.0
 
-d2 global lattice: 20 10 10 10  // global lattice size
+d2 global lattice: 24 12 12 12  // global lattice size
 d2 local lattice: 1 1 1 2   // lattice size on each process
 d2 mu factor: 1.0
 
 
 
-
 #wilson_param                // parameters for the inverter
- // xm0: -0.376218197306779
- // xcsw: 1.6112
 
-m0: -0.396470414841930
+m0: -0.41388114884
 
-csw: 1.6452
-mu: 0.0006
-setup mu: 0.0006
+csw: 1.69
+mu: 0.00072
+setup mu: 0.00072
   mu odd shift: 0.0
   mu even shift: 0.0
 epsbar: 0.00
@@ -103,8 +101,6 @@ coarse grid gcrodr_k_solve: 600
 coarse grid polyprec_d: 20
 coarse grid polyprec_d_setup: 20
 coarse grid polyprec_d_solve: 20
-
-low level meas: 0
 
 #general_param
 print mode: 1

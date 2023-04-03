@@ -100,10 +100,10 @@ void gels_via_givens_PRECISION( int ida, int idb, complex_PRECISION* a, int lda,
 
   int i,j;
 
-  if ( g.on_solve==0 ) {
-    gels_PRECISION( LAPACK_COL_MAJOR, 'N', ida, idb, 1, a, lda, b, ldb );
-    return;
-  }
+  //if ( g.on_solve==0 ) {
+  //  gels_PRECISION( LAPACK_COL_MAJOR, 'N', ida, idb, 1, a, lda, b, ldb );
+  //  return;
+  //}
 
   // solve via Givens rotations
 

@@ -1441,8 +1441,6 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   int start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
-  PRECISION norm_r0=1.0;
-
 #ifdef BLOCK_JACOBI
   if ( l->level==0 && l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas == 1 ) {
     // re-construct Lejas

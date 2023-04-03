@@ -1015,8 +1015,15 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   save_pt = &(g.odd_even); g.odd_even = 1;
   read_parameter( &save_pt, "odd even preconditioning:", "%d", 1, in, _DEFAULT_SET );
 #ifdef GCRODR
+
   save_pt = &(g.gcrodr_k); g.gcrodr_k = 15;
   read_parameter( &save_pt, "coarse grid gcrodr_k:", "%d", 1, in, _DEFAULT_SET );
+
+  save_pt = &(g.gcrodr_k_setup); g.gcrodr_k_setup = 15;
+  read_parameter( &save_pt, "coarse grid gcrodr_k_setup:", "%d", 1, in, _DEFAULT_SET );
+
+  save_pt = &(g.gcrodr_k_solve); g.gcrodr_k_solve = 15;
+  read_parameter( &save_pt, "coarse grid gcrodr_k_solve:", "%d", 1, in, _DEFAULT_SET );
 
   save_pt = &(g.gcrodr_upd_itrs_setup); g.gcrodr_upd_itrs_setup = 5;
   read_parameter( &save_pt, "coarse grid gcrodr_upd_itrs_setup:", "%d", 1, in, _DEFAULT_SET );
@@ -1030,6 +1037,14 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   save_pt = &(g.polyprec_d); g.polyprec_d = 5;
   read_parameter( &save_pt, "coarse grid polyprec_d:", "%d", 1, in, _DEFAULT_SET );
   g.polyprec_d++;
+
+  save_pt = &(g.polyprec_d_setup); g.polyprec_d_setup = 5;
+  read_parameter( &save_pt, "coarse grid polyprec_d_setup:", "%d", 1, in, _DEFAULT_SET );
+  g.polyprec_d_setup++;
+
+  save_pt = &(g.polyprec_d_solve); g.polyprec_d_solve = 5;
+  read_parameter( &save_pt, "coarse grid polyprec_d_solve:", "%d", 1, in, _DEFAULT_SET );
+  g.polyprec_d_solve++;
 #endif
 
 #ifdef BLOCK_JACOBI

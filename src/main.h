@@ -394,14 +394,14 @@
         restart, max_restart, kcycle_restart, kcycle_max_restart, coarse_iter, coarse_restart;
     double tol, coarse_tol, kcycle_tol, csw, rho, *relax_fac;
 #ifdef GCRODR
-    int gcrodr_k;
+    int gcrodr_k, gcrodr_k_setup, gcrodr_k_solve;
     int gcrodr_upd_itrs_solve;
     int gcrodr_upd_itrs_setup;
     int gcrodr_calling_from_setup;
 #endif
 
 #ifdef POLYPREC
-    int polyprec_d;
+    int polyprec_d, polyprec_d_setup, polyprec_d_solve;
 #endif
 
 #ifdef BLOCK_JACOBI
@@ -469,6 +469,8 @@
 #ifdef GCRODR
     double gcrodr_LSP_time, gcrodr_buildAB_time, gcrodr_buildCU_time;
 #endif
+
+    int setup_phase_ctr;
 
   } global_struct;
 
