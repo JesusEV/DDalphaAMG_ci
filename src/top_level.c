@@ -232,7 +232,8 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
       // calling the coarsest-level solver once on setup
-#if defined(GCRODR) || defined(POLYPREC) || defined(BLOCK_JACOBI)
+//#if defined(GCRODR) || defined(POLYPREC) || defined(BLOCK_JACOBI)
+#if defined(GCRODR)
       {
         level_struct *lx = l;
 
@@ -254,12 +255,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               vector_double_define_random( px->b, px->v_start, px->v_end, lx );
               END_MASTER(threading)
 
-#ifdef GCRODR
               START_MASTER(threading)
               g.gcrodr_calling_from_setup = 1;
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
-#endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
@@ -278,12 +277,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
 
-#ifdef GCRODR
               START_MASTER(threading)
               g.gcrodr_calling_from_setup = 0;
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
-#endif
 
             }
             else {
@@ -295,12 +292,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               vector_float_define_random( px->b, px->v_start, px->v_end, lx );
               END_MASTER(threading)
 
-#ifdef GCRODR
               START_MASTER(threading)
               g.gcrodr_calling_from_setup = 1;
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
-#endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
@@ -319,12 +314,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
 
-#ifdef GCRODR
               START_MASTER(threading)
               g.gcrodr_calling_from_setup = 0;
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
-#endif
 
             }
 
@@ -353,7 +346,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       END_MASTER(threading)
 
       if(g.bc==2)
-     apply_twisted_bc_to_vector_double( solution, solution, minus_twisted_bc, l);
+      apply_twisted_bc_to_vector_double( solution, solution, minus_twisted_bc, l);
       
       START_LOCKED_MASTER(threading)  
       printf0("\n\n+-------------------------- down --------------------------+\n\n");
@@ -445,7 +438,8 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
       // calling the coarsest-level solver once on setup
-#if defined(GCRODR) || defined(POLYPREC) || defined(BLOCK_JACOBI)
+//#if defined(GCRODR) || defined(POLYPREC) || defined(BLOCK_JACOBI)
+#if defined(GCRODR)
       {
         level_struct *lx = l;
 
@@ -467,12 +461,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               vector_double_define_random( px->b, px->v_start, px->v_end, lx );
               END_MASTER(threading)
 
-#ifdef GCRODR
               START_MASTER(threading)
               g.gcrodr_calling_from_setup = 1;
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
-#endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
@@ -491,12 +483,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
 
-#ifdef GCRODR
               START_MASTER(threading)
               g.gcrodr_calling_from_setup = 0;
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
-#endif
 
             }
             else {
@@ -508,12 +498,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               vector_float_define_random( px->b, px->v_start, px->v_end, lx );
               END_MASTER(threading)
 
-#ifdef GCRODR
               START_MASTER(threading)
               g.gcrodr_calling_from_setup = 1;
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
-#endif
 
               double buff1x = px->tol;
               double buff2x = g.coarse_tol;
@@ -532,12 +520,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
 
-#ifdef GCRODR
               START_MASTER(threading)
               g.gcrodr_calling_from_setup = 0;
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
-#endif
 
             }
 
