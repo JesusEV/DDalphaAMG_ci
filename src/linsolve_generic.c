@@ -120,6 +120,7 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
 
 #ifdef BLOCK_JACOBI
   p->block_jacobi_PRECISION.b_backup = NULL;
+  p->block_jacobi_PRECISION.xtmp = NULL;
   local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
 }
