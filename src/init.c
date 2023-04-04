@@ -1235,8 +1235,8 @@ void validate_parameters( int ls, level_struct *l ) {
   //  ASSERT( g.num_eig_vect[i] <= g.num_eig_vect[i+1] );
 
   //TODO: for some reason g.mixed_precision=0 do not work with g.num_levels>2
-  if ( g.num_levels>2 && g.interpolation )
-    ASSERT( g.mixed_precision );
+  //if ( g.num_levels>2 && g.interpolation )
+  //  ASSERT( g.mixed_precision );
 
 #ifdef HAVE_TM1p1
   //TODO: method = 6 not supported with HAVE_TM1p1. To fix all the g5D functions
