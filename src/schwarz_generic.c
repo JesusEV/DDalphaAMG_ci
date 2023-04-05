@@ -570,7 +570,7 @@ void schwarz_layout_PRECISION_define( schwarz_PRECISION_struct *s, level_struct 
                             s->block[j].bt[i] = connect_link_PRECISION( t, z, y, x, mu, -1, dt, it, s, l );
                             i++;
                           }
-                          block_end[mu] = tmp;
+                    block_end[mu] = tmp;
                   }
                   j++;
                 }
@@ -1591,7 +1591,7 @@ void additive_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, v
     }
   }
   PRECISION r_norm = global_norm_PRECISION( r, 0, l->inner_vector_size, l, no_threading );
-  char number[3]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
+  char number[20]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
   printf0(" ---- depth: %d, c: %d, schwarz iter %2d, norm: %11.6le |", l->depth, s->num_colors, k, r_norm );
   printf0("\033[0m\n"); fflush(0);
   END_LOCKED_MASTER(threading)
@@ -1762,7 +1762,7 @@ void red_black_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, 
 
   }
   PRECISION r_norm = global_norm_PRECISION( r, 0, l->inner_vector_size, l, no_threading );
-  char number[3]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
+  char number[20]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
   printf0(" ---- depth: %d, c: %d, schwarz iter %2d, norm: %11.6le |", l->depth, s->num_colors, k, r_norm );
   printf0("\033[0m\n"); fflush(0);
   END_LOCKED_MASTER(threading)
@@ -1977,7 +1977,7 @@ void schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_phi, vector_PRE
   }
 
   PRECISION r_norm = global_norm_PRECISION( r, 0, l->inner_vector_size, l, no_threading );
-  char number[3]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
+  char number[20]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
   printf0(" ---- depth: %d, c: %d, schwarz iter %2d, norm: %11.6le |", l->depth, s->num_colors, k, r_norm );
   printf0("\033[0m\n"); fflush(0);
   END_LOCKED_MASTER(threading)
@@ -2134,7 +2134,7 @@ void sixteen_color_schwarz_PRECISION( vector_PRECISION phi, vector_PRECISION D_p
     PRECISION r_norm = global_norm_PRECISION( true_r, 0, l->inner_vector_size, l, no_threading ),
       den = global_norm_PRECISION( eta, 0, l->inner_vector_size, l, no_threading );
     r_norm/=den;
-    char number[3]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
+    char number[20]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
     printf0(" ---- depth: %d, c: %d, schwarz iter %2d, norm: %11.6le |", l->depth, s->num_colors, k, r_norm );
     printf0("\033[0m\n"); fflush(0);
     PUBLIC_FREE( true_r, complex_PRECISION, l->vector_size );

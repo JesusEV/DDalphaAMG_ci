@@ -144,7 +144,7 @@ void read_tv_from_file_PRECISION( level_struct *l, struct Thread *threading ) {
       START_LOCKED_MASTER(threading)
 
       int n = l->num_eig_vect, i;
-      char filename[STRINGLENGTH+1];
+      char filename[STRINGLENGTH+20];
       vector_double tmp = NULL;
       
       MALLOC( tmp, complex_double, l->inner_vector_size );
@@ -532,7 +532,46 @@ void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thre
   PUBLIC_MALLOC( v_buf, complex_PRECISION, l->vector_size );
   
   if ( !l->idle ) {
-    for ( int j=0; j<setup_iter; j++ ) {
+    for ( int j=0; j<setup_iter; j++ ) {      
+
+      /*
+      // dynamically setting the degree of the polynomial at the coarsest level
+      {
+        g.setup_phase_ctr = j;
+
+        double y1 = g.polyprec_d;
+        double y0 = 2;
+        double x1 = (double)(setup_iter-1);
+        double x0 = 0;
+
+        double slope = (y1-y0)/(x1-x0);
+
+        double xj = (double)(j);
+        double yj = y0 + (xj-x0)*slope;
+
+        g.polyprec_d_setup = (int)(yj);
+
+        //if ( j<2 ) {  }
+        //else {}
+
+        level_struct *lx = l;
+        while (1) {
+          if ( lx->level==0 ) {
+            if ( g.mixed_precision==0 ) {
+              lx->p_double.polyprec_double.d_poly = g.polyprec_d_setup;
+            }
+            else {
+              lx->p_float.polyprec_float.d_poly = g.polyprec_d_setup;
+            }
+            break;
+          }
+          else { lx = lx->next_level; }
+        }
+
+        printf0("DEGREE = %d\n", lx->p_float.polyprec_float.d_poly);
+      }
+      */
+
       int pc = 0;
 #ifdef DEBUG
       int pi = 1, pn = l->num_eig_vect*l->post_smooth_iter;

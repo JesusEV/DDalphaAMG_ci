@@ -120,6 +120,7 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
 
 #ifdef BLOCK_JACOBI
   p->block_jacobi_PRECISION.b_backup = NULL;
+  p->block_jacobi_PRECISION.xtmp = NULL;
   local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
 
@@ -317,8 +318,9 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 #endif
 
 #ifdef POLYPREC
-  p->polyprec_PRECISION.d_poly = g.polyprec_d;
-  int d_poly=p->polyprec_PRECISION.d_poly;
+  int d_max = (g.polyprec_d_setup>g.polyprec_d_solve)?g.polyprec_d_setup:g.polyprec_d_solve;
+  p->polyprec_PRECISION.d_poly = d_max;
+  int d_poly = p->polyprec_PRECISION.d_poly;
 
   MALLOC( p->polyprec_PRECISION.col_prods, complex_PRECISION, d_poly);
   MALLOC( p->polyprec_PRECISION.h_ritz, complex_PRECISION, d_poly);
@@ -820,7 +822,7 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
 #ifdef COARSE_RES
   if ( l->depth > 0 ) {
     START_MASTER(threading)
-    char number[3]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
+    char number[20]; sprintf( number, "%2d", 31+l->depth ); printf0("\033[1;%2sm|", number );
     printf0(" - depth: %d, gmres iter: %2d, approx rel res: %le |", l->depth, iter, gamma_jp1/norm_r0 );
     printf0("\033[0m\n"); fflush(0);
     END_MASTER(threading)

@@ -96,46 +96,73 @@ int main( int argc, char **argv ) {
 
     //t0x = MPI_Wtime();
 
-    
-    
 #ifdef MUMPS_ADDS
-    level_struct *lx = &l;
-    int i;
-    for (i = 1; i<g.num_levels; i++){
-	lx = lx->next_level;
+    {
+      level_struct *lx = &l;
+      int i;
+      for (i = 1; i<g.num_levels; i++) {
+        lx = lx->next_level;
+      }
+      if (!lx->idle){ 
+        printf0("call to mumps_setup\n");
+        mumps_setup_float(lx, &threading);        //setup vals, Is, Js
+        printf0("mumps_setup done\n");
+        struct Thread* threadx = &threading;
+
+        double t0,t1;
+        START_MASTER(threadx)
+        t0 = MPI_Wtime();
+        END_MASTER(threadx)
+        SYNC_CORES(threadx)
+    
+        printf0("starting analyze\n");
+
+        //g.mumps_id.job = 4; //analyze and factorize
+        g.mumps_id.job = 1; //analyze
+        START_MASTER(threadx)
+        cmumps_c(&(g.mumps_id));
+        END_MASTER(threadx)
+        SYNC_CORES(threadx);
+        printf0("analyze done, starting factorize using multithreading\n");
+        g.mumps_id.job = 2; //factorize
+        cmumps_c(&(g.mumps_id));
+
+        START_MASTER(threadx)
+        t1 = MPI_Wtime();
+        if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f\n",t1-t0);
+
+        printf0("factorize done\n");
+        END_MASTER(threadx)
+        SYNC_CORES(threadx)
+      }
     }
-    if (!lx->idle){ 
-      printf0("call to mumps_setup\n");
-      mumps_setup_float(lx, &threading);        //setup vals, Is, Js
-      printf0("mumps_setup done\n");
-      struct Thread* threadx = &threading;
+#endif
 
-      double t0,t1;
-      START_MASTER(threadx)
-      t0 = MPI_Wtime();
-      END_MASTER(threadx)
-      SYNC_CORES(threadx)
-    
-      printf0("starting analyze\n");
-
-//    g.mumps_id.job = 4; //analyze and factorize
-      g.mumps_id.job = 1; //analyze
-      START_MASTER(threadx)
-      cmumps_c(&(g.mumps_id));
-      END_MASTER(threadx)
-      SYNC_CORES(threadx);
-      printf0("analyze done, starting factorize using multithreading\n");
-      g.mumps_id.job = 2; //factorize
-      cmumps_c(&(g.mumps_id));
-
-      START_MASTER(threadx)
-      t1 = MPI_Wtime();
-      if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f\n",t1-t0);
-    
-    
-      printf0("factorize done\n");
-      END_MASTER(threadx)
-      SYNC_CORES(threadx)
+#if defined(POLYPREC) || defined(GCRODR)
+    {
+      level_struct *lx = &l;
+      while (1) {
+        if ( lx->level==0 ) {
+          if ( g.mixed_precision==0 ) {
+#ifdef GCRODR
+            lx->p_double.gcrodr_double.k = g.gcrodr_k_setup;
+#endif
+#ifdef POLYPREC
+            lx->p_float.polyprec_float.d_poly = g.polyprec_d_setup;
+#endif
+          }
+          else {
+#ifdef GCRODR
+            lx->p_float.gcrodr_float.k = g.gcrodr_k_setup;
+#endif
+#ifdef POLYPREC
+            lx->p_float.polyprec_float.d_poly = g.polyprec_d_setup;
+#endif
+          }
+          break;
+        }
+        else { lx = lx->next_level; }
+      }
     }
 #endif
 
@@ -145,6 +172,34 @@ int main( int argc, char **argv ) {
     //t1x = MPI_Wtime();
     //elap_time = t1x-t0x;
     //if (g.my_rank==0) printf("elapsed time (iterative setup phase): %-8.4lf seconds\n", elap_time);
+
+#if defined(POLYPREC) || defined(GCRODR)
+    {
+      level_struct *lx = &l;
+      while (1) {
+        if ( lx->level==0 ) {
+          if ( g.mixed_precision==0 ) {
+#ifdef POLYPREC
+            lx->p_double.polyprec_double.d_poly = g.polyprec_d_solve;
+#endif
+#ifdef GCRODR
+            lx->p_double.gcrodr_double.k = g.gcrodr_k_solve;
+#endif
+          }
+          else {
+#ifdef POLYPREC
+            lx->p_float.polyprec_float.d_poly = g.polyprec_d_solve;
+#endif
+#ifdef GCRODR
+            lx->p_float.gcrodr_float.k = g.gcrodr_k_solve;
+#endif
+          }
+          break;
+        }
+        else { lx = lx->next_level; }
+      }
+    }
+#endif
 
     g.on_solve = 1;
 

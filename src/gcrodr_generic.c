@@ -362,6 +362,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   int fgmresx_iter=0, m=0, j, ol, k=p->gcrodr_PRECISION.k, i, g_ln, start, end;
   PRECISION beta=0;
 
+  int buff_init_guess = p->initial_guess_zero;
+
   g_ln = p->restart_length + p->gcrodr_PRECISION.k;
 
   START_MASTER(threading)
@@ -535,34 +537,49 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     //printf0("OUT OF INITIAL GMRES, m = %d ***\n", m);
 
-    if ( m>15 && m<k ) {
+    if ( m>20 && m<k ) {
 
-      // TODO : setting this to zero is clearly inconsistent with what follows
-      vector_PRECISION_define( p->x, 0, start, end, l );
+      double t0, t1;
+      t0 = MPI_Wtime();
 
-      int buff_init_guess = p->initial_guess_zero;
-      START_MASTER(threading)
-      p->initial_guess_zero = 0;
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
+      printf0("Quite a lot of iterations. Let's try and construct a deflation/recycling subspace\n");
 
-      apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
-      vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+      {
 
-      beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
+        p->initial_guess_zero = 0;
 
-      START_MASTER(threading);
-      // setting the following line for the upcoming call to fgmresx_PRECISION(...)
-      p->gamma[0] = beta;
-      END_MASTER(threading);
+        vector_PRECISION_define_random( p->x, start, end, l );
+
+        // compute initial residual
+        apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+        vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
+
+        beta = global_norm_PRECISION( p->r, p->v_start, p->v_end, l, threading ); // gamma_0 = norm(r)
+
+        START_MASTER(threading);
+        p->gcrodr_PRECISION.norm_r0 = beta;
+        // setting the following line for the upcoming call to fgmresx_PRECISION(...)
+        p->gamma[0] = beta;
+        END_MASTER(threading);
+
+        beta = global_norm_PRECISION( p->b, p->v_start, p->v_end, l, threading );
+
+        START_MASTER(threading)
+        p->gcrodr_PRECISION.b_norm = beta;
+        p->gcrodr_PRECISION.finish = 0;
+        END_MASTER(threading);
+
+        SYNC_MASTER_TO_ALL(threading);
+
+      }
 
       double buff1x = p->tol;
       double buff2x = g.coarse_tol;
       int buff3x = p->restart_length;
       START_MASTER(threading)
       //if ( g.on_solve==1 ) {
-        p->tol = 1.0e-5;
-        g.coarse_tol = 1.0e-5;
+        p->tol = 1.0e-20;
+        g.coarse_tol = 1.0e-20;
         p->restart_length = k+1;
       //}
       l->dup_H = 1;
@@ -570,8 +587,6 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
       m = fgmresx_PRECISION(p, l, threading);
       fgmresx_iter += m;
-
-      //printf0("OUT OF (SECOND) INITIAL GMRES, m = %d ***\n", m);
 
       START_MASTER(threading)
       p->tol = buff1x;
@@ -581,10 +596,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       END_MASTER(threading)
       SYNC_MASTER_TO_ALL(threading);
 
-      START_MASTER(threading)
-      p->initial_guess_zero = buff_init_guess;
-      END_MASTER(threading)
-      SYNC_MASTER_TO_ALL(threading)
+      t1 = MPI_Wtime();
+      printf0("Arnoldi time : %.10f seconds\n", t1-t0);
+
     }
     else {
       fgmresx_iter += m;
@@ -638,8 +652,12 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     // if m<k, there's not enough information to build the recycling subspace
     if ( m<k ) {
+      p->initial_guess_zero = buff_init_guess;
       return m;
     }
+
+    double t0, t1;
+    t0 = MPI_Wtime();
 
     if ( p->preconditioner==NULL ) {
       // build the matrices A and B used for generalized-eigensolving
@@ -671,6 +689,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       //printf0("COMPLETED INITIAL CONSTRUCTION OF C AND U ***\n");
     }
 
+    t1 = MPI_Wtime();
+    printf0("GEVP time : %.10f\n", t1-t0);
+
     // FIXME : issue when disabling this ...
     START_MASTER(threading)
     p->gcrodr_PRECISION.CU_usable=1;
@@ -684,6 +705,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     // check if this first call to fgmresx_PRECISION was enough
     if ( p->gcrodr_PRECISION.finish==1 ) {
+      p->initial_guess_zero = buff_init_guess;
       return m;
     }
 
@@ -694,7 +716,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
 #endif
 
-  if ( g.gcrodr_calling_from_setup==1 ) { return m; }
+  if ( g.gcrodr_calling_from_setup==1 ) {
+    p->initial_guess_zero = buff_init_guess;
+    return m;
+  }
 
   for ( ol=0; ol < p->num_restart; ol++ )  {
 
@@ -840,6 +865,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     // check if tolerance has been reached
     if ( p->gcrodr_PRECISION.finish==1 ) {
+      p->initial_guess_zero = buff_init_guess;
       return fgmresx_iter;
     }
 
@@ -848,6 +874,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
   SYNC_MASTER_TO_ALL(threading);
 
+  p->initial_guess_zero = buff_init_guess;
   return fgmresx_iter;
 }
 
@@ -946,6 +973,8 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
   // start and end indices for vector functions depending on thread
   int start, end, j=-1, finish=0, iter=0, il;
+
+  //int was_there_stagnation = 0;
 
   PRECISION norm_r0=1, gamma_jp1=1;
 
@@ -1047,9 +1076,10 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
           // if the residual hasn't changed, exit
           if ( nr1_i == nr2_i ) {
 
-            printf0( "STAGNATION ***\n" );
-
+            printf0( "WARNING : stagnation to three significant digits in the residual\n" );
             finish = 1;
+
+            //was_there_stagnation = 1;
           }
         }
       }
@@ -1084,6 +1114,8 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
 
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
+
+  //if ( was_there_stagnation==1 ) printf0("WARNING : there was stagnation of the residual\n");
 
   return iter;
 }
