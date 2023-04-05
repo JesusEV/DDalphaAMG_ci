@@ -658,3 +658,6 @@
   #include "polyprec_double.h"
   #include "polyprec_float.h"
 #endif
+
+#include "sparse_mv_float.h"
+#include "sparse_mv_double.h"
