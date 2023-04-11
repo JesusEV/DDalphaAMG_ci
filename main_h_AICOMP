@@ -117,8 +117,6 @@
 #define JOB_INIT -1
 #define JOB_END -2
 #define USE_COMM_WORLD -987654
-#define ICNTL(I)                                                               \
-  icntl[(I)-1] // macro according to docu //bridges from fortran indices to c
 #endif
 
 #ifdef SSE

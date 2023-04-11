@@ -205,9 +205,10 @@ int main( int argc, char **argv ) {
 
 
 #ifdef MUMPS_ADDS
-    //level_struct *lx = &l;
+    {
+      level_struct *lx = &l;
       lx = &l;
-//    int i;
+      int i;
     for (i = 1; i<g.num_levels; i++){
 	lx = lx->next_level;
     }
@@ -237,6 +238,7 @@ int main( int argc, char **argv ) {
       if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f\n",t1-t0); 
       END_MASTER(threadx)
       SYNC_CORES(threadx)
+    }
     }
 #endif
     solve_driver( &l, &threading );

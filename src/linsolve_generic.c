@@ -435,8 +435,8 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     memset(l->p_PRECISION.mumps_vals, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(complex_PRECISION));
 
     int mumps_n = site_var * nr_nodes * l->num_processes;	//order of Matrix
-    int nnz = SQUARE(site_var) * nr_nodes *9 * l->num_processes;	//number of nonzero elements
-    int nnz_loc = SQUARE(site_var) * nr_nodes *9;
+//    int nnz = SQUARE(site_var) * nr_nodes *9 * l->num_processes;	//number of nonzero elements
+//    int nnz_loc = SQUARE(site_var) * nr_nodes *9;
 
     // Allocating and initializing SOLUTION
     // will be used only by one process/ p0
