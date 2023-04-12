@@ -311,6 +311,14 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
     printf0("| coarsest grid GCRODR CU time: %-8.4lf seconds (%04.1lf%%)        |\n",
               g.gcrodr_buildCU_time, 100*(g.gcrodr_buildCU_time/(t1-t0)) );
 #endif
+#ifdef MUMPS_ADDS
+//    printf0("|  corsst g MUMPS fact time: %-8.4lf                          |\n",
+//	    g.mumps_fact_time);   
+    printf0("| corsst g MUMPS solve time: %-8.4lf seconds (%04.1lf%%)      |\n",
+	    g.mumps_solve_time, 100*(g.mumps_solve_time/(t1-t0)) );   
+    printf0("| coarsest grid MUMPS calls: %-8.2d                      |\n",
+	    g.mumps_solve_number);
+#endif
     printf0("|  consumed core minutes*: %-8.2le (solve only)           |\n", ((t1-t0)*g.num_processes*MAX(1,threading->n_core))/60.0 );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");

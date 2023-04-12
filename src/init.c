@@ -158,12 +158,6 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   
   START_LOCKED_MASTER(threading)
   g.in_setup = 1;
-
-#ifdef MUMPS_ADDS
-  // a timer and counter to measure MUMPS performance
-  g.mumps_solve_time = 0;
-  g.mumps_solve_number = 0;
-#endif
    
   if ( g.vt.evaluation ) {
     l->level = g.num_levels-1;
