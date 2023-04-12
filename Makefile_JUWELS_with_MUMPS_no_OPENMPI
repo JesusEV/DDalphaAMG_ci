@@ -1,0 +1,211 @@
+# --- COMPILER ----------------------------------------
+CC = mpicc
+#CC = /usr/lib64/mpi/gcc/openmpi2/bin/mpicc
+#CC = /usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/bin/mpicc
+
+# --- CFLAGS -----------------------------------------
+CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp # -lblas -llapack 
+#CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
+#CFLAGS = $(CFLAGS_intel)
+CFLAGS = $(CFLAGS_gnu)
+
+# --- DO NOT CHANGE -----------------------------------
+CPP = cpp
+MAKEDEP = $(CPP) -MM
+SRCDIR = src
+BUILDDIR = build
+BINDIR=bin
+LIBDIR=lib
+INCDIR=include
+TSTDIR=tests
+DOCDIR=doc
+GSRCDIR = $(BUILDDIR)/gsrc
+SRC = $(patsubst $(SRCDIR)/%,%,$(filter-out %_generic.c,$(wildcard $(SRCDIR)/*.c)))
+TSTS = $(patsubst %.c,%,$(wildcard $(TSTDIR)/*.c))
+
+LIB =  $(LIBDIR)/libDDalphaAMG.a $(INCDIR)/DDalphaAMG.h $(LIBDIR)/libDDalphaAMG_devel.a
+
+SRCGEN = $(patsubst $(SRCDIR)/%,%,$(wildcard $(SRCDIR)/*_generic.c))
+GSRCFLT = $(patsubst %_generic.c,$(GSRCDIR)/%_float.c,$(SRCGEN))
+GSRCDBL = $(patsubst %_generic.c,$(GSRCDIR)/%_double.c,$(SRCGEN))
+GSRC = $(patsubst %,$(GSRCDIR)/%,$(SRC)) $(GSRCFLT) $(GSRCDBL)
+HEA = $(patsubst $(SRCDIR)/%,%,$(filter-out %_generic.h,$(wildcard $(SRCDIR)/*.h)))
+HEAGEN = $(patsubst $(SRCDIR)/%,%,$(wildcard $(SRCDIR)/*_generic.h))
+GHEAFLT = $(patsubst %_generic.h,$(GSRCDIR)/%_float.h,$(HEAGEN))
+GHEADBL = $(patsubst %_generic.h,$(GSRCDIR)/%_double.h,$(HEAGEN))
+GHEA = $(patsubst %,$(GSRCDIR)/%,$(HEA)) $(GHEAFLT) $(GHEADBL)
+OBJ = $(patsubst $(GSRCDIR)/%.c,$(BUILDDIR)/%.o,$(GSRC))
+OBJDB = $(patsubst %.o,%_devel.o,$(OBJ))
+DEP = $(patsubst %.c,%.dep,$(GSRC))
+
+# --- FLAGS FOR HDF5 ---------------------------------
+# H5FLAGS=-DHAVE_HDF5 /usr/include
+# H5LIB=-lhdf5 -lz
+
+# --- FLAGS FOR LIME ---------------------------------
+LIMEDIR = ./dependencies/qio/build
+LIMEFLAGS = -DHAVE_LIME -I$(LIMEDIR)/include
+LIMELIB = $(LIMEDIR)/lib/liblime.a
+
+# Available flags:
+# -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING
+# -DSINGLE_ALLREDUCE_ARNOLDI
+# -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DDEBUG
+
+OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES -DPROFILING #-DOPENMP
+#OPT_VERSION_FLAGS += -DGCRODR
+#OPT_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
+#OPT_VERSION_FLAGS += -DBLOCK_JACOBI -DLOC_POLYPREC
+#OPT_VERSION_FLAGS += -DPOLYPREC
+#OPT_VERSION_FLAGS += $(LIBSMUMPS)
+
+DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS #-DOPENMP
+#DEVEL_VERSION_FLAGS += -DGCRODR
+#DEVEL_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
+#DEVEL_VERSION_FLAGS += -DBLOCK_JACOBI -DLOC_POLYPREC
+#DEVEL_VERSION_FLAGS += -DPOLYPREC
+#DEVEL_VERSION_FLAGS += $(LIBSMUMPS)
+
+#---------------------------------------------------
+
+# clean integration of MUMPS within DDalphaAMG
+
+MUMPSDIR = /p/software/juwels/stages/2020/software/MUMPS/5.3.4-gpsmkl-2021/
+MUMPS_LIBS = $(MUMPSDIR)lib64/
+
+LMETISDIR = /p/software/juwels/stages/2020/software/METIS/5.1.0-GCC-10.3.0/lib64/
+LMETIS=-L$(LMETISDIR) -lmetis
+
+LPMETISDIR = /p/software/juwels/stages/2020/software/ParMETIS/4.0.3-gpsmpi-2021/lib64/
+LPMETIS=-L$(LPMETISDIR) -lparmetis
+
+LSCOTCHDIR = /p/software/juwels/stages/2020/software/SCOTCH/6.1.0-gpsmpi-2021/lib64/
+LSCOTCH = -L$(LSCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lscotch -lscotcherr
+
+LPORD=-L$(MUMPS_LIBS) -lpord
+LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
+
+LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/p/software/juwels/stages/2020/software/psmpi/5.4.10-1-GCC-10.3.0/lib64/ -lmpi # -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
+
+# Enable the following three to activate MUMPS within DDalphaAMG
+LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
+OPT_VERSION_FLAGS += -DMUMPS_ADDS
+DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
+MUMPS_INCLUDE = -I/p/software/juwels/stages/2020/software/MUMPS/5.3.4-gpsmkl-2020/include/
+
+# OPT_VERSION_FLAGS += -DAGGLO
+# DEVEL_VERSION_FLAGS += -DAGGLO
+
+#---------------------------------------------------
+
+# lapack and scalapack linkages
+
+#LAPACK_DIR = dependencies/lapack-3.9.0
+#LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
+#LAPACKE_INCLUDE = -I$(LAPACKE_DIR)/include
+#BLASLIB      = $(LAPACK_DIR)/librefblas.a
+#LAPACKLIB    = $(LAPACK_DIR)/liblapack.a
+#LAPACKELIB   = $(LAPACK_DIR)/liblapacke.a
+#LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
+
+LAPACKE_INCLUDE =
+LAPACK_LIBRARIES =
+
+#SPBLAS_DIR = dependencies/spblas
+#SPBLASLIB = $(SPBLAS_DIR)/libsparseblas.a
+#SPBLAS_LIBRARIES = $(SPBLASLIB)
+
+SPBLAS_LIBRARIES = 
+
+SCALAPACK_DIR = /p/software/juwels/stages/2020/software/imkl/2021.2.0-gpsmpi-2021/mkl/2021.2.0/
+SCALAPACK_INCLUDE = -I$(SCALAPACK_DIR)/include/
+SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib/intel64/ -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+
+#---------------------------------------------------
+
+all: execs library # exec-tests
+execs: $(BINDIR)/DDalphaAMG $(BINDIR)/DDalphaAMG_devel
+library: $(LIB)
+exec-tests: $(TSTS)
+documentation: $(DOCDIR)/user_doc.pdf
+install: copy
+
+.PHONY: all wilson library
+.SUFFIXES:
+.SECONDARY:
+
+$(BINDIR)/DDalphaAMG : $(OBJ) 
+	mpif90 $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) $(SPBLAS_LIBRARIES) -lm -lgfortran $(LIBSMUMPS) -fopenmp -Dintel_ -DALLOW_NON_INIT
+
+DDalphaAMG : $(BINDIR)/DDalphaAMG
+	ln -sf $(BINDIR)/$@ $@
+
+$(BINDIR)/DDalphaAMG_devel : $(OBJDB)
+	mpif90 -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) $(SPBLAS_LIBRARIES) -lm -lgfortran $(LIBSMUMPS) -fopenmp -Dintel_ -DALLOW_NON_INIT
+
+$(LIBDIR)/libDDalphaAMG.a: $(OBJ)
+	ar rc $@ $(OBJ)
+	ar d $@ main.o
+	ranlib $@
+
+$(LIBDIR)/libDDalphaAMG_devel.a: $(OBJDB)
+	ar rc $@ $(OBJDB)
+	ar d $@ main.o
+	ranlib $@
+
+#$(TSTDIR)/%: $(LIB) $(TSTDIR)/%.c
+#	$(CC) -DAdd_ $(CFLAGS) -o $@ $@.c -I$(INCDIR) $(MUMPS_INCLUDE) $(LAPACKE_INCLUDE) $(SCALAPACK_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
+
+$(DOCDIR)/user_doc.pdf: $(DOCDIR)/user_doc.tex $(DOCDIR)/user_doc.bib
+	( cd $(DOCDIR); pdflatex user_doc; bibtex user_doc; pdflatex user_doc; pdflatex user_doc; )
+
+$(INCDIR)/%: $(SRCDIR)/%
+	cp $(SRCDIR)/`basename $@` $@
+
+$(BUILDDIR)/%.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
+	$(CC) -DAdd_ $(OPT_VERSION_FLAGS) $(MUMPS_INCLUDE) $(LAPACKE_INCLUDE) $(SCALAPACK_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
+
+$(BUILDDIR)/%_devel.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
+	$(CC) -g -DAdd_ $(DEVEL_VERSION_FLAGS) $(MUMPS_INCLUDE) $(LAPACKE_INCLUDE) $(SCALAPACK_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
+
+$(GSRCDIR)/%.h: $(SRCDIR)/%.h $(firstword $(MAKEFILE_LIST))
+	cp $< $@
+
+$(GSRCDIR)/%_float.h: $(SRCDIR)/%_generic.h $(firstword $(MAKEFILE_LIST))
+	sed -f float.sed $< > $@
+
+$(GSRCDIR)/%_double.h: $(SRCDIR)/%_generic.h $(firstword $(MAKEFILE_LIST))
+	sed -f double.sed $< > $@
+
+$(GSRCDIR)/%.c: $(SRCDIR)/%.c $(firstword $(MAKEFILE_LIST))
+	cp $< $@
+
+$(GSRCDIR)/%_float.c: $(SRCDIR)/%_generic.c $(firstword $(MAKEFILE_LIST))
+	sed -f float.sed $< > $@
+
+$(GSRCDIR)/%_double.c: $(SRCDIR)/%_generic.c $(firstword $(MAKEFILE_LIST))
+	sed -f double.sed $< > $@
+
+%.dep: %.c $(GHEA)
+	$(MAKEDEP) $< | sed 's,\(.*\)\.o[ :]*,$(BUILDDIR)/\1.o $@ : ,g' > $@
+	$(MAKEDEP) $< | sed 's,\(.*\)\.o[ :]*,$(BUILDDIR)/\1_devel.o $@ : ,g' >> $@
+
+copy: $(BINDIR) $(LIBDIR) $(INCDIR) 
+	cp -r $(BINDIR)/ $(PREFIX)
+	cp -r $(LIBDIR)/ $(PREFIX)
+	cp -r $(INCDIR)/ $(PREFIX)
+
+clean:
+	rm -f $(BUILDDIR)/*.o
+	rm -f $(GSRCDIR)/*
+
+cleanall: clean
+	rm -f $(BINDIR)/*
+	rm -f $(LIBDIR)/*
+	rm -f $(INCDIR)/*
+	rm -f $(SRCDIR)/*~
+	rm -f $(TSTDIR)/*~
+	rm -f $(TSTS)
+	rm -f *~
+
+-include $(DEP)
