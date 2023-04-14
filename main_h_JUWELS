@@ -455,6 +455,7 @@ typedef struct block_struct {
 #endif
 #ifdef MUMPS_ADDS
     double mumps_solve_time;
+    double mumps_fact_time;
     int mumps_solve_number;
     double mumps_drop_tol;
 #endif
