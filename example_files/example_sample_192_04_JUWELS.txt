@@ -1,0 +1,123 @@
+|----------------------------------------------|
+|------------ configuration files -------------|
+|----------------------------------------------|
+| Formats:                                     |
+| 0 - DDalphaAMG                               |
+| 1 - LIME                                     |
+|----------------------------------------------|
+
+configuration: ../../../../../../project/chwu29/ramirez1/configs/tm/for_testing/cB96/conf.1000
+format: 1
+
+|----------------------------------------------|
+|----------- Select right hand side -----------|
+|----------------------------------------------|
+| 0 - ones                                     |
+| 1 - first unit vector                        |
+| 2 - random                                   |
+|----------------------------------------------|
+right hand side: 0
+
+|----------------------------------------------|
+|--- Information about the lattice geometry ---|
+|--- fine grid = depth 0 ----------------------|
+|----------------------------------------------|
+| ordering = [ T, Z, Y, X ]                    |
+|----------------------------------------------|
+| ----- antiperiodic boundary conditions ------|
+|----------------------------------------------|
+| 0 - periodic (1,1,1,1)                       |
+| 1 - antiperiodic in time (-1,1,1,1)          |
+| 2 - twisted boundary cond.                   |
+|         (M_PI,M_PI,M_PI,M_PI)*t.b.c.         |
+|----------------------------------------------|
+boundary conditions: 1
+twisted boundary conditions: 1 0 0 0
+number of levels: 4
+number of openmp threads: 1
+
+
+
+d0 global lattice: 192 96 96 96  // global lattice size
+d0 local lattice: 4 16 16 32  // lattice size on each process
+                             // nproc = prod(global lattice)/prod(local lattice)
+d0 block lattice: 4 4 4 4    // Schwarz blocks
+d0 post smooth iter: 5      // number of Schwarz cycles per MG iteration
+d0 block iter: 4
+d0 test vectors: 32          // number of test vectors used to construct the interpolation
+d0 setup iter: 5             // number of bootstrap setup iteration (excluding the initial step)
+
+d1 global lattice: 48 24 24 24  // global lattice size
+d1 local lattice: 1 4 4 8   // lattice size on each process
+d1 block lattice: 1 2 2 2   // Schwarz blocks
+d1 post smooth iter: 4       // number of Schwarz cycles per MG iteration
+d1 block iter: 4
+d1 test vectors: 32          // number of test vectors used to construct the interpolation
+d1 setup iter: 4             // number of bootstrap setup iteration (excluding the initial step)
+d1 mu factor: 1.0
+
+d2 global lattice: 48 12 12 12  // global lattice size
+d2 local lattice: 1 2 2 4   // lattice size on each process
+d2 block lattice: 1 2 2 2   // Schwarz blocks
+d2 post smooth iter: 3       // number of Schwarz cycles per MG iteration
+d2 block iter: 4
+d2 test vectors: 32          // number of test vectors used to construct the interpolation
+d2 setup iter: 3             // number of bootstrap setup iteration (excluding the initial step)
+d2 mu factor: 1.0
+
+d3 global lattice: 48 6 6 6  // global lattice size
+d3 local lattice: 1 1 1 2   // lattice size on each process
+d3 mu factor: 1.0
+
+
+
+#wilson_param                // parameters for the inverter
+
+m0: -0.41388114884
+
+csw: 1.69
+mu: 0.00072
+setup mu: 0.00072
+  mu odd shift: 0.0
+  mu even shift: 0.0
+epsbar: 0.00
+  epsbar odd shift: 0.0
+  epsbar even shift: 0.0
+addDownPropagator: 0
+
+tolerance for relative residual: 1E-10
+iterations between restarts: 10
+maximum of restarts: 50
+
+kcycle: 1
+kcycle length: 5
+kcycle restarts: 2
+kcycle tolerance: 1.0E-1
+
+coarse grid tolerance: 0.1
+coarse grid iterations: 810
+coarse grid restarts: 2
+
+coarse grid gcrodr_upd_itrs_setup: 0
+coarse grid gcrodr_upd_itrs_solve: 0
+
+coarse grid local_polyprec_d: 2
+
+coarse grid gcrodr_k: 800
+coarse grid gcrodr_k_setup: 800
+coarse grid gcrodr_k_solve: 800
+
+coarse grid polyprec_d: 20
+coarse grid polyprec_d_setup: 20
+coarse grid polyprec_d_solve: 20
+
+#general_param
+print mode: 1
+method: 2
+interpolation: 2
+mixed precision: 2
+randomize test vectors: 1               // initialize random number generator with time(0) ? 0=no/1=yes
+odd even preconditioning: 1
+
+// for further information, please read the user documentation in doc/
+// developers version of an input file in sample_devel.ini
