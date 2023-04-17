@@ -1,0 +1,20 @@
+#!/bin/bash -x
+#SBATCH --account=hwu29
+#SBATCH --nodes=108
+#SBATCH --ntasks-per-node=48
+#SBATCH --cpus-per-task=1
+#SBATCH --output=mpi-out.%j
+#SBATCH --error=mpi-err.%j
+#SBATCH --time=00:30:00
+#SBATCH --partition=batch
+
+
+module load GCC/11.2.0
+module load OpenMPI/4.1.2
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
+
+make clean
+make -j 32
+
+. run -i sample192.ini

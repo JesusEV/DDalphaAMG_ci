@@ -1076,7 +1076,12 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
           // if the residual hasn't changed, exit
           if ( nr1_i == nr2_i ) {
 
-            printf0( "WARNING : stagnation to three significant digits in the residual\n" );
+            printf0( "WARNING : stagnation to three significant digits in the residual, the recycling subspace needs to be rebuilt\n" );
+            START_MASTER(threading)
+            p->gcrodr_PRECISION.CU_usable = 0;
+            END_MASTER(threading)
+            SYNC_MASTER_TO_ALL(threading);
+
             finish = 1;
 
             //was_there_stagnation = 1;
