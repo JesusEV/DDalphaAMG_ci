@@ -34,7 +34,10 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 
 
 
+  SYNC_CORES(threading)
   START_MASTER(threading)
+  printf0("starting setup!\n");
+  
   int lrank = 0; //local rank in level-comm
   MPI_Comm_rank(l->gs_PRECISION.level_comm, &lrank);
 
@@ -72,6 +75,9 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     }
     k += skip;
   }
+
+  printf0("inital counting done!\n");
+
 
   // A B
   // C D    all A, B, C, D stored columnwise
@@ -115,6 +121,9 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     clover_pt += clover_step_size2; // bend pointer to next clover for next lattice site
   }
 
+  printf0("clover part done!\n");
+
+
 #ifdef HAVE_TM
   // twisted mass-term:
   // correction of A 0
@@ -145,6 +154,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   }
 #endif
 
+  printf0("twisted mass part done!\n");
 
   // hopping-term
   // memory for mumps will look like: 
@@ -181,11 +191,12 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 
   int *glob_ranks, *loc_ranks; //will contain global ranks and corresponding local ranks
 
-  START_MASTER(threading)
+  //TODO: fix threading in here!
+//  START_MASTER(threading)
   MALLOC( glob_ranks, int, global_comm_size);
   MALLOC( loc_ranks, int, global_comm_size);
-  END_MASTER(threading)
-  SYNC_CORES(threading)
+//  END_MASTER(threading)
+//  SYNC_CORES(threading)
  
   for (i = 0; i<global_comm_size; i++) { glob_ranks[i]= i; loc_ranks[i] = -1;}
 
@@ -214,6 +225,10 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   int bt_index;
   int num_site_var=site_var;
   
+
+  printf0("allocs for hopping done!\n");
+
+
   for (dir = T; dir <= X; dir++){
     boundary_table = op->c.boundary_table[2*dir];
     buffer_i_pt = 0;
@@ -224,13 +239,14 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     buff_d_recv[dir] = NULL;
  
     // allocating and initialization of buffers
-    START_MASTER(threading)
+    // TODO: fix threading
+  //  START_MASTER(threading)
     MALLOC(buff_i_send[dir], int, 2 * comm_nr[dir]);
     MALLOC(buff_i_recv[dir], int, 2 * comm_nr[dir]);
     MALLOC(buff_d_send[dir], complex_PRECISION, num_link_var * comm_nr[dir]);
     MALLOC(buff_d_recv[dir], complex_PRECISION, num_link_var * comm_nr[dir]);
-    END_MASTER(threading)
-    SYNC_CORES(threading)
+//    END_MASTER(threading)
+//    SYNC_CORES(threading)
     memset(buff_i_send[dir], 0, 2 * comm_nr[dir] * sizeof(int));
     memset(buff_i_recv[dir], 0, 2 * comm_nr[dir] * sizeof(int));
     memset(buff_d_send[dir], 0, num_link_var * comm_nr[dir] * sizeof(complex_PRECISION));
@@ -242,6 +258,12 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     // TODO: when odd-even enabled -> change this? 
     neighbors_j_start = loc_ranks[l->neighbor_rank[2*dir]] * l->num_inner_lattice_sites * site_var;
     for (node = core_start; node < core_end; node ++){
+      
+	    
+      printf0("starting node: %d, core_end: %d\n", node, core_end);
+
+
+
       index = 5 * node; // neighbor table will contain site numbers in chunks of 5 for each lattice site: [my_site_number, T neighbor, Z neighbor, Y neighbor, X neighbor]
 
       // make mu+ couplings as usual (Values + Row indices aka. Is)
@@ -328,8 +350,9 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
         *(buff_i_send[dir] + 2 * buffer_i_pt) = boundary_table[op->neighbor_table[index + 1 + dir] % comm_nr[dir]];
         *(buff_i_send[dir] + 2 * buffer_i_pt + 1) = op->neighbor_table[index];
  	buffer_i_pt++;
-
+	printf0("node %d has neighbor in dir %d on different domain\n", node, dir);
       } else {	// neighboring lattice site is on same/my process-domain
+
         for (k = 0; k < SQUARE(num_site_var/2); k ++){
           //A
           *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir +1)*num_link_var + k) = 
@@ -345,7 +368,11 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 			j_start + num_site_var * op->neighbor_table[index +1 + dir] + k/(int)(num_site_var*0.5) + (int)(num_site_var*0.5);
         }
       }
+      printf0("hopping node: %d done!\n", node);
     }	// loop over nodes/lattice sites
+
+  
+    printf0("hopping in dim: %d done!\n", dir);
 
     // sending both buffers:
     if (comm_nr[dir] > 0){
@@ -359,7 +386,11 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // in the order [T+ T- Z+ Z- ...]
       // no barrier here. Ordering is ensured by tag = dir
     }
+    printf0("Isends in dim: %d done!\n", dir);
   }  // loop over directions
+
+
+  printf0("hopping in mu+ done!\n");
 
   // mu- couplings
   for (dir = T; dir <= X; dir++){
@@ -412,6 +443,10 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       }
     }//end if (comm_nr[dir] > 0)
 
+
+    printf0("recieved communicated couplings in dir: %d\n", dir);
+
+
     // regular mu- coupling for all nodes except communicated ones
     buffer_i_pt = 0;
     for (i = 0; i < core_end; i++){	//loop over lattice sites
@@ -463,9 +498,13 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 			j_start + num_site_var * op->neighbor_table[index] + k%(int)(num_site_var*0.5) + num_site_var*0.5;
       }
     }	//loop over nodes  
+    printf0("mu- on node %d, dir %d done!\n", node, dir);
   }	//loop over directions
 
 
+  printf0("hopping in mu - done!\n");
+
+   
 
   // increase global indices by 1 to match fortran indexing.
   // spmv doesn't work then anymore
@@ -475,16 +514,18 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     *(l->p_PRECISION.mumps_Is + i ) = *(l->p_PRECISION.mumps_Is + i ) +1;
   }
 
-  START_MASTER(threading)
+  printf0("freeing ranks\n");
+  //TODO: fix threading in here!
+  //START_MASTER(threading)
   FREE( glob_ranks, int, global_comm_size);
   FREE( loc_ranks, int, global_comm_size);
-  END_MASTER(threading)
-  SYNC_CORES(threading)
+//  END_MASTER(threading)
+//  SYNC_CORES(threading)
 
 
 
   // timing the setup
-  //START_MASTER(threading)
+//  START_MASTER(threading)
   t1 = MPI_Wtime();
   printf0("MUMPS pre-setup time (seconds) : %f\n",t1-t0);
   END_MASTER(threading)
@@ -570,7 +611,9 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, i
     // index original/in fortran 7 but in c 6
 
     // linking LHS
+    START_MASTER(threading)
     printf0("setting lhs\n");
+    END_MASTER(threading)
     g.mumps_id.n = mumps_n;     //needed at least on P0
     g.mumps_id.nnz_loc = nnz_loc;
     g.mumps_id.irn_loc = p->mumps_Is;
@@ -578,7 +621,9 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, i
     g.mumps_id.a_loc = p->mumps_vals;
 
     // linking RHS
+    START_MASTER(threading)
     printf0("setting rhs\n");
+    END_MASTER(threading)
     g.mumps_id.nloc_rhs = rhs_len;
     g.mumps_id.rhs_loc = p->mumps_rhs_loc;
     g.mumps_id.irhs_loc = p->mumps_irhs_loc;
