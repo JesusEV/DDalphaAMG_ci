@@ -58,7 +58,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
           //  ist stored as dense matrix / "off-diagonal" clover part
 
   int nr_nodes = l->num_inner_lattice_sites;
-  int n = g.mumps_id.n;
   int i, j, k; // k = index in matrix
   int c, r;    // col no., row no.
   int skip = 8 * SQUARE(site_var); //skip number of elements in Blockrow in large matrix (for self
@@ -77,11 +76,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     }
     k += skip;
   }
-
-
-
-
-
 
   printf0("inital counting done!\n");
 
@@ -232,13 +226,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   int bt_index;
   int num_site_var=site_var;
 
-
-#ifdef COARSE_ODDEVEN_FULL
-  int j_shift = 0; // nr_nodes * site_var; 
-#else
-  int j_shift = 0;//shifts the sparse matrix element col. index to match OE ordering
-#endif
-
   printf0("allocs for hopping done!\n");
 
   /* FINDME */
@@ -270,46 +257,10 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     // compute column index for coupling to a lattice site on a neighboring process
     // TODO: when odd-even enabled -> change this? 
     neighbors_j_start = loc_ranks[l->neighbor_rank[2*dir]] * l->num_inner_lattice_sites * site_var;
-    
-    
-    
-    
-   //FINDME
-    /*
-    printf("p %d reached checkpoint %d\n", g.my_rank, dir);
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (dir == 1){
-      exit(0);
-    }
-*/
-
 
     for (node = core_start; node < core_end; node ++){
-     
-	    
-
-
-
-
       index = 5 * node; // neighbor table will contain site numbers in chunks of 5 for each lattice site: [my_site_number, T neighbor, Z neighbor, Y neighbor, X neighbor]
-
-
-/*
-      if (g.my_rank == 4) {
-        printf("starting node: %d, core_end: %d, dir: %d, ", node, core_end, dir);
-        printf("neighbors: %d, %d, %d, %d, %d,\t", op->neighbor_table[index], op->neighbor_table[index
-	      + 1], op->neighbor_table[index + 2], op->neighbor_table[index + 3],
-	      op->neighbor_table[index + 4]);
-	printf("boundary_table: %d, \t neighbors_rank: %d\n", boundary_table[bt_index],
-		loc_ranks[l->neighbor_rank[2*dir]]);
-	sleep(1);
-	
-      }
-
-      */
-
-
-      
+     
       // make mu+ couplings as usual (Values + Row indices aka. Is)
       // A
       for (k = 0; k < SQUARE(num_site_var/2); k ++){ 
@@ -347,74 +298,31 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       }
 
 
-      //FINDME
-      /*
-      if (g.my_rank == 1){
-	printf("dim: %d, node: %d, I: %d", dir, node, (i_start + num_site_var *
-		    op->neighbor_table[index]) /(num_site_var));
-	sleep(1);
-      }
-*/
-
-
-
-//FINDME
-      // computing and storing column indices Js
+     // computing and storing column indices Js
       if (comm_nr[dir] > 0 && op->neighbor_table[index+1+dir] >= l->num_inner_lattice_sites){
-
-	  /*
-	  if (g.my_rank == 1){
-	    printf(", J: %d, bt: %d, nt: %d, nt mod num_inner_lattice_site: %d\n", neighbors_j_start
-		    + num_site_var * (op->neighbor_table[index + 1 + dir] %
-			l->num_inner_lattice_sites) / num_site_var, boundary_table[bt_index], op->neighbor_table[index + 1 +dir],
-		    op->neighbor_table[index + 1 +dir] % l->num_inner_lattice_sites);
-	    sleep(1);
-	  }
-*/
-
 
         for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //FINDME
           //A
           *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir +1)*num_link_var + k) = 
-#ifdef COARSE_ODDEVEN_FULL
 			neighbors_j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
 				l->num_inner_lattice_sites) +
 			 k/((int)(num_site_var*0.5));
-#else
-			(neighbors_j_start + num_site_var * boundary_table[bt_index] +
-			 k/((int)(num_site_var*0.5)) + j_shift ) % n;
-#endif
           //C
 	  *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir +1)*num_link_var + 1 * (int)SQUARE(num_site_var/2) + k) = 
-#ifdef COARSE_ODDEVEN_FULL
 			neighbors_j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
 				l->num_inner_lattice_sites) +
 			 k/((int)(num_site_var*0.5));
-#else
-			(neighbors_j_start + num_site_var * boundary_table[bt_index] +
-			 k/((int)(num_site_var*0.5)) + j_shift) % n;
-#endif
           //B
           *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir+1)*num_link_var + 2 * (int)SQUARE(num_site_var/2) + k) = 
-#ifdef COARSE_ODDEVEN_FULL
 			neighbors_j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
 				l->num_inner_lattice_sites) +
 			 k/((int)(num_site_var*0.5)) + (int)(num_site_var*0.5);
-#else
-			(neighbors_j_start + num_site_var * boundary_table[bt_index] +
-			 k/((int)(num_site_var*0.5)) + (int)(num_site_var*0.5) + j_shift) % n;
-#endif
           //D
           *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir + 1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) =
-#ifdef COARSE_ODDEVEN_FULL
 			neighbors_j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
 				l->num_inner_lattice_sites) +
 			 k/((int)(num_site_var*0.5)) + (int)(num_site_var*0.5);
-#else
-			(neighbors_j_start + num_site_var * boundary_table[bt_index] +
-			 k/((int)(num_site_var*0.5)) + (int)(num_site_var*0.5) + j_shift) % n;
-#endif
         }
 	bt_index++;
 
@@ -450,60 +358,29 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 	printf0("node %d has neighbor in dir %d on different domain\n", node, dir);
       } else {	// neighboring lattice site is on same/my process-domain
 
-//FINDME
-	  /*
-          if (g.my_rank == 1){ //j_start + num_site_var * (op->neighbor_table[index + 1 + dir] % l->num_inner_lattice_sites) / num_site_var	    
-	      printf(", J: %d\n", (j_start + num_site_var * (op->neighbor_table[index +1 + dir] %
-			    l->num_inner_lattice_sites)) /num_site_var );
-	    sleep(1);
-	  }
-	  */
-
-
-
 
 
         for (k = 0; k < SQUARE(num_site_var/2); k ++){
           //A
           *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir +1)*num_link_var + k) =
-#ifdef COARSE_ODDEVEN_FULL
 			j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
 				l->num_inner_lattice_sites) +
 			 k/((int)(num_site_var*0.5));
-#else
-          		(j_start + num_site_var * op->neighbor_table[index +1 + dir] +
-			k/(int)(num_site_var*0.5) + j_shift ) % n;
-#endif
           //C 
           *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir +1)*num_link_var + 1 * (int)SQUARE(num_site_var/2) + k) = 
-#ifdef COARSE_ODDEVEN_FULL
 			j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
 				l->num_inner_lattice_sites) +
 			 k/((int)(num_site_var*0.5));
-#else
-			(j_start + num_site_var * op->neighbor_table[index +1 + dir] +
-			k/(int)(num_site_var*0.5) + j_shift ) % n;
-#endif
           //B
           *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir+1)*num_link_var + 2 * (int)SQUARE(num_site_var/2) + k) = 
-#ifdef COARSE_ODDEVEN_FULL
 			j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
 				l->num_inner_lattice_sites) +
 			k/((int)(num_site_var*0.5)) + (int)(num_site_var*0.5);
-#else
-			(j_start + num_site_var * op->neighbor_table[index +1 + dir] +
-			k/(int)(num_site_var*0.5) + (int)(num_site_var*0.5) + j_shift ) % n;
-#endif
           //D
-          *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir+1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
-#ifdef COARSE_ODDEVEN_FULL
+          *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir+1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) =
 			j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
 				l->num_inner_lattice_sites) +
 			k/((int)(num_site_var*0.5)) + (int)(num_site_var*0.5);
-#else
-			(j_start + num_site_var * op->neighbor_table[index +1 + dir] +
-			k/(int)(num_site_var*0.5) + (int)(num_site_var*0.5) + j_shift ) % n;
-#endif
         }
       }
       printf0("hopping node: %d done!\n", node);
@@ -554,7 +431,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 			i_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + k/(int)(num_site_var*0.5);
 	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + k) = 
 			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +
-			k%(int)(num_site_var*0.5) + j_shift ) % n;
+			k%(int)(num_site_var*0.5));
         }
 	// -C*
 	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
@@ -564,7 +441,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 			i_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + k/(int)(num_site_var*0.5);
 	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) =
 			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +
-			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5) + j_shift ) % n;
+			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
         }
 	// -B*
 	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
@@ -574,7 +451,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 			i_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
 	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +
-			 k%(int)(num_site_var*0.5) + j_shift ) % n;
+			 k%(int)(num_site_var*0.5));
         } 
 	// D*
 	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
@@ -584,7 +461,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 			i_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
 	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +
-			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5) + j_shift ) % n;
+			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
         }
       }
     }//end if (comm_nr[dir] > 0)
@@ -615,7 +492,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5);
         *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + k) = 
 			(j_start + num_site_var * op->neighbor_table[index] +
-			 k%(int)(num_site_var*0.5) + j_shift ) % n;
+			 k%(int)(num_site_var*0.5));
       }
       // -C*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
@@ -625,7 +502,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5);
         *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			(j_start + num_site_var * op->neighbor_table[index] +
-			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5) + j_shift ) % n;
+			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
       }
       // -B*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
@@ -635,7 +512,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
         *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			(j_start + num_site_var * op->neighbor_table[index] +
-			 k%(int)(num_site_var*0.5) + j_shift ) % n;
+			 k%(int)(num_site_var*0.5));
       }
       // D*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
@@ -645,48 +522,18 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
         *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			(j_start + num_site_var * op->neighbor_table[index] +
-			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5) + j_shift ) % n;
+			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
       }
     }	//loop over nodes  
     printf0("mu- on node %d, dir %d done!\n", node, dir);
   }	//loop over directions
 
   
-  /*
-  
-  MPI_Barrier(MPI_COMM_WORLD);
-  exit(0);
-
-  */
-
-
-/* FINDME  */
-
   printf0("hopping in mu - done!\n");
-
-   
 
   // increase global indices by 1 to match fortran indexing.
   // spmv doesn't work then anymore
   int nnz_loc = SQUARE(site_var) * nr_nodes *9;
-  //FINDME
-
-  /*
-
-  for (j = 0; j < g.num_processes; j++){
-      if (g.my_rank == j){
-	for (i = 0; i < nnz_loc; i+= SQUARE(56)){
-	  printf("r: %d, I: %d, J: %d\n", g.my_rank, l->p_PRECISION.mumps_Is[i]/56,
-		  l->p_PRECISION.mumps_Js[i]/56);
-	  sleep(1);
-	}
-      }
-      MPI_Barrier(MPI_COMM_WORLD);
-  }
-  MPI_Barrier(MPI_COMM_WORLD);
-  exit(0);
-*/
-
 
   for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing
     *(l->p_PRECISION.mumps_Js + i ) = *(l->p_PRECISION.mumps_Js + i ) +1;
