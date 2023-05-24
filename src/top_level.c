@@ -540,6 +540,45 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 
       }
 #endif
+#ifdef MUMPS_ADDS
+      g.mumps_fact_time = 0;
+      {
+        level_struct *lx = l;
+        int i;
+        for (i = 1; i<g.num_levels; i++){
+          lx = lx->next_level;
+        }
+        if (!lx->idle){ 
+
+	  printf0("call to mumps_setup from top_level.c\n");
+	  mumps_setup_float(lx, threading);        //setup vals, Is, Js
+
+          double t0,t1;
+          START_MASTER(threading)
+          t0 = MPI_Wtime();
+          printf0("starting analyze from top_level.c\n");
+
+
+
+//    g.mumps_id.job = 4; //analyze and factorize
+          g.mumps_id.job = 1; //analyze
+
+          cmumps_c(&(g.mumps_id));
+
+
+          printf0("analyze done, starting factorize singlethreaded from top_level.c\n");
+          g.mumps_id.job = 2; //factorize
+          cmumps_c(&(g.mumps_id));
+
+
+	  t1 = MPI_Wtime();
+	  if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f \t from top_level.c\n",t1-t0);
+	  g.mumps_fact_time += t1-t0;
+	  END_MASTER(threading)
+	  SYNC_CORES(threading)
+	}
+      }
+#endif
 
   START_MASTER(threading)
   g.avg_b1 = 0.0;

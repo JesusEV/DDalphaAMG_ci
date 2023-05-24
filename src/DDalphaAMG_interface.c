@@ -132,6 +132,11 @@ void DDalphaAMG_update_parameters( DDalphaAMG_parameters *mg_params, DDalphaAMG_
   g.gcrodr_buildAB_time = 0;
   g.gcrodr_buildCU_time = 0;
 #endif
+#ifdef MUMPS_ADDS
+  g.mumps_solve_time = 0;
+  g.mumps_fact_time = 0;
+  g.mumps_solve_number = 0;
+#endif
   g.iter_count = 0;
   g.coarse_iter_count = 0;
 
@@ -374,6 +379,11 @@ void DDalphaAMG_change_mu_sign( DDalphaAMG_status *mg_status ) {
   g.gcrodr_buildAB_time = 0;
   g.gcrodr_buildCU_time = 0;
 #endif
+#ifdef MUMPS_ADDS
+  g.mumps_solve_time = 0;
+  g.mumps_fact_time = 0;
+  g.mumps_solve_number = 0;
+#endif
   g.iter_count = 0;
   g.coarse_iter_count = 0;
   mg_status->success = 0;
@@ -543,6 +553,11 @@ void DDalphaAMG_setup( DDalphaAMG_status * mg_status ) {
   g.gcrodr_buildAB_time = 0;
   g.gcrodr_buildCU_time = 0;
 #endif
+#ifdef MUMPS_ADDS
+  g.mumps_solve_time = 0;
+  g.mumps_fact_time = 0;
+  g.mumps_solve_number = 0;
+#endif
   g.iter_count = 0;
   g.coarse_iter_count = 0;
   mg_status->success = 0;
@@ -586,7 +601,12 @@ void DDalphaAMG_update_setup( int iterations, DDalphaAMG_status * mg_status ) {
     g.gcrodr_buildAB_time = 0;
     g.gcrodr_buildCU_time = 0;
 #endif
-    g.iter_count = 0;
+#ifdef MUMPS_ADDS
+  g.mumps_solve_time = 0;
+  g.mumps_fact_time = 0;
+  g.mumps_solve_number = 0;
+#endif
+   g.iter_count = 0;
     g.coarse_iter_count = 0;
     mg_status->success = 0;
     mg_status->info = 0;
@@ -722,6 +742,11 @@ static inline void DDalphaAMG_driver( double *vector1_out, double *vector1_in, d
   g.gcrodr_LSP_time = 0;
   g.gcrodr_buildAB_time = 0;
   g.gcrodr_buildCU_time = 0;
+#endif
+#ifdef MUMPS_ADDS
+  g.mumps_solve_time = 0;
+  g.mumps_fact_time = 0;
+  g.mumps_solve_number = 0;
 #endif
   g.iter_count = 0;
   g.coarse_iter_count = 0;

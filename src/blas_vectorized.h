@@ -28,7 +28,7 @@
 #endif
 
 // C=A*B+C
-static inline void cgemv(const int N, const OPERATOR_TYPE_float *A, int lda, const float *B, float *C)
+static inline void cgemv_custom(const int N, const OPERATOR_TYPE_float *A, int lda, const float *B, float *C)
 {
 #ifdef SSE
   sse_cgemv( N, A, lda, B, C );

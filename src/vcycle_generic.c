@@ -155,8 +155,28 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 
             }
           } else {
-            fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
-          }
+#ifdef MUMPS_ADDS_deactivated
+	    if (!g.on_solve) { //deactivate mumps during set up
+              l->next_level->p_PRECISION.preconditioner = NULL;
+	    }
+#endif
+	    START_MASTER(threading)
+	    g.coarsest_time -= MPI_Wtime();
+	    END_MASTER(threading)
+
+	    int fgmres_iters = fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
+
+	    START_MASTER(threading)
+	    g.coarsest_time += MPI_Wtime();
+	    END_MASTER(threading)
+
+#ifdef MUMPS_ADDS
+              l->next_level->p_PRECISION.preconditioner = mumps_solve_PRECISION;
+#endif
+	    START_MASTER(threading)
+            printf0("gmres iters = %d\n", fgmres_iters);
+            END_MASTER(threading)
+	  }
         }
         START_MASTER(threading)
         if ( l->depth == 0 )

@@ -123,6 +123,17 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->block_jacobi_PRECISION.xtmp = NULL;
   local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
+
+#ifdef MUMPS_ADDS
+    p->mumps_vals = NULL;
+    p->mumps_Is = NULL;
+    p->mumps_Js = NULL;
+
+    p->mumps_rhs_loc = NULL;
+    p->mumps_irhs_loc = NULL;
+    p->mumps_SOL = NULL;
+#endif
+
 }
 
 
@@ -410,6 +421,39 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   }
 #endif
 
+#ifdef MUMPS_ADDS
+  if (l->level==0 && !l->idle) {
+    // Allocate memory for cmumps data format
+    int site_var = l->num_lattice_site_var;
+    int nr_nodes = l->num_inner_lattice_sites;
+    MALLOC( p->mumps_vals, complex_PRECISION, SQUARE(site_var)*nr_nodes * 9);
+    MALLOC( p->mumps_Is, int, SQUARE(site_var)*nr_nodes * 9); // nr. of el per node * nr. of nodes * 9 	//9 = self + T+ + T- + Z+ + Z- + Y+ ...
+    MALLOC(p->mumps_Js, int, SQUARE(site_var)*nr_nodes * 9);
+    // initializing with 0s
+    memset(l->p_PRECISION.mumps_Is, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(int));
+    memset(l->p_PRECISION.mumps_Js, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(int));
+    memset(l->p_PRECISION.mumps_vals, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(complex_PRECISION));
+
+    int mumps_n = site_var * nr_nodes * l->num_processes;	//order of Matrix
+//    int nnz = SQUARE(site_var) * nr_nodes *9 * l->num_processes;	//number of nonzero elements
+//    int nnz_loc = SQUARE(site_var) * nr_nodes *9;
+
+    // Allocating and initializing SOLUTION
+    // will be used only by one process/ p0
+    if (g.my_rank == 0){
+      MALLOC(l->p_PRECISION.mumps_SOL, complex_PRECISION, mumps_n);
+      memset(l->p_PRECISION.mumps_SOL, 0, mumps_n * sizeof(complex_PRECISION));
+    }
+
+    // set up RHS //TODO: case of odd_even, len(rhs) = 2 * (v_end - v_start)?
+    int rhs_len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
+    MALLOC(l->p_PRECISION.mumps_irhs_loc, int, rhs_len);
+    MALLOC(l->p_PRECISION.mumps_rhs_loc, complex_PRECISION, rhs_len);
+    memset(l->p_PRECISION.mumps_rhs_loc, 0, rhs_len * sizeof(complex_PRECISION));
+    memset(l->p_PRECISION.mumps_irhs_loc, 0, rhs_len * sizeof(int));
+  }
+#endif
+
 }
 
 
@@ -521,6 +565,24 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
     local_fgmres_PRECISION_struct_free( &(p->block_jacobi_PRECISION.local_p), l );
   }
 #endif
+
+#ifdef MUMPS_ADDS
+  // free cmumps instance
+  if (l->level == 0 && !l->idle){
+      g.mumps_id.job = JOB_END;
+      cmumps_c(&(g.mumps_id));
+      int site_var = l->num_lattice_site_var;
+      int nr_nodes = l->num_inner_lattice_sites;
+      FREE( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes *9 );
+      FREE( p->mumps_Is,int,SQUARE(site_var)*nr_nodes *9);
+      FREE( p->mumps_Js,int,SQUARE(site_var)*nr_nodes *9);
+      //in case of odd even -> use 2*(v_end - v_start)? 
+      FREE( p->mumps_irhs_loc, int, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
+      FREE( p->mumps_rhs_loc, complex_PRECISION, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
+      FREE( p->mumps_SOL, complex_PRECISION, site_var * nr_nodes * l->num_processes);	//order of Matrix
+  }
+#endif
+
 }
 
 
@@ -749,6 +811,14 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
               g.gcrodr_buildAB_time, 100*(g.gcrodr_buildAB_time/(t1-t0)) );
     printf0("| coarsest grid GCRODR CU time: %-8.4lf seconds (%04.1lf%%)        |\n",
               g.gcrodr_buildCU_time, 100*(g.gcrodr_buildCU_time/(t1-t0)) );
+#endif 
+#ifdef MUMPS_ADDS
+//    printf0("|  corsst g MUMPS fact time: %-8.4lf                          |\n",
+//	    g.mumps_fact_time);   
+    printf0("| corsst g MUMPS solve time: %-8.4lf seconds (%04.1lf%%)      |\n",
+	    g.mumps_solve_time, 100*(g.mumps_solve_time/(t1-t0)) );   
+    printf0("| coarsest grid MUMPS calls: %-8.2d                      |\n",
+	    g.mumps_solve_number);
 #endif
     printf0("|  consumed core minutes*: %-8.2le (solve only)           |\n", ((t1-t0)*g.num_processes*MAX(1,threading->n_core))/60.0 );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );

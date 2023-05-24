@@ -86,6 +86,7 @@ int main( int argc, char **argv ) {
 
     //t0x = MPI_Wtime();
 
+
     // setup up initial MG hierarchy
     method_setup( NULL, &l, &threading );
 
@@ -94,6 +95,58 @@ int main( int argc, char **argv ) {
     //if (g.my_rank==0) printf("elapsed time (init setup phase): %-8.4lf seconds\n", elap_time);
 
     //t0x = MPI_Wtime();
+
+#ifdef MUMPS_ADDS
+    {
+      level_struct *lx = &l;
+      int i;
+      for (i = 1; i<g.num_levels; i++) {
+        lx = lx->next_level;
+      }
+      if (!lx->idle){
+
+        struct Thread* threadx = &threading;
+
+        SYNC_CORES(threadx)
+        START_MASTER(threadx)
+	printf0("call to mumps_setup from main.c\n");
+	END_MASTER(threadx)
+        mumps_setup_float(lx, &threading);        //setup vals, Is, Js
+        START_MASTER(threadx)
+        printf0("mumps_setup done in main.c\n");
+	END_MASTER(threadx)
+        SYNC_CORES(threadx)
+
+        double t0,t1;
+        START_MASTER(threadx)
+        t0 = MPI_Wtime();
+//	g.mumps_fact_time-=MPI_Wtime();
+        printf0("starting analyze from main.c\n");
+        END_MASTER(threadx)
+        SYNC_CORES(threadx)
+    
+        START_MASTER(threadx)
+        //g.mumps_id.job = 4; //analyze and factorize
+        g.mumps_id.job = 1; //analyze
+
+        cmumps_c(&(g.mumps_id));
+        printf0("analyze done, starting factorize singlethreaded from main.c\n");
+  
+  
+        g.mumps_id.job = 2; //factorize
+        cmumps_c(&(g.mumps_id));
+
+
+        t1 = MPI_Wtime();
+	g.mumps_fact_time += t1 - t0;
+        if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f \t in main.c\n",t1-t0);
+
+        printf0("factorize done in main.c\n");
+        END_MASTER(threadx)
+        SYNC_CORES(threadx)
+      }
+    }
+#endif
 
 #if defined(POLYPREC) || defined(GCRODR)
     {
@@ -159,6 +212,8 @@ int main( int argc, char **argv ) {
 #endif
 
     g.on_solve = 1;
+
+
     solve_driver( &l, &threading );
   }
   
