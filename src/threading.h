@@ -143,13 +143,14 @@ typedef struct Thread
     // these variables define start and end site for this specific *core* (not thread)
     // but num_inner_lattice_sites depends on the level
     // use level_struct.depth as index
-    int start_site[4];
-    int end_site[4];
-    int n_site[4];
+    // TODO : switch from static to dynamic for the following arrays
+    int start_site[10];
+    int end_site[10];
+    int n_site[10];
     // index = site*num_lattice_site_var = inner_vector_size
-    int start_index[4];
-    int end_index[4];
-    int n_index[4];
+    int start_index[10];
+    int end_index[10];
+    int n_index[10];
 
     // barrier among cores
     void (*barrier)(int);
