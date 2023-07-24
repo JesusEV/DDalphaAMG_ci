@@ -534,11 +534,21 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   // increase global indices by 1 to match fortran indexing.
   // spmv doesn't work then anymore
   int nnz_loc = SQUARE(site_var) * nr_nodes *9;
-
+#ifndef DenseDirectSolves
   for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing
     *(l->p_PRECISION.mumps_Js + i ) = *(l->p_PRECISION.mumps_Js + i ) +1;
     *(l->p_PRECISION.mumps_Is + i ) = *(l->p_PRECISION.mumps_Is + i ) +1;
   }
+#else	// DenseDirectSolves is defined
+  for (i = 0; i < nnz_loc; i++){
+      l->p_PRECISION.dense_vals[ l->p_PRECISION.mumps_Is[i] % ( nr_nodes * site_var ) *
+	  global_comm_size * ( nr_nodes * site_var ) + l->p_PRECISION.mumps_Js[i]] =
+	  l->p_PRECISION.mumps_vals[i] ; 
+  }
+
+#endif
+
+
 
   printf0("freeing ranks\n");
   //TODO: fix threading in here!
@@ -671,4 +681,58 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, i
 }
 
 
+void invert_coarsest_matrix_scalap_PRECISION( level_struct *l, vector_PRECISION A, int N){
+    printf0("starting scalap routine\n");
+    int *IPIV;
+    MALLOC( IPIV, int, N);
+    memset( IPIV, 0, N * sizeof(int));
+    int LWORK = N*N;
+    vector_PRECISION WORK;
+    MALLOC( WORK, complex_PRECISION, LWORK);
+    memset( WORK, 0, LWORK * sizeof(complex_PRECISION));
+    int INFO;
+
+    printf0("malloc and memsets done!\n");
+
+
+    dgetrf_(&N,&N,A,&N,IPIV,&INFO);
+
+   
+    exit(0);
+   /* 
+    complex_PRECISION one = 1;
+    char trans = 'n';
+    int m; //local rows 
+    m = l->inner_vector_size; 
+    int ia; //global starting row
+    ia = m * g.my_rank;// m * "local" rank
+    int desca[9];
+    int descx[9];
+    int i;
+    for (i = 0; i <9; i++){
+	desca[i] = 0;
+	descx[i] = 0;
+    }
+//    descset_( desca, M, N, MB, NB, IRSRC, ICSRC, ICTXT, LLD )
+//    printf0("trans: %c, m: %d, ia: %d \n", trans, m, ia);
+//    printf0("desca: %d %d %d %d %d %d %d %d %d\n", desca[0], desca[1], desca[2], desca[3], desca[4], desca[5], desca[6], desca[7], desca[8]);
+//    printf0("descx: %d %d %d %d %d %d %d %d %d\n", descx[0], descx[1], descx[2], descx[3], descx[4], descx[5], descx[6], descx[7], descx[8]);
+//    exit(0);
+    //pcgemv_(trans, m, n, alpha, a, ia, ja, desca, x, ix, jx, descx, incx, beta, y, iy, jy, descy, incy);
+  //  pcgemv_(  trans, m, N, one,   A, ia,  0, desca, l->p_PRECISION.b, ia, 0, descx, 1, one, l->p_PRECISION.b, ia, 0, descx, 1);
+
+//    pcgetrf_(m, N, A, ia, 0, desca, IPIV, INFO);
+
+
+*/
+
+    printf0("info: %d\n", INFO);
+    
+    dgetri_(&N,A,&N,IPIV,WORK,&LWORK,&INFO);
+    printf0("scalap routines done\n");
+    free( IPIV );
+    free( WORK );
+    printf0("completed invert matrix w. scalapack, info: %d\n", INFO);
+    exit(0);
+}
 #endif

@@ -129,18 +129,24 @@ int main( int argc, char **argv ) {
         //g.mumps_id.job = 4; //analyze and factorize
         g.mumps_id.job = 1; //analyze
 
+#ifndef DenseDirectSolves
         cmumps_c(&(g.mumps_id));
         printf0("analyze done, starting factorize singlethreaded from main.c\n");
   
   
         g.mumps_id.job = 2; //factorize
         cmumps_c(&(g.mumps_id));
-
+#else
+	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals, g.mumps_id.n );
+#endif
 
         t1 = MPI_Wtime();
 	g.mumps_fact_time += t1 - t0;
-        if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f \t in main.c\n",t1-t0);
-
+#ifndef DenseDirectSolves
+	if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f \t in main.c\n",t1-t0);
+#else
+	if (g.my_rank == 0) printf("Invert using scalapack time (seconds) : %f \t in main.c\n",t1-t0);
+#endif
         printf0("factorize done in main.c\n");
         END_MASTER(threadx)
         SYNC_CORES(threadx)

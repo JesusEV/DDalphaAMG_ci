@@ -218,6 +218,11 @@
     vector_PRECISION mumps_rhs_loc;
     int *mumps_irhs_loc;
     vector_PRECISION mumps_SOL;
+#ifdef DenseDirectSolves
+    vector_PRECISION dense_vals;
+    int ia; // global index of starting row of local piece of matrix
+#endif
+
 #endif
 
   } gmres_PRECISION_struct;

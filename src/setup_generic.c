@@ -367,14 +367,21 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     START_MASTER(threading)
     t0 = MPI_Wtime();
     g.mumps_fact_time -= MPI_Wtime();
-
+#ifndef DenseDirectSolves   //find LU with mumps
     g.mumps_id.job = 2;	//factorize
     // call to factorize
     cmumps_c(&(g.mumps_id));
+#else	//find inverse with scalapack
+    invert_coarsest_matrix_scalap_PRECISION( l, l->p_PRECISION.dense_vals, g.mumps_id.n );
 
+#endif
     t1 = MPI_Wtime();
     g.mumps_fact_time += MPI_Wtime();
+#ifndef DenseDirectSolves
     printf0("MUMPS factorize time (seconds) : %f\n",t1-t0);
+#else
+    printf0("Scalapack invert time (seconds) : %f\n",t1-t0);
+#endif
     END_MASTER(threading)
     SYNC_CORES(threading)
 #endif
