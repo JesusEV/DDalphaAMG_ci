@@ -390,7 +390,7 @@
         **global_lattice, **local_lattice, **block_lattice, 
         *post_smooth_iter, *block_iter, *setup_iter, *ncycle,
         method, odd_even, rhs, propagator_coords[4],
-        interpolation, randomize, *num_eig_vect, num_coarse_eig_vect, kcycle, mixed_precision,
+        interpolation, randomize, *num_eig_vect, num_coarse_eig_vect, kcycle, wcycle, mixed_precision,
         restart, max_restart, kcycle_restart, kcycle_max_restart, coarse_iter, coarse_restart;
     double tol, coarse_tol, kcycle_tol, csw, rho, *relax_fac;
 #ifdef GCRODR
