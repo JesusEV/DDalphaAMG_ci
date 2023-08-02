@@ -1167,6 +1167,8 @@ void read_kcycle_data( FILE *in ) {
   read_parameter( &save_pt, "kcycle restarts:", "%d", 1, in, _DEFAULT_SET );
   save_pt = &(g.kcycle_tol); g.kcycle_tol = 1E-1;
   read_parameter( &save_pt, "kcycle tolerance:", "%le", 1, in, _DEFAULT_SET );
+  save_pt = &(g.wcycle); g.wcycle = 0;
+  read_parameter( &save_pt, "wcycle:", "%d", 1, in, _DEFAULT_SET );
 }
 
 void validate_parameters( int ls, level_struct *l ) {

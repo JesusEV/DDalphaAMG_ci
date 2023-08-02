@@ -107,10 +107,15 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
           g.coarse_time -= MPI_Wtime();
         END_MASTER(threading)
         if ( l->level > 1 ) {
-          if ( g.kcycle )
-            fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
-          else
+          if ( g.kcycle ) {
+            if ( g.wcycle==1 ) {
+              vcycle_PRECISION( l->next_level->p_PRECISION.x, NULL, l->next_level->p_PRECISION.b, _NO_RES, l->next_level, threading );
+            } else {
+              fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
+            }
+          } else {
             vcycle_PRECISION( l->next_level->p_PRECISION.x, NULL, l->next_level->p_PRECISION.b, _NO_RES, l->next_level, threading );
+          }
         } else {
           if ( g.odd_even ) {
             if ( g.method == 6 ) {
