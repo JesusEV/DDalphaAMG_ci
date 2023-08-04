@@ -1165,7 +1165,10 @@ void validate_parameters( int ls, level_struct *l ) {
   }
 
   ASSERT( ASCENDING( 0, g.rhs, 2 ) );
-  ASSERT( ASCENDING( -1, g.method, 5 ) );
+  // special case : Richardson is g.method=9
+  if ( g.method!=9 ) {
+    ASSERT( ASCENDING( -1, g.method, 5 ) );
+  }
   
   ASSERT( IMPLIES( g.vt.evaluation, g.rhs <= 2 ) );
 #ifdef _20TV

@@ -43,5 +43,11 @@
                             level_struct *l, struct Thread *threading );
   void compute_solution_PRECISION( vector_PRECISION x, vector_PRECISION *V, complex_PRECISION *y, complex_PRECISION *gamma,
                                    complex_PRECISION **H, int j, int ol, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
-  
+
+  void richardson_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta, int n, int res,
+                           gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
+
+  void richardson_PRECISION_init( gmres_PRECISION_struct *p );
+  void richardson_PRECISION_alloc( long int vl, gmres_PRECISION_struct *p, level_struct *l );
+  void richardson_PRECISION_free( gmres_PRECISION_struct *p );
 #endif

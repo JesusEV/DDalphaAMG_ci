@@ -183,13 +183,14 @@
 #endif
 
   typedef struct {
-    vector_PRECISION x, b, r, w, *V, *Z;
+    vector_PRECISION x, b, r, w, *V, *Z, richardson_w, richardson_r;
     complex_PRECISION **H, *y, *gamma, *c, *s;
     config_PRECISION *D, *clover;
     operator_PRECISION_struct *op;
-    PRECISION tol;
+    PRECISION tol, richardson_omega;
     int num_restart, restart_length, timing, print, kind,
-      initial_guess_zero, layout, v_start, v_end;
+      initial_guess_zero, layout, v_start, v_end, richardson_update_omega,
+      richardson_vl;
     long int total_storage;
     void (*preconditioner)();
     void (*eval_operator)();

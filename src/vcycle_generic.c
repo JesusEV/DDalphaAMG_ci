@@ -24,7 +24,7 @@
 
 void smoother_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
                          int n, const int res, level_struct *l, struct Thread *threading ) {
-  
+
   ASSERT( phi != eta );
 
   START_MASTER(threading);
@@ -37,6 +37,14 @@ void smoother_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRE
     red_black_schwarz_PRECISION( phi, Dphi, eta, n, res, &(l->s_PRECISION), l, threading );
   } else if ( g.method == 3 ) {
     sixteen_color_schwarz_PRECISION( phi, Dphi, eta, n, res, &(l->s_PRECISION), l, threading );
+  } else if ( g.method == 9 ) {
+    // apply Richardson
+
+    gmres_PRECISION_struct * px = 0;
+    if ( l->depth==0 ) { px = (gmres_PRECISION_struct*) &(g.p_MP.sp); }
+    else { px = &(l->p_PRECISION); }
+
+    richardson_PRECISION( phi, Dphi, eta, n, res, px, l, threading );
   } else {
     int start = threading->start_index[l->depth];
     int end   = threading->end_index[l->depth];

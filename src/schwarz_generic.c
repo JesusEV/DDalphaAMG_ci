@@ -80,7 +80,7 @@ void schwarz_PRECISION_init( schwarz_PRECISION_struct *s, level_struct *l ) {
 void schwarz_PRECISION_alloc( schwarz_PRECISION_struct *s, level_struct *l ) {
   
   int i, j, n, mu, nu, *bl = l->block_lattice;
-  
+
   if ( g.method == 4 ) {
     fgmres_PRECISION_struct_alloc( l->block_iter, 1, (l->depth==0)?l->inner_vector_size:l->vector_size,
                                    EPS_PRECISION, _COARSE_GMRES, _NOTHING, NULL,

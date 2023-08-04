@@ -123,6 +123,19 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->block_jacobi_PRECISION.xtmp = NULL;
   local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
+
+  if ( g.method==9 ) {
+    if ( g.mixed_precision!=2 ) {
+      error0("Method=9 only implemented in combination with mixed_precision=2\n");
+    }
+    richardson_PRECISION_init( p );
+  }
+}
+
+
+void richardson_PRECISION_init( gmres_PRECISION_struct *p ) {
+  p->richardson_w = NULL;
+  p->richardson_r = NULL;
 }
 
 
@@ -410,6 +423,20 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   }
 #endif
 
+  if ( g.method==9 ) {
+    richardson_PRECISION_alloc( vl, p, l );
+  }
+}
+
+
+void richardson_PRECISION_alloc( long int vl, gmres_PRECISION_struct *p, level_struct *l ) {
+  p->richardson_vl = vl;
+
+  MALLOC( p->richardson_w, complex_PRECISION, vl );
+  MALLOC( p->richardson_r, complex_PRECISION, vl );
+
+  // indicate that the omega in Richardson needs to be updated
+  p->richardson_update_omega = 1;
 }
 
 
@@ -521,6 +548,16 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
     local_fgmres_PRECISION_struct_free( &(p->block_jacobi_PRECISION.local_p), l );
   }
 #endif
+
+  if ( g.method==9 ) {
+    richardson_PRECISION_free( p );
+  }
+}
+
+
+void richardson_PRECISION_free( gmres_PRECISION_struct *p ) {
+  FREE( p->richardson_w, complex_PRECISION, p->richardson_vl );
+  FREE( p->richardson_r, complex_PRECISION, p->richardson_vl );
 }
 
 
@@ -2048,6 +2085,31 @@ void compute_solution_PRECISION( vector_PRECISION x, vector_PRECISION *V, comple
     for ( i=1; i<=j; i++ ) {
       vector_PRECISION_saxpy( x, x, V[i], y[i], start, end, l );
     }
+  }
+}
+
+
+void richardson_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta, int n, int res,
+                           gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
+
+  int start, end, i;
+  compute_core_start_end( p->v_start, p->v_end, &start, &end, l, threading );
+
+  // FIXME
+  p->richardson_omega = 0.3;
+
+  // initial guess
+  if ( res == _NO_RES ) {
+    vector_PRECISION_define( phi, 0, start, end, l );
+  }
+
+  for ( i=0; i<n; i++ ) {
+    // 1. compute residual
+    apply_operator_PRECISION( p->richardson_w, phi, p, l, threading );
+    vector_PRECISION_minus( p->richardson_r, eta, p->richardson_w, start, end, l );
+
+    // 2. update solution
+    vector_PRECISION_saxpy( phi, phi, p->richardson_r, p->richardson_omega, start, end, l );
   }
 }
 
