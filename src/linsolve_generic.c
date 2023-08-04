@@ -124,7 +124,7 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
 
-  if ( g.method==9 ) {
+  if ( g.method==2 ) {
     if ( g.mixed_precision!=2 ) {
       error0("Method=9 only implemented in combination with mixed_precision=2\n");
     }
@@ -423,7 +423,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   }
 #endif
 
-  if ( g.method==9 ) {
+  if ( g.method==2 ) {
     richardson_PRECISION_alloc( vl, p, l );
   }
 }
@@ -549,7 +549,7 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   }
 #endif
 
-  if ( g.method==9 ) {
+  if ( g.method==2 ) {
     richardson_PRECISION_free( p );
   }
 }
@@ -2113,6 +2113,9 @@ void richardson_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_P
     // 2. update solution
     vector_PRECISION_saxpy( phi, phi, p->richardson_r, p->richardson_omega, start, end, l );
   }
+
+  // when g.method=2, Dphi has to be provided
+  if ( Dphi!=NULL ) apply_operator_PRECISION( Dphi, phi, p, l, threading );
 }
 
 
