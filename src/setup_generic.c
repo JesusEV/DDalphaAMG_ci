@@ -326,6 +326,8 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
         coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
       }
       re_setup_PRECISION( l->next_level, threading );
+
+      l->next_level->p_PRECISION.richardson_update_omega = 1;
     }
   }
 #if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI)

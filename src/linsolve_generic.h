@@ -50,4 +50,5 @@
   void richardson_PRECISION_init( gmres_PRECISION_struct *p );
   void richardson_PRECISION_alloc( long int vl, gmres_PRECISION_struct *p, level_struct *l );
   void richardson_PRECISION_free( gmres_PRECISION_struct *p );
+  void richardson_update_omega_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading );
 #endif
