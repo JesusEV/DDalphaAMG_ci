@@ -148,11 +148,50 @@ int main( int argc, char **argv ) {
 	memset( xs, 0, 2*lx->vector_size * sizeof(complex_float));
 	memset( xg, 0, 2*lx->vector_size * sizeof(complex_float));
 
+	float r1, r2, r3; //norms 
 	int start = 0, end = 2*lx->vector_size;
 	vector_float_define_random( rand, start, end, lx );
 	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
 
-	//inverting using scalapack uses p_float.b as RHS and as solution afterwards
+//printing matrix
+	printf0("D = \n");
+	int of = 0; //55
+	int size = 3;
+	for (int i=0; i < lx->num_inner_lattice_sites * lx->num_lattice_site_var; i = i + size){
+	    for (int j=0; j < lx->num_inner_lattice_sites * lx->num_lattice_site_var; j = j + size){
+		if (fabs((lx->p_float.dense_vals[(i + of) + lx->num_inner_lattice_sites *
+			    lx->num_lattice_site_var * (j + of)])) > 1e-7) printf0("X");
+		else printf0(" ");
+//		printf0("%e\t", (creal(lx->p_float.dense_vals[i * lx->num_inner_lattice_sites * lx->num_lattice_site_var + j])));
+	    }
+	    printf0("\n");
+	}
+
+
+
+	//x = A *b via scalapack currently in "invert_coarsest_matrix" is apply coarsest matrix 
+	printf0("applying coarsest matrix via scalapack from main.c\n");
+	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, g.mumps_id.n, &threading);	
+	vector_float_copy( xs, lx->p_float.b, start, end, lx );	 // r = eta from start to end on level l
+
+	//applying matrix via DDalphaAMG
+	apply_coarse_operator_float( xg, lx->p_float.b, lx->p_float.op, lx, &threading );
+
+	//checking norm of diff:
+	vector_float_minus( rand, xg, xs, start, end, lx );	
+	r1 = global_norm_float( rand, start, end, lx, &threading );
+	r1 = r1/global_norm_float( xg, start, end, lx, &threading );
+
+	printf0("\n\n\nrelative res. |(Ax)_s - (Ax)_d)|/|(Ax)_d| = %f\n\n\n\n", r1);
+
+
+//checking elementwise
+	printf0("xs\t\t\txg\n");
+	for (int i = 0; i < lx->num_inner_lattice_sites * lx->num_lattice_site_var; i = i+28){
+	    printf0("%+5.1f%+5.1fi,\t%+5.1f%+5.1fi,\n", CSPLIT(xs[i]), CSPLIT(xg[i]));
+	}
+	exit(0);
+//inverting using scalapack uses p_float.b as RHS and as solution afterwards
 	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, g.mumps_id.n, &threading);
 	
 	//compute A * sol_from_scalapack = xs
@@ -163,7 +202,6 @@ int main( int argc, char **argv ) {
 
 	//compute norms of solutions ||rand - xs|| / ||rand||
 	printf0("computing relative residual, in main.c\n");
-	float r2, r3; 
 
 	r2 = global_norm_float( xs, start, end, lx, &threading );
 	r3 = global_norm_float( rand, start, end, lx, &threading );
@@ -199,7 +237,7 @@ int main( int argc, char **argv ) {
 	//compute norms of solutions ||xg - xs|| / ||xg||
 	printf0("computing relative residual, in main.c\n");
 	vector_float_minus( xs, xg, xs, start, end, lx );	
-	float r1 = global_norm_float( xs, start, end, lx, &threading );
+	r1 = global_norm_float( xs, start, end, lx, &threading );
 	r1  = r1 / global_norm_float( xg, start, end, lx, &threading );
 
 	printf0("\n\n\nrelative res. |xg - xs| / |xg| = %f\n\n\n\n", r1);

@@ -108,7 +108,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + r] = *(clover_pt + k); // diagonal element
     }
     clover_pt += clover_step_size1; // bend pointer to next piece of memory/clover part
-
+/*
     // D
     for (k = 0, r = num_eig_vect; r < 2*num_eig_vect; r++, k++){
       for (c = num_eig_vect; c < r; c++, k++){
@@ -117,8 +117,8 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       }
       px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + r] = *(clover_pt + k);
     }
-    clover_pt += clover_step_size1;
-
+  */  clover_pt += clover_step_size1;
+/*
     // C
     for (r = num_eig_vect, k = 0; r < 2*num_eig_vect; r++){
       for (c = 0; c < num_eig_vect; c++, k++){
@@ -133,12 +133,12 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
         px->mumps_vals[j*9*SQUARE(site_var) + (c * site_var) + r + num_eig_vect] = *(clover_pt + k);
       }
     }
-    clover_pt += clover_step_size2; // bend pointer to next clover for next lattice site
+*/    clover_pt += clover_step_size2; // bend pointer to next clover for next lattice site
   }
 
   printf0("clover part done!\n");
 
-
+/*
 #ifdef HAVE_TM
   // twisted mass-term:
   // correction of A 0
@@ -169,7 +169,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   }
   printf0("twisted mass part done!\n");
 #endif
-
+*/
 
   // hopping-term
   // memory for mumps will look like: 
@@ -272,6 +272,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     // TODO: when odd-even enabled -> change this? 
     neighbors_j_start = loc_ranks[l->neighbor_rank[2*dir]] * l->num_inner_lattice_sites * site_var;
 
+    /*
     for (node = core_start; node < core_end; node ++){
       index = 5 * node; // neighbor table will contain site numbers in chunks of 5 for each lattice site: [my_site_number, T neighbor, Z neighbor, Y neighbor, X neighbor]
      
@@ -416,6 +417,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // no barrier here. Ordering is ensured by tag = dir
     }
     printf0("Isends in dim: %d done!\n", dir);
+    */
   }  // loop over directions
 
 
@@ -427,6 +429,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 
   // mu- couplings
   for (dir = T; dir <= X; dir++){
+      /*
     if (comm_nr[dir] > 0){ //there is stuff to communicate in direction dir
       MPI_Recv(buff_d_recv[dir], num_link_var * comm_nr[dir], MPI_COMPLEX_PRECISION, l->neighbor_rank[2*dir+1], dir, g.comm_cart, &s);
       MPI_Recv((buff_i_recv[dir]), 2 * comm_nr[dir], MPI_INT, l->neighbor_rank[2*dir+1], dir, g.comm_cart, &s);
@@ -540,6 +543,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       }
     }	//loop over nodes  
     printf0("mu- on node %d, dir %d done!\n", node, dir);
+    */
   }	//loop over directions
 
   
@@ -744,11 +748,29 @@ void invert_coarsest_matrix_scalap_PRECISION( level_struct *l, vector_PRECISION 
     int ia = 1, ja = 1; //starting indices (global)
     int ib = 1, jb = 1;
     
+    
+//  pgemv_PRECISION(char* trans, int* M, int* N, PRECISION* alpha, PRECISION* A, int* ia, int* ja,
+//  int* descA, PRECISION* X, int* ix, int* jx, int* descX, int* lldX, PRECISION* beta, PRECISION*
+//  Y, int* iy, int* jy, int* descY, int* lddY);
+    // With trans = 'N' computing : Y = alpha A * X + beta Y;
+
+    char trans = 'N';
+    PRECISION alpha = 1.0, beta = 0.0;
+    vector_PRECISION Y;
+    MALLOC( Y, complex_PRECISION, 2*l->vector_size);
+    memset( Y, 0, 2*l->vector_size * sizeof(complex_PRECISION));
+    
+    printf0("calling pgemv_() ...\n");
+    pgemv_PRECISION( &trans, &N, &N, &alpha, A, &ia, &ja, descA, B, &ib, &jb, descB, &N, &beta, Y,
+	    &ib, &jb, descB, &N);
+
+    vector_PRECISION_copy( B, Y, 0, l->num_inner_lattice_sites, l );
+/*
     printf0("calling pdgesv_() .... \n");
     pgesv_PRECISION( &N, &ione, A, &ia, &ja, descA, ipiv, B, &ib, &jb, descB, &info);
     printf0("pdgesv_() done \n");
     if (info != 0 ) error0("Error during pdgesv_(), info = %d\n", info);
-
+*/
     blacs_gridexit_(&ictxt);
 
     printf0("scalap routine done!\n");
@@ -756,9 +778,7 @@ void invert_coarsest_matrix_scalap_PRECISION( level_struct *l, vector_PRECISION 
 
 
 void mumps_2_scalap_matrix_PRECISION(level_struct *l, struct Thread *threading){
-#ifdef HAVE_TM 
-    printf0("TM ENABLED\n");
-#endif
+
     //TODO: the following implementation works only for one process. For multiprocessing check r and
     //c being global and use a smart modulo operation
 
@@ -769,7 +789,7 @@ void mumps_2_scalap_matrix_PRECISION(level_struct *l, struct Thread *threading){
     //each lattice site contains 9 blocks of each SQUARE(site_var) elements, 1 for self coupling, +
     //2x4 hopping terms (2 in each dimension)
 	for (int d = 0; d < 9; d++){ //loop over each block as mentioned above
-	    if (d == 0) {
+	    if (d == 0) 
 		for (int i = 0; i < SQUARE(l->num_lattice_site_var); i++){ //local index to copy elementwise within a block
 		    r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
 		    c = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
@@ -778,7 +798,6 @@ void mumps_2_scalap_matrix_PRECISION(level_struct *l, struct Thread *threading){
 		    l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var  + r] =
 			l->p_PRECISION.mumps_vals[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
 		}
-	    }
 	}
     }
 /*

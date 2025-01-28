@@ -405,6 +405,7 @@ void coarse_self_couplings_PRECISION( vector_PRECISION eta, vector_PRECISION phi
 
   coarse_self_couplings_clover_PRECISION( eta+start*vector_size, phi+start*vector_size,
                                           op->clover+start*clover_size, (end-start)*vector_size, l );
+/*
 #ifdef HAVE_TM // tm_term
   if (op->mu + op->mu_odd_shift != 0.0 || op->mu + op->mu_even_shift != 0.0 )
     coarse_add_anti_block_diagonal_PRECISION( eta+start*vector_size, phi+start*vector_size, 
@@ -416,7 +417,7 @@ void coarse_self_couplings_PRECISION( vector_PRECISION eta, vector_PRECISION phi
     coarse_add_doublet_coupling_PRECISION( eta+start*vector_size, phi+start*vector_size, 
                                            op->epsbar_term+start*block_size, (end-start)*vector_size, l );
 #endif
-
+*/
 }
 
 void coarse_aggregate_block_diagonal_PRECISION( vector_PRECISION eta1, vector_PRECISION eta2, vector_PRECISION phi,
@@ -690,13 +691,13 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   SYNC_CORES(threading)
 
   PROF_PRECISION_START( _NC, threading );
-
+/*
 #ifndef OPTIMIZED_COARSE_NEIGHBOR_COUPLING_PRECISION
   coarse_hopping_term_PRECISION( eta, phi, op, _FULL_SYSTEM, l, threading );
 #else
   coarse_hopping_term_PRECISION_vectorized( eta, phi, op, _FULL_SYSTEM, l, threading ); 
 #endif
-
+*/
   PROF_PRECISION_STOP( _NC, 1, threading );
 
   SYNC_MASTER_TO_ALL(threading)

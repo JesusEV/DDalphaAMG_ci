@@ -204,6 +204,7 @@
     //          C D ]
     // storage order: upper triangle of A, upper triangle of D, B, columnwise
     // diagonal coupling
+    /*
 #ifdef HAVE_TM1p1
     if( g.n_flavours == 2 ) {
       while ( phi_pt < phi_end_pt ) {
@@ -215,7 +216,7 @@
         // D
         eta_pt += num_eig_vect;//2
         phi_pt += num_eig_vect;//2
-        clover_pt += clover_step_size1; 
+        clover_pt += clover_step_size1;
         mvp_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
         eta_pt += num_eig_vect;//3
         phi_pt += num_eig_vect;//3
@@ -240,20 +241,26 @@
         clover_pt += clover_step_size2;
       }
     } else
-#endif
-      while ( phi_pt < phi_end_pt ) {
-        // A
-        mvp_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
-        clover_pt += clover_step_size1; eta_pt += num_eig_vect; phi_pt += num_eig_vect;
-        // D
-        mvp_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
-        clover_pt += clover_step_size1; phi_pt -= num_eig_vect;
-        // C = -B*
-        nmvh_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
-        phi_pt += num_eig_vect; eta_pt -= num_eig_vect;
-        // B
-        mv_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
-        clover_pt += clover_step_size2; phi_pt += num_eig_vect; eta_pt += site_var;
+#endif*/
+    while (phi_pt < phi_end_pt) {
+      // A
+      mvp_PRECISION(eta_pt, clover_pt, phi_pt, num_eig_vect);
+      clover_pt += clover_step_size1;
+      eta_pt += num_eig_vect;
+      phi_pt += num_eig_vect;
+      // D
+      // mvp_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
+      clover_pt += clover_step_size1;
+      phi_pt -= num_eig_vect;
+      // C = -B*
+      // nmvh_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
+      phi_pt += num_eig_vect;
+      eta_pt -= num_eig_vect;
+      // B
+      // mv_PRECISION( eta_pt, clover_pt, phi_pt, num_eig_vect );
+      clover_pt += clover_step_size2;
+      phi_pt += num_eig_vect;
+      eta_pt += site_var;
       }
   }
 
