@@ -120,7 +120,8 @@ int main( int argc, char **argv ) {
         double t0,t1;
         START_MASTER(threadx)
         t0 = MPI_Wtime();
-//	g.mumps_fact_time-=MPI_Wtime();
+
+#ifndef DenseDirectSolves
         printf0("starting analyze from main.c\n");
         END_MASTER(threadx)
         SYNC_CORES(threadx)
@@ -129,7 +130,6 @@ int main( int argc, char **argv ) {
         //g.mumps_id.job = 4; //analyze and factorize
         g.mumps_id.job = 1; //analyze
 
-#ifndef DenseDirectSolves
         cmumps_c(&(g.mumps_id));
         printf0("analyze done, starting factorize singlethreaded from main.c\n");
   
@@ -137,7 +137,82 @@ int main( int argc, char **argv ) {
         g.mumps_id.job = 2; //factorize
         cmumps_c(&(g.mumps_id));
 #else
-	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals, g.mumps_id.n );
+        printf0("starting inverting using scalapack from main.c\n");
+//Testing from here
+
+	vector_float rand, xs, xg;
+	MALLOC( rand, complex_float, 2*lx->vector_size);
+	MALLOC( xs, complex_float, 2*lx->vector_size);
+	MALLOC( xg, complex_float, 2*lx->vector_size);
+	memset( rand, 0, 2*lx->vector_size * sizeof(complex_float));
+	memset( xs, 0, 2*lx->vector_size * sizeof(complex_float));
+	memset( xg, 0, 2*lx->vector_size * sizeof(complex_float));
+
+	int start = 0, end = 2*lx->vector_size;
+	vector_float_define_random( rand, start, end, lx );
+	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
+
+	//inverting using scalapack uses p_float.b as RHS and as solution afterwards
+	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, g.mumps_id.n, &threading);
+	
+	//compute A * sol_from_scalapack = xs
+	printf0("applying coarse operator, in main.c\n");
+	//apply_operator_float(xs, lx->p_float.b, lx->p_float.eval_operator, lx, &threading );
+	apply_coarse_operator_float( xs, lx->p_float.b, lx->p_float.op, lx, &threading );
+
+
+	//compute norms of solutions ||rand - xs|| / ||rand||
+	printf0("computing relative residual, in main.c\n");
+	float r2, r3; 
+
+	r2 = global_norm_float( xs, start, end, lx, &threading );
+	r3 = global_norm_float( rand, start, end, lx, &threading );
+	printf0("\n\n\nrelative res. |A ( A^-1 b)| = %f, \t |b| = %f\n\n\n\n", r2, r3);
+	
+	vector_float_minus( xs, rand, xs, start, end, lx );	
+	r2 = global_norm_float( xs, start, end, lx, &threading );
+	
+	printf0("\n\n\nrelative res. |A ( A^-1 b) - b| = %f\n\n\n\n", r2);
+	
+	r2  = r2 / global_norm_float( rand, start, end, lx, &threading );
+
+	printf0("\n\n\nrelative res. |A ( A^-1 b) - b| / |b| = %f\n\n\n\n", r2);
+
+	exit(0);
+
+	//copy scalapack solution to xs
+	printf0("copying solution from scalapack to xs, in main.c\n");
+	vector_float_copy( xs, lx->p_float.b, start, end, lx );	 // r = eta from start to end on level l
+	
+	//reset p_float.b to rand
+	printf0("resetting b to rand, in main.c\n");
+	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
+
+	//compute solution using fgmres
+	printf0("inverting using fgmres, in main.c\n");
+	int its = fgmres_float( &(lx->p_float), lx,  &threading );
+
+	//copy fgmres solution to xg
+	printf0("copying solution from fgmres to xg, in main.c\n");
+	vector_float_copy( xg, lx->p_float.x, start, end, lx );	 // r = eta from start to end on level l
+
+	//compute norms of solutions ||xg - xs|| / ||xg||
+	printf0("computing relative residual, in main.c\n");
+	vector_float_minus( xs, xg, xs, start, end, lx );	
+	float r1 = global_norm_float( xs, start, end, lx, &threading );
+	r1  = r1 / global_norm_float( xg, start, end, lx, &threading );
+
+	printf0("\n\n\nrelative res. |xg - xs| / |xg| = %f\n\n\n\n", r1);
+	//check if p_float.b is changes ||rand - b|| / ||rand||
+
+
+//	float global_norm_PRECISION( vector_PRECISION phi, int start, int end, level_struct *l, struct Thread *threading );
+
+//Testing to here
+	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, g.mumps_id.n, &threading);
+        printf0("inverting using scalapack done\n");
+
+	exit(0);
 #endif
 
         t1 = MPI_Wtime();

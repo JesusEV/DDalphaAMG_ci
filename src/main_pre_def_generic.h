@@ -220,7 +220,8 @@
     vector_PRECISION mumps_SOL;
 #ifdef DenseDirectSolves
     vector_PRECISION dense_vals;
-    int ia; // global index of starting row of local piece of matrix
+    int *desc_dense_vals;
+    int *desc_rhs;
 #endif
 
 #endif

@@ -135,6 +135,8 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
 
 #ifdef DenseDirectSolves
     p->dense_vals = NULL;
+    p->desc_dense_vals = NULL;
+    p->desc_rhs = NULL;
 #endif
 #endif
 
@@ -458,7 +460,14 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 #ifdef DenseDirectSolves
     MALLOC( p->dense_vals, complex_PRECISION, mumps_n * nr_nodes * site_var);
     memset( p->dense_vals, 0, mumps_n * nr_nodes * site_var * sizeof(complex_PRECISION));
-    p->ia = 0;
+    
+    MALLOC( p->desc_dense_vals, int, 9);
+    memset( p->desc_dense_vals, 0,  9 * sizeof(int));
+    
+    MALLOC( p->desc_rhs, int, 9);
+    memset( p->desc_rhs, 0,  9 * sizeof(int));
+
+
 #endif
   }
 #endif

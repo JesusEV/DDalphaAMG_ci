@@ -17,9 +17,17 @@ void mumps_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc,
                           int rhs_len, level_struct *l, Thread *threading);
 
+#ifdef DenseDirectSolves
 // this function computes the inverse for a given Matrix A of size N x N and
 // overwrites the input array with the computed inverse
 void invert_coarsest_matrix_scalap_PRECISION(level_struct *l,
-                                             vector_PRECISION A, int N);
+                                             vector_PRECISION A, int *descA,
+                                             vector_PRECISION B, int *descB,
+                                             int N, struct Thread *threading);
+
+// this function will generate a "dense" memory layout for solving with
+// scalapack
+void mumps_2_scalap_matrix_PRECISION(level_struct *l, struct Thread *threading);
+#endif
 
 #endif

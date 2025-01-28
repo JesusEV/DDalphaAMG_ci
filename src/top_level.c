@@ -572,7 +572,8 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
           g.mumps_id.job = 2; //factorize
           cmumps_c(&(g.mumps_id));
 #else
-	  invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals, g.mumps_id.n );
+	  invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals,
+		  lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, g.mumps_id.n, threading );
 #endif
 
 	  t1 = MPI_Wtime();

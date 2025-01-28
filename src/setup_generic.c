@@ -372,7 +372,8 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     // call to factorize
     cmumps_c(&(g.mumps_id));
 #else	//find inverse with scalapack
-    invert_coarsest_matrix_scalap_PRECISION( l, l->p_PRECISION.dense_vals, g.mumps_id.n );
+    invert_coarsest_matrix_scalap_PRECISION( l, l->p_PRECISION.dense_vals,
+	    l->p_PRECISION.desc_dense_vals, l->p_PRECISION.b, l->p_PRECISION.desc_rhs, g.mumps_id.n, threading);
 
 #endif
     t1 = MPI_Wtime();
