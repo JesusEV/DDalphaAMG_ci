@@ -138,25 +138,25 @@ int main( int argc, char **argv ) {
         cmumps_c(&(g.mumps_id));
 #else
         printf0("starting inverting using scalapack from main.c\n");
+	
+	int N = lx->num_inner_lattice_sites * lx->num_lattice_site_var * lx->num_processes;
 //Testing from here
 
 	vector_float rand, xs, xg;
-	MALLOC( rand, complex_float, 2*lx->vector_size);
-	MALLOC( xs, complex_float, 2*lx->vector_size);
-	MALLOC( xg, complex_float, 2*lx->vector_size);
-	memset( rand, 0, 2*lx->vector_size * sizeof(complex_float));
-	memset( xs, 0, 2*lx->vector_size * sizeof(complex_float));
-	memset( xg, 0, 2*lx->vector_size * sizeof(complex_float));
+	int start = 0, end = lx->num_inner_lattice_sites * lx->num_lattice_site_var;
+	MALLOC( rand, complex_float, end);
+	MALLOC( xs, complex_float, end);
+	MALLOC( xg, complex_float, end);
+	memset( rand, 0, end * sizeof(complex_float));
+	memset( xs, 0, end * sizeof(complex_float));
+	memset( xg, 0, end * sizeof(complex_float));
 
-	float r1, r2, r3; //norms 
-	int start = 0, end = 2*lx->vector_size;
-	vector_float_define_random( rand, start, end, lx );
-	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
 
 //printing matrix
+/*
 	printf0("D = \n");
 	int of = 0; //55
-	int size = 3;
+	int size = 7;
 	for (int i=0; i < lx->num_inner_lattice_sites * lx->num_lattice_site_var; i = i + size){
 	    for (int j=0; j < lx->num_inner_lattice_sites * lx->num_lattice_site_var; j = j + size){
 		if (fabs((lx->p_float.dense_vals[(i + of) + lx->num_inner_lattice_sites *
@@ -165,89 +165,33 @@ int main( int argc, char **argv ) {
 //		printf0("%e\t", (creal(lx->p_float.dense_vals[i * lx->num_inner_lattice_sites * lx->num_lattice_site_var + j])));
 	    }
 	    printf0("\n");
-	}
+	}*/
 
 
-
-	//x = A *b via scalapack currently in "invert_coarsest_matrix" is apply coarsest matrix 
-	printf0("applying coarsest matrix via scalapack from main.c\n");
-	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, g.mumps_id.n, &threading);	
-	vector_float_copy( xs, lx->p_float.b, start, end, lx );	 // r = eta from start to end on level l
-
-	//applying matrix via DDalphaAMG
-	apply_coarse_operator_float( xg, lx->p_float.b, lx->p_float.op, lx, &threading );
-
-	//checking norm of diff:
-	vector_float_minus( rand, xg, xs, start, end, lx );	
-	r1 = global_norm_float( rand, start, end, lx, &threading );
-	r1 = r1/global_norm_float( xg, start, end, lx, &threading );
-
-	printf0("\n\n\nrelative res. |(Ax)_s - (Ax)_d)|/|(Ax)_d| = %f\n\n\n\n", r1);
-
-
-//checking elementwise
-	printf0("xs\t\t\txg\n");
-	for (int i = 0; i < lx->num_inner_lattice_sites * lx->num_lattice_site_var; i = i+28){
-	    printf0("%+5.1f%+5.1fi,\t%+5.1f%+5.1fi,\n", CSPLIT(xs[i]), CSPLIT(xg[i]));
-	}
-	exit(0);
-//inverting using scalapack uses p_float.b as RHS and as solution afterwards
-	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, g.mumps_id.n, &threading);
-	
-	//compute A * sol_from_scalapack = xs
-	printf0("applying coarse operator, in main.c\n");
-	//apply_operator_float(xs, lx->p_float.b, lx->p_float.eval_operator, lx, &threading );
-	apply_coarse_operator_float( xs, lx->p_float.b, lx->p_float.op, lx, &threading );
-
-
-	//compute norms of solutions ||rand - xs|| / ||rand||
-	printf0("computing relative residual, in main.c\n");
-
-	r2 = global_norm_float( xs, start, end, lx, &threading );
-	r3 = global_norm_float( rand, start, end, lx, &threading );
-	printf0("\n\n\nrelative res. |A ( A^-1 b)| = %f, \t |b| = %f\n\n\n\n", r2, r3);
-	
-	vector_float_minus( xs, rand, xs, start, end, lx );	
-	r2 = global_norm_float( xs, start, end, lx, &threading );
-	
-	printf0("\n\n\nrelative res. |A ( A^-1 b) - b| = %f\n\n\n\n", r2);
-	
-	r2  = r2 / global_norm_float( rand, start, end, lx, &threading );
-
-	printf0("\n\n\nrelative res. |A ( A^-1 b) - b| / |b| = %f\n\n\n\n", r2);
-
-	exit(0);
-
-	//copy scalapack solution to xs
-	printf0("copying solution from scalapack to xs, in main.c\n");
-	vector_float_copy( xs, lx->p_float.b, start, end, lx );	 // r = eta from start to end on level l
-	
-	//reset p_float.b to rand
-	printf0("resetting b to rand, in main.c\n");
+	float r1, r2, r3; //norms 
+	vector_float_define_random( rand, start, end, lx );
 	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
+	
+	//applying the matrix using scalapack
+	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals,
+		lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, N, &threading);
+	vector_float_copy( xs, lx->p_float.b, start, end, lx);
 
-	//compute solution using fgmres
-	printf0("inverting using fgmres, in main.c\n");
-	int its = fgmres_float( &(lx->p_float), lx,  &threading );
+	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
+	//apply coarse operator with DDalphaAMG
+	apply_coarse_operator_float( xg, lx->p_float.b, lx->p_float.op, lx, &threading);
 
-	//copy fgmres solution to xg
-	printf0("copying solution from fgmres to xg, in main.c\n");
-	vector_float_copy( xg, lx->p_float.x, start, end, lx );	 // r = eta from start to end on level l
-
-	//compute norms of solutions ||xg - xs|| / ||xg||
-	printf0("computing relative residual, in main.c\n");
-	vector_float_minus( xs, xg, xs, start, end, lx );	
+	vector_float_minus( xs, xg, xs, start, end, lx );
+	    
 	r1 = global_norm_float( xs, start, end, lx, &threading );
-	r1  = r1 / global_norm_float( xg, start, end, lx, &threading );
+	r1 = r1 / global_norm_float( xg, start, end, lx, &threading );
+	printf0("rel. res. |Ax_s - Ax_d| / |Ax_d| = %f\n", r1);
 
-	printf0("\n\n\nrelative res. |xg - xs| / |xg| = %f\n\n\n\n", r1);
-	//check if p_float.b is changes ||rand - b|| / ||rand||
-
-
-//	float global_norm_PRECISION( vector_PRECISION phi, int start, int end, level_struct *l, struct Thread *threading );
-
+	exit(0);
+	
 //Testing to here
-	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, g.mumps_id.n, &threading);
+	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals,
+		lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, N, &threading);
         printf0("inverting using scalapack done\n");
 
 	exit(0);

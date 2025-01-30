@@ -108,7 +108,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + r] = *(clover_pt + k); // diagonal element
     }
     clover_pt += clover_step_size1; // bend pointer to next piece of memory/clover part
-/*
     // D
     for (k = 0, r = num_eig_vect; r < 2*num_eig_vect; r++, k++){
       for (c = num_eig_vect; c < r; c++, k++){
@@ -117,8 +116,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       }
       px->mumps_vals[j*9*SQUARE(site_var) + r * site_var + r] = *(clover_pt + k);
     }
-  */  clover_pt += clover_step_size1;
-/*
+    clover_pt += clover_step_size1;
     // C
     for (r = num_eig_vect, k = 0; r < 2*num_eig_vect; r++){
       for (c = 0; c < num_eig_vect; c++, k++){
@@ -133,12 +131,11 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
         px->mumps_vals[j*9*SQUARE(site_var) + (c * site_var) + r + num_eig_vect] = *(clover_pt + k);
       }
     }
-*/    clover_pt += clover_step_size2; // bend pointer to next clover for next lattice site
+    clover_pt += clover_step_size2; // bend pointer to next clover for next lattice site
   }
 
   printf0("clover part done!\n");
 
-/*
 #ifdef HAVE_TM
   // twisted mass-term:
   // correction of A 0
@@ -169,7 +166,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   }
   printf0("twisted mass part done!\n");
 #endif
-*/
 
   // hopping-term
   // memory for mumps will look like: 
@@ -272,7 +268,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     // TODO: when odd-even enabled -> change this? 
     neighbors_j_start = loc_ranks[l->neighbor_rank[2*dir]] * l->num_inner_lattice_sites * site_var;
 
-    /*
     for (node = core_start; node < core_end; node ++){
       index = 5 * node; // neighbor table will contain site numbers in chunks of 5 for each lattice site: [my_site_number, T neighbor, Z neighbor, Y neighbor, X neighbor]
      
@@ -417,7 +412,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // no barrier here. Ordering is ensured by tag = dir
     }
     printf0("Isends in dim: %d done!\n", dir);
-    */
   }  // loop over directions
 
 
@@ -429,7 +423,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 
   // mu- couplings
   for (dir = T; dir <= X; dir++){
-      /*
     if (comm_nr[dir] > 0){ //there is stuff to communicate in direction dir
       MPI_Recv(buff_d_recv[dir], num_link_var * comm_nr[dir], MPI_COMPLEX_PRECISION, l->neighbor_rank[2*dir+1], dir, g.comm_cart, &s);
       MPI_Recv((buff_i_recv[dir]), 2 * comm_nr[dir], MPI_INT, l->neighbor_rank[2*dir+1], dir, g.comm_cart, &s);
@@ -543,7 +536,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       }
     }	//loop over nodes  
     printf0("mu- on node %d, dir %d done!\n", node, dir);
-    */
   }	//loop over directions
 
   
@@ -735,45 +727,44 @@ void invert_coarsest_matrix_scalap_PRECISION( level_struct *l, vector_PRECISION 
 	   
     int numr = numroc_( &N, &bs, &iam, &izero, &nprow ); // number of rows stored in each process
     int lddA = numr > 1? numr : 1;	//leading dimension in A (remember, matrix elements are	stored in a column major order)
+
     printf0("setting the descriptor of coarsest matrix for scalapack.\n");
+    //descinit ( DESC,			    M, N,    MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO )
     descinit_( l->p_float.desc_dense_vals, &N, &N, &bs, &bs, &izero, &izero, &ictxt, &lddA, &info);
     printf0("matrix descriptor done.\n");
     if (info != 0) error0("Error in descinit for DescA, info = %d\n", info);
 
     printf0("setting the descriptor of RHS for scalapack.\n");
+    //descinit ( DESC,		    M, N,	MB, NB,	    IRSRC, ICSRC, ICTXT, LLD, INFO )
     descinit_( l->p_float.desc_rhs, &N, &nrhs, &bs, &ione, &izero, &izero, &ictxt, &lddA, &info);
     printf0("RHS descriptor done.\n");
     if (info != 0) error0("Error in descinit for DescB, info = %d\n", info);
 
+
+
     int ia = 1, ja = 1; //starting indices (global)
     int ib = 1, jb = 1;
     
-    
-//  pgemv_PRECISION(char* trans, int* M, int* N, PRECISION* alpha, PRECISION* A, int* ia, int* ja,
-//  int* descA, PRECISION* X, int* ix, int* jx, int* descX, int* lldX, PRECISION* beta, PRECISION*
-//  Y, int* iy, int* jy, int* descY, int* lddY);
-    // With trans = 'N' computing : Y = alpha A * X + beta Y;
-
     char trans = 'N';
     PRECISION alpha = 1.0, beta = 0.0;
-    vector_PRECISION Y;
-    MALLOC( Y, complex_PRECISION, 2*l->vector_size);
-    memset( Y, 0, 2*l->vector_size * sizeof(complex_PRECISION));
-    
-    printf0("calling pgemv_() ...\n");
-    pgemv_PRECISION( &trans, &N, &N, &alpha, A, &ia, &ja, descA, B, &ib, &jb, descB, &N, &beta, Y,
-	    &ib, &jb, descB, &N);
+    vector_PRECISION outvector;
+    MALLOC( outvector, complex_PRECISION, l->num_inner_lattice_sites * l->num_lattice_site_var);
+    memset( outvector, 0, l->num_inner_lattice_sites * l->num_lattice_site_var * sizeof(complex_PRECISION));
 
-    vector_PRECISION_copy( B, Y, 0, l->num_inner_lattice_sites, l );
-/*
+//    pgemv_PRECISION(char*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, PRECISION*, int*, int*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, int*);
+    pgemv_PRECISION( &trans, &N, &N, &alpha, A, &ia, &ja, descA, B, &ib, &jb, descB, &ione, &beta,
+	    outvector, &ib, &jb, descB, &ione);
+    vector_PRECISION_copy(B, outvector, 0, l->num_inner_lattice_sites * l->num_lattice_site_var, l);
+
+    /*
     printf0("calling pdgesv_() .... \n");
     pgesv_PRECISION( &N, &ione, A, &ia, &ja, descA, ipiv, B, &ib, &jb, descB, &info);
     printf0("pdgesv_() done \n");
     if (info != 0 ) error0("Error during pdgesv_(), info = %d\n", info);
-*/
-    blacs_gridexit_(&ictxt);
-
+    */
     printf0("scalap routine done!\n");
+    
+    blacs_gridexit_(&ictxt);
 }
 
 
@@ -789,104 +780,13 @@ void mumps_2_scalap_matrix_PRECISION(level_struct *l, struct Thread *threading){
     //each lattice site contains 9 blocks of each SQUARE(site_var) elements, 1 for self coupling, +
     //2x4 hopping terms (2 in each dimension)
 	for (int d = 0; d < 9; d++){ //loop over each block as mentioned above
-	    if (d == 0) 
-		for (int i = 0; i < SQUARE(l->num_lattice_site_var); i++){ //local index to copy elementwise within a block
-		    r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
-		    c = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
-
-    //		printf0("llsite = %3d, dir = %d, r = %5d, c = %5d, \t writing to pos: %8d \n",llsite, d, r, c, r *l->num_inner_lattice_sites * l->num_lattice_site_var+ c);
-		    l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var  + r] =
-			l->p_PRECISION.mumps_vals[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
-		}
+	    for (int i = 0; i < SQUARE(l->num_lattice_site_var); i++){ //local index to copy elementwise within a block
+	        r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
+	        c = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
+		l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] += l->p_PRECISION.mumps_vals[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
+	    }
 	}
     }
-/*
-    //self coupling
-    for (int llsite = 0; llsite < l->num_lattice_sites; llsite ++){
-	printf0("working on site %d\n", llsite);
-
-	printf0("copying self coupling term\n");
-	int k = 0; //just to differentiate between coupling terms
-	for (int i = llsite * SQUARE(l->num_lattice_site_var) * 9 ; i < (llsite +1 ) * SQUARE(l->num_lattice_site_var) * 9; i ++){
-	    r = l->p_PRECISION.mumps_Is[i];
-	    c = l->p_PRECISION.mumps_Js[i]; 
-	    l->p_PRECISION.dense_vals[k + c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] =
-		l->p_PRECISION.mumps_vals[i];
-	}
-
-	k = k + SQUARE(l->num_lattice_site_var);
-	//hopping T
-	printf0("copying self hopping term T+\n");
-	for (int i = (llsite + 1) * SQUARE(l->num_lattice_site_var) * 9 ; i < (llsite + 2) * SQUARE(l->num_lattice_site_var) * 9; i ++){
-	    r = l->p_PRECISION.mumps_Is[i];
-	    c = l->p_PRECISION.mumps_Js[i]; 
-	    l->p_PRECISION.dense_vals[k + c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] =
-		l->p_PRECISION.mumps_vals[i];
-	}
-	k = k + SQUARE(l->num_lattice_site_var);
-	printf0("copying self hopping term T-\n");
-	for (int i = (llsite + 2) * SQUARE(l->num_lattice_site_var) * 9 ; i < (llsite + 3) * SQUARE(l->num_lattice_site_var) * 9; i ++){
-	    r = l->p_PRECISION.mumps_Is[i];
-	    c = l->p_PRECISION.mumps_Js[i]; 
-	    l->p_PRECISION.dense_vals[k + c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] =
-		l->p_PRECISION.mumps_vals[i];
-	}
-	k = k + SQUARE(l->num_lattice_site_var);
-	
-	//hopping Z
-	printf0("copying self hopping term Z+\n");
-	for (int i = (llsite + 3) * SQUARE(l->num_lattice_site_var) * 9 ; i < (llsite + 4) * SQUARE(l->num_lattice_site_var) * 9; i ++){
-	    r = l->p_PRECISION.mumps_Is[i];
-	    c = l->p_PRECISION.mumps_Js[i]; 
-	    l->p_PRECISION.dense_vals[k + c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] =
-		l->p_PRECISION.mumps_vals[i];
-	}
-	k = k + SQUARE(l->num_lattice_site_var);
-	printf0("copying self hopping term Z-\n");
-	for (int i = (llsite + 4) * SQUARE(l->num_lattice_site_var) * 9 ; i < (llsite + 5) * SQUARE(l->num_lattice_site_var) * 9; i ++){
-	    r = l->p_PRECISION.mumps_Is[i];
-	    c = l->p_PRECISION.mumps_Js[i]; 
-	    l->p_PRECISION.dense_vals[k + c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] =
-		l->p_PRECISION.mumps_vals[i];
-	}
-	k = k + SQUARE(l->num_lattice_site_var);
-
-	//hopping Y
-	printf0("copying self hopping term Y+\n");
-	for (int i = (llsite + 5) * SQUARE(l->num_lattice_site_var) * 9 ; i < (llsite + 6) * SQUARE(l->num_lattice_site_var) * 9; i ++){
-	    r = l->p_PRECISION.mumps_Is[i];
-	    c = l->p_PRECISION.mumps_Js[i]; 
-	    l->p_PRECISION.dense_vals[k + c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] =
-		l->p_PRECISION.mumps_vals[i];
-	}
-	k = k + SQUARE(l->num_lattice_site_var);
-	printf0("copying self hopping term Y-\n");
-	for (int i = (llsite + 6) * SQUARE(l->num_lattice_site_var) * 9 ; i < (llsite + 7) * SQUARE(l->num_lattice_site_var) * 9; i ++){
-	    r = l->p_PRECISION.mumps_Is[i];
-	    c = l->p_PRECISION.mumps_Js[i]; 
-	    l->p_PRECISION.dense_vals[k + c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] =
-		l->p_PRECISION.mumps_vals[i];
-	}
-	k = k + SQUARE(l->num_lattice_site_var);
-
-	//hopping X
-	printf0("copying self hopping term X+\n");
-	for (int i = (llsite + 7) * SQUARE(l->num_lattice_site_var) * 9 ; i < (llsite + 8) * SQUARE(l->num_lattice_site_var) * 9; i ++){
-	    r = l->p_PRECISION.mumps_Is[i];
-	    c = l->p_PRECISION.mumps_Js[i]; 
-	    l->p_PRECISION.dense_vals[k + c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] =
-		l->p_PRECISION.mumps_vals[i];
-	}
-	k = k + SQUARE(l->num_lattice_site_var);
-	printf0("copying self hopping term X-\n");
-	for (int i = (llsite + 8) * SQUARE(l->num_lattice_site_var) * 9 ; i < (llsite + 9) * SQUARE(l->num_lattice_site_var) * 9; i ++){
-	    r = l->p_PRECISION.mumps_Is[i];
-	    c = l->p_PRECISION.mumps_Js[i]; 
-	    l->p_PRECISION.dense_vals[k + c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] =
-		l->p_PRECISION.mumps_vals[i];
-	}
-	k = k + SQUARE(l->num_lattice_site_var);
-    }*/
     //REMEMBER: Column major storage for Scalapack due to fortran calls!
 }
 
