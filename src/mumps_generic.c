@@ -781,7 +781,8 @@ void mumps_2_scalap_matrix_PRECISION(level_struct *l, struct Thread *threading){
     //2x4 hopping terms (2 in each dimension)
 	for (int d = 0; d < 9; d++){ //loop over each block as mentioned above
 	    for (int i = 0; i < SQUARE(l->num_lattice_site_var); i++){ //local index to copy elementwise within a block
-	        r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
+	        r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i] -
+			g.my_rank * l->num_inner_lattice_sites * l->num_lattice_site_var;
 	        c = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
 		l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] += l->p_PRECISION.mumps_vals[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
 	    }

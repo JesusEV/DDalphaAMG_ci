@@ -151,21 +151,23 @@ int main( int argc, char **argv ) {
 	memset( xs, 0, end * sizeof(complex_float));
 	memset( xg, 0, end * sizeof(complex_float));
 
-
 //printing matrix
-/*
+	MPI_Barrier(MPI_COMM_WORLD);
 	printf0("D = \n");
 	int of = 0; //55
 	int size = 7;
-	for (int i=0; i < lx->num_inner_lattice_sites * lx->num_lattice_site_var; i = i + size){
-	    for (int j=0; j < lx->num_inner_lattice_sites * lx->num_lattice_site_var; j = j + size){
-		if (fabs((lx->p_float.dense_vals[(i + of) + lx->num_inner_lattice_sites *
-			    lx->num_lattice_site_var * (j + of)])) > 1e-7) printf0("X");
-		else printf0(" ");
+	for (int r = 0; r < lx->num_processes; r++){
+	    if (r == g.my_rank)	for (int i=0; i < lx->num_inner_lattice_sites * lx->num_lattice_site_var; i = i + size){
+		for (int j=0; j < lx->num_processes * lx->num_inner_lattice_sites * lx->num_lattice_site_var; j = j + size){
+		    if (fabs((lx->p_float.dense_vals[i + lx->num_inner_lattice_sites *
+			    lx->num_lattice_site_var * j])) > 1e-7) printf("X");
+		    else printf(" ");
 //		printf0("%e\t", (creal(lx->p_float.dense_vals[i * lx->num_inner_lattice_sites * lx->num_lattice_site_var + j])));
+		}
+		printf(" rank %d\n", r);
 	    }
-	    printf0("\n");
-	}*/
+	    MPI_Barrier(MPI_COMM_WORLD);
+	}
 
 
 	float r1, r2, r3; //norms 
@@ -180,13 +182,20 @@ int main( int argc, char **argv ) {
 	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
 	//apply coarse operator with DDalphaAMG
 	apply_coarse_operator_float( xg, lx->p_float.b, lx->p_float.op, lx, &threading);
-
+	MPI_Barrier(MPI_COMM_WORLD);
+	exit(0);
 	vector_float_minus( xs, xg, xs, start, end, lx );
 	    
 	r1 = global_norm_float( xs, start, end, lx, &threading );
 	r1 = r1 / global_norm_float( xg, start, end, lx, &threading );
 	printf0("rel. res. |Ax_s - Ax_d| / |Ax_d| = %f\n", r1);
 
+	MPI_Barrier(MPI_COMM_WORLD);
+	FREE( rand, complex_float, end );
+	FREE( xs, complex_float, end );
+	FREE( xg, complex_float, end );
+	printf0("done with freeing ranks!\n");
+	MPI_Barrier(MPI_COMM_WORLD);
 	exit(0);
 	
 //Testing to here
