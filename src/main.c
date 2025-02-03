@@ -96,7 +96,7 @@ int main( int argc, char **argv ) {
 
     //t0x = MPI_Wtime();
 
-#ifdef MUMPS_ADDS
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     {
       level_struct *lx = &l;
       int i;
@@ -121,7 +121,7 @@ int main( int argc, char **argv ) {
         START_MASTER(threadx)
         t0 = MPI_Wtime();
 
-#ifndef DenseDirectSolves
+#ifndef COARSE_SCALAP
         printf0("starting analyze from main.c\n");
         END_MASTER(threadx)
         SYNC_CORES(threadx)
@@ -153,6 +153,7 @@ int main( int argc, char **argv ) {
 	memset( xg, 0, mend * sizeof(complex_float));
 
 //printing matrix
+	/*
 	MPI_Barrier(MPI_COMM_WORLD);
 	printf0("D = \n");
 	int of = 0; //55
@@ -170,6 +171,7 @@ int main( int argc, char **argv ) {
 	    MPI_Barrier(MPI_COMM_WORLD);
 	}
 
+*/
 
 	float r1, r2, r3; //norms 
 	vector_float_define_random( rand, start, end, lx );
@@ -205,11 +207,11 @@ int main( int argc, char **argv ) {
         printf0("inverting using scalapack done\n");
 
 	exit(0);
-#endif
 
         t1 = MPI_Wtime();
+#endif
+#ifndef COARSE_SCALAP
 	g.mumps_fact_time += t1 - t0;
-#ifndef DenseDirectSolves
 	if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f \t in main.c\n",t1-t0);
 #else
 	if (g.my_rank == 0) printf("Invert using scalapack time (seconds) : %f \t in main.c\n",t1-t0);

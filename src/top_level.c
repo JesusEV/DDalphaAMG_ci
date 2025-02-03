@@ -540,7 +540,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 
       }
 #endif
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS || COARSE_SCALAP
       g.mumps_fact_time = 0;
       {
         level_struct *lx = l;
@@ -557,16 +557,13 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
           START_MASTER(threading)
           t0 = MPI_Wtime();
 
-#ifndef DenseDirectSolves
+#ifndef COARSE_SCALAP
           printf0("starting analyze from top_level.c\n");
 
-
-
-//    g.mumps_id.job = 4; //analyze and factorize
+	  //    g.mumps_id.job = 4; //analyze and factorize
           g.mumps_id.job = 1; //analyze
 
           cmumps_c(&(g.mumps_id));
-
 
           printf0("analyze done, starting factorize singlethreaded from top_level.c\n");
           g.mumps_id.job = 2; //factorize
@@ -577,7 +574,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 	  t1 = MPI_Wtime();
-#ifndef DenseDirectSolves
+#ifndef COARSE_SCALAP
 	  if (g.my_rank == 0) printf("MUMPS analyze and factorize time (seconds) : %f \t from top_level.c\n",t1-t0);
 #else
 	  if (g.my_rank == 0) printf("Invert using scalapack time (seconds) : %f \t from top_level.c\n",t1-t0);

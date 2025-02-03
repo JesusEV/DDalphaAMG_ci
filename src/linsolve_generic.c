@@ -124,7 +124,7 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
 
-#ifdef MUMPS_ADDS
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     p->mumps_vals = NULL;
     p->mumps_Is = NULL;
     p->mumps_Js = NULL;
@@ -133,7 +133,7 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
     p->mumps_irhs_loc = NULL;
     p->mumps_SOL = NULL;
 
-#ifdef DenseDirectSolves
+#ifdef COARSE_SCALAP
     p->dense_vals = NULL;
     p->desc_dense_vals = NULL;
     p->desc_rhs = NULL;
@@ -427,7 +427,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   }
 #endif
 
-#ifdef MUMPS_ADDS
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
   if (l->level==0 && !l->idle) {
     // Allocate memory for cmumps data format
     int site_var = l->num_lattice_site_var;
@@ -457,7 +457,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     MALLOC(l->p_PRECISION.mumps_rhs_loc, complex_PRECISION, rhs_len);
     memset(l->p_PRECISION.mumps_rhs_loc, 0, rhs_len * sizeof(complex_PRECISION));
     memset(l->p_PRECISION.mumps_irhs_loc, 0, rhs_len * sizeof(int));
-#ifdef DenseDirectSolves
+#ifdef COARSE_SCALAP
     MALLOC( p->dense_vals, complex_PRECISION, mumps_n * nr_nodes * site_var);
     memset( p->dense_vals, 0, mumps_n * nr_nodes * site_var * sizeof(complex_PRECISION));
     
@@ -584,11 +584,13 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   }
 #endif
 
-#ifdef MUMPS_ADDS
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
   // free cmumps instance
   if (l->level == 0 && !l->idle){
+#ifdef MUMPS_ADDS
       g.mumps_id.job = JOB_END;
       cmumps_c(&(g.mumps_id));
+#endif
       int site_var = l->num_lattice_site_var;
       int nr_nodes = l->num_inner_lattice_sites;
       FREE( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes *9 );
@@ -598,6 +600,12 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
       FREE( p->mumps_irhs_loc, int, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
       FREE( p->mumps_rhs_loc, complex_PRECISION, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
       FREE( p->mumps_SOL, complex_PRECISION, site_var * nr_nodes * l->num_processes);	//order of Matrix
+#ifdef COARSE_SCALAP
+      FREE( p->dense_vals, complex_PRECISION, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var   
+						* l->num_inner_lattice_sites *l->num_lattice_site_var);
+      FREE( p->desc_dense_vals, int, 9);
+      FREE( p->desc_rhs, int, 9);    
+#endif
   }
 #endif
 

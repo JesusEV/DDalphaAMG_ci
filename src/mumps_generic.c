@@ -21,11 +21,11 @@
 
 #include "main.h"
 
-#ifdef MUMPS_ADDS
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 
 #include "mumps_PRECISION.h"
 
-#ifdef DenseDirectSolves
+#ifdef COARSE_SCALAP
 void blacs_get_(int*, int*, int*);
 void blacs_pinfo_(int*, int*);
 void blacs_gridinit_(int*, char*, int*, int*);
@@ -541,19 +541,17 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   
   printf0("hopping in mu - done!\n");
 
+#ifdef COARSE_SCALAP	//use Scalapack on coarsest level to solve.
+  coord2dense_PRECISION( l, threading);
+  printf0("generate scalap matrix done\n");
+#else
   // increase global indices by 1 to match fortran indexing.
   // spmv doesn't work then anymore
   int nnz_loc = SQUARE(site_var) * nr_nodes *9;
-#ifndef DenseDirectSolves
-  for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing
+  for (i = 0; i < nnz_loc; i++){	//increase indices by one to match fortran indexing in MUMPS
     *(l->p_PRECISION.mumps_Js + i ) = *(l->p_PRECISION.mumps_Js + i ) +1;
     *(l->p_PRECISION.mumps_Is + i ) = *(l->p_PRECISION.mumps_Is + i ) +1;
   }
-#else	// DenseDirectSolves is defined
-
-  printf0("starting generate scalap matrix from mumps_setup\n");
-  mumps_2_scalap_matrix_PRECISION( l, threading);
-  printf0("generate scalap matrix done\n");
 #endif
 
 
@@ -580,7 +578,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 }
 
 
-
+#ifdef MUMPS_ADDS
 void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
                             int res, level_struct *lx, struct Thread *threading )
 {
@@ -688,8 +686,10 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, i
 //    printf0("finished mumps_init_PRECISION\n\n\n");
     
 }
+#endif
 
-#ifdef DenseDirectSolves
+
+#ifdef COARSE_SCALAP
 void invert_coarsest_matrix_scalap_PRECISION( level_struct *l, vector_PRECISION A, int* descA,
 	vector_PRECISION B, int* descB, int N, struct Thread *threading){
     printf0("starting scalap routine\n");
@@ -768,7 +768,7 @@ void invert_coarsest_matrix_scalap_PRECISION( level_struct *l, vector_PRECISION 
 }
 
 
-void mumps_2_scalap_matrix_PRECISION(level_struct *l, struct Thread *threading){
+void coord2dense_PRECISION(level_struct *l, struct Thread *threading){
 
     //TODO: the following implementation works only for one process. For multiprocessing check r and
     //c being global and use a smart modulo operation

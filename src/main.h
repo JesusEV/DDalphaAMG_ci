@@ -128,14 +128,12 @@
 #define JOB_INIT -1
 #define JOB_END -2
 #define USE_COMM_WORLD -987654
-
-#ifdef DenseDirectSolves
+#endif
+#ifdef COARSE_SCALAP
 #define pgesv_double pzgesv_
 #define pgesv_float pcgesv_
 #define pgemv_double pzgemv_
 #define pgemv_float pcgemv_
-#endif
-
 #endif
 
 #ifdef SSE
@@ -735,7 +733,7 @@ typedef struct block_struct {
   #include "polyprec_float.h"
 #endif
 
-#ifdef MUMPS_ADDS
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 #include "mumps_double.h"
 #include "mumps_float.h"
 #endif

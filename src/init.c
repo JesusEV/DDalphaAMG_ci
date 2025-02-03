@@ -98,10 +98,8 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
         int nnz_loc = SQUARE(l->next_level->num_lattice_site_var) * l->next_level->num_inner_lattice_sites *9;
         int rhs_len = l->next_level->p_float.v_end-l->next_level->p_float.v_start;
 	
-#ifndef DenseDirectSolves
 	// fill mumps data structure with values
         mumps_init_float(&(l->next_level->p_float), mumps_n, nnz_loc, rhs_len, l->next_level, threading);
-#endif
 
       }
 #endif

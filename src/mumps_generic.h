@@ -6,6 +6,7 @@
 // this function will set up the data format for mumps / csr
 void mumps_setup_PRECISION(level_struct *l, struct Thread *threading);
 
+#ifdef MUMPS_ADDS
 // this function will do all the necessary handling of data for the solve call.
 // e.g. distributing the calculated solution to all processes
 void mumps_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
@@ -16,8 +17,9 @@ void mumps_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 // general values and link arrays
 void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc,
                           int rhs_len, level_struct *l, Thread *threading);
+#endif
 
-#ifdef DenseDirectSolves
+#ifdef COARSE_SCALAP
 // this function computes the inverse for a given Matrix A of size N x N and
 // overwrites the input array with the computed inverse
 void invert_coarsest_matrix_scalap_PRECISION(level_struct *l,
@@ -27,7 +29,7 @@ void invert_coarsest_matrix_scalap_PRECISION(level_struct *l,
 
 // this function will generate a "dense" memory layout for solving with
 // scalapack
-void mumps_2_scalap_matrix_PRECISION(level_struct *l, struct Thread *threading);
+void coord2dense_PRECISION(level_struct *l, struct Thread *threading);
 #endif
 
 #endif

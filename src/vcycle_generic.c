@@ -177,8 +177,8 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 	    g.coarsest_time += MPI_Wtime();
 	    END_MASTER(threading)
 
-//TODO: re-enable the following ifdef statment
-#ifdef MUMPS_ADDS_deactivated
+//TODO: add here call to scalapack solver as preconditioner of gmres
+#ifdef MUMPS_ADDS
               l->next_level->p_PRECISION.preconditioner = mumps_solve_PRECISION;
 #endif
 	    START_MASTER(threading)
