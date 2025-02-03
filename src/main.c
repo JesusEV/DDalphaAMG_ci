@@ -143,13 +143,14 @@ int main( int argc, char **argv ) {
 //Testing from here
 
 	vector_float rand, xs, xg;
+	int mend = 2*lx->inner_vector_size;
 	int start = 0, end = lx->num_inner_lattice_sites * lx->num_lattice_site_var;
-	MALLOC( rand, complex_float, end);
-	MALLOC( xs, complex_float, end);
-	MALLOC( xg, complex_float, end);
-	memset( rand, 0, end * sizeof(complex_float));
-	memset( xs, 0, end * sizeof(complex_float));
-	memset( xg, 0, end * sizeof(complex_float));
+	MALLOC( rand, complex_float, mend);
+	MALLOC( xs, complex_float, mend);
+	MALLOC( xg, complex_float, mend);
+	memset( rand, 0, mend * sizeof(complex_float));
+	memset( xs, 0, mend * sizeof(complex_float));
+	memset( xg, 0, mend * sizeof(complex_float));
 
 //printing matrix
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -180,20 +181,20 @@ int main( int argc, char **argv ) {
 	vector_float_copy( xs, lx->p_float.b, start, end, lx);
 
 	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
+
 	//apply coarse operator with DDalphaAMG
-	apply_coarse_operator_float( xg, lx->p_float.b, lx->p_float.op, lx, &threading);
-	MPI_Barrier(MPI_COMM_WORLD);
-	exit(0);
-	vector_float_minus( xs, xg, xs, start, end, lx );
+	apply_coarse_operator_float( lx->p_float.x, lx->p_float.b, lx->p_float.op, lx, &threading);
+
+	vector_float_minus( xs, lx->p_float.x, xs, start, end, lx );
 	    
 	r1 = global_norm_float( xs, start, end, lx, &threading );
-	r1 = r1 / global_norm_float( xg, start, end, lx, &threading );
+	r1 = r1 / global_norm_float( lx->p_float.x, start, end, lx, &threading );
 	printf0("rel. res. |Ax_s - Ax_d| / |Ax_d| = %f\n", r1);
 
 	MPI_Barrier(MPI_COMM_WORLD);
-	FREE( rand, complex_float, end );
-	FREE( xs, complex_float, end );
-	FREE( xg, complex_float, end );
+	FREE( rand, complex_float, mend );
+	FREE( xs, complex_float, mend );
+	FREE( xg, complex_float, mend );
 	printf0("done with freeing ranks!\n");
 	MPI_Barrier(MPI_COMM_WORLD);
 	exit(0);
