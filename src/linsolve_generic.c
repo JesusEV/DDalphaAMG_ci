@@ -21,6 +21,10 @@
 
 #include "main.h"
 
+#ifdef COARSE_SCALAP
+void blacs_gridexit_(int*);
+#endif
+
 void print_Matrix_PRECISION(complex_PRECISION** A, int mv, int mh )
 {
   int i,j;
@@ -137,6 +141,7 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
     p->dense_vals = NULL;
     p->desc_dense_vals = NULL;
     p->desc_rhs = NULL;
+    p->ipiv = NULL;
 #endif
 #endif
 
@@ -467,7 +472,10 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     MALLOC( p->desc_rhs, int, 9);
     memset( p->desc_rhs, 0,  9 * sizeof(int));
 
+    MALLOC( p->ipiv, int, mumps_n + 1);
+    for (int i = 0; i < mumps_n +1; i++) p->ipiv[i] = i;
 
+    p->blacs_ctxt = 0;
 #endif
   }
 #endif
@@ -605,6 +613,11 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
 						* l->num_inner_lattice_sites *l->num_lattice_site_var);
       FREE( p->desc_dense_vals, int, 9);
       FREE( p->desc_rhs, int, 9);    
+      FREE( p->ipiv, int, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var
+	      +1);
+
+      
+      blacs_gridexit_( p->blacs_ctxt);
 #endif
   }
 #endif

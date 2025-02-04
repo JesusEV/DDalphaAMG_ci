@@ -90,8 +90,9 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
       next_level_float_setup( l );
       END_LOCKED_MASTER(threading)
 
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+      if (l->level == 1 && !l->next_level->idle){
 #ifdef MUMPS_ADDS
-      if (l->level == 1 && !l->next_level->idle){   
 	//			site_var 			no. of nodes
         int mumps_n = l->next_level->num_lattice_site_var * l->next_level->num_inner_lattice_sites * l->next_level->num_processes;        //order of Matrix
         int nnz = SQUARE(l->next_level->num_lattice_site_var) *l->next_level->num_inner_lattice_sites *9 * g.num_processes; //number of nonzero elements
@@ -100,7 +101,10 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
 	
 	// fill mumps data structure with values
         mumps_init_float(&(l->next_level->p_float), mumps_n, nnz_loc, rhs_len, l->next_level, threading);
-
+#endif
+#ifdef COARSE_SCALAP
+	coarse_scalap_init_float(l->next_level, threading);
+#endif
       }
 #endif
 

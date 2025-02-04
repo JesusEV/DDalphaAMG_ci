@@ -31,7 +31,6 @@ void blacs_pinfo_(int*, int*);
 void blacs_gridinit_(int*, char*, int*, int*);
 void blacs_gridinfo_(int*, int*, int*, int*, int*);
 void descinit_(int*, int*, int*, int*, int*, int*, int*, int*, int*, int*);
-void blacs_gridexit_(int*);
 int numroc_(int*, int*, int*, int*, int*);
 
 void pgesv_PRECISION(int*, int*, double*, int*, int*, int*, int*, double*, int*, int*, int*, int* );
@@ -542,7 +541,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   printf0("hopping in mu - done!\n");
 
 #ifdef COARSE_SCALAP	//use Scalapack on coarsest level to solve.
-  coord2dense_PRECISION( l, threading);
+  coarse_scalap_setup_PRECISION( l, threading);
   printf0("generate scalap matrix done\n");
 #else
   // increase global indices by 1 to match fortran indexing.
@@ -690,56 +689,13 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, i
 
 
 #ifdef COARSE_SCALAP
-void invert_coarsest_matrix_scalap_PRECISION( level_struct *l, vector_PRECISION A, int* descA,
-	vector_PRECISION B, int* descB, int N, struct Thread *threading){
+void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int* descA,
+	vector_PRECISION B, int* descB, int N, int* ipiv, int bctxt, struct Thread *threading){
     printf0("starting scalap routine\n");
 
     int izero = 0;
     int ione = 1;
-    int myrank_mpi, nprocs_mpi;
-
-    MPI_Comm_rank( l->gs_PRECISION.level_comm, &myrank_mpi );
-    MPI_Comm_size( l->gs_PRECISION.level_comm, &nprocs_mpi );
-
-    int nprow = nprocs_mpi;
-    int npcol = 1;
-
-    char layout = 'R';
-
-    int *ipiv;
     int info = 0;
-
-    int iam = 0, nprocs = 0;
-    int ictxt, myrow, mycol;
-
-    blacs_pinfo_( &iam, &nprocs); //setting rank and number of blacs-processes
-    blacs_get_(&izero, &izero, &ictxt);			//create context
-    blacs_gridinit_(&ictxt, &layout, &nprow, &npcol );	//create blacs grid
-    blacs_gridinfo_(&ictxt, &nprow, &npcol, &myrow, &mycol);	//set process coordinates of blacs-grid
-
-//setting the descriptors:
-	//TODO may choose a different blocksize, but in beginning start with bs = 2 * num. testvecs
-	//* num inner lattice sites,
-	//probably a good choice
-
-    int bs = l->num_lattice_site_var * l->num_inner_lattice_sites;
-    int nrhs = 1;
-	   
-    int numr = numroc_( &N, &bs, &iam, &izero, &nprow ); // number of rows stored in each process
-    int lddA = numr > 1? numr : 1;	//leading dimension in A (remember, matrix elements are	stored in a column major order)
-
-    printf0("setting the descriptor of coarsest matrix for scalapack.\n");
-    //descinit ( DESC,			    M, N,    MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO )
-    descinit_( l->p_float.desc_dense_vals, &N, &N, &bs, &bs, &izero, &izero, &ictxt, &lddA, &info);
-    printf0("matrix descriptor done.\n");
-    if (info != 0) error0("Error in descinit for DescA, info = %d\n", info);
-
-    printf0("setting the descriptor of RHS for scalapack.\n");
-    //descinit ( DESC,		    M, N,	MB, NB,	    IRSRC, ICSRC, ICTXT, LLD, INFO )
-    descinit_( l->p_float.desc_rhs, &N, &nrhs, &bs, &ione, &izero, &izero, &ictxt, &lddA, &info);
-    printf0("RHS descriptor done.\n");
-    if (info != 0) error0("Error in descinit for DescB, info = %d\n", info);
-
 
 
     int ia = 1, ja = 1; //starting indices (global)
@@ -763,12 +719,10 @@ void invert_coarsest_matrix_scalap_PRECISION( level_struct *l, vector_PRECISION 
     if (info != 0 ) error0("Error during pdgesv_(), info = %d\n", info);
     */
     printf0("scalap routine done!\n");
-    
-    blacs_gridexit_(&ictxt);
 }
 
 
-void coord2dense_PRECISION(level_struct *l, struct Thread *threading){
+void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 
     //TODO: the following implementation works only for one process. For multiprocessing check r and
     //c being global and use a smart modulo operation
@@ -792,5 +746,45 @@ void coord2dense_PRECISION(level_struct *l, struct Thread *threading){
 }
 
 
+void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
+
+    int izero = 0;
+    int ione = 1;
+    int nprow = l->num_processes;
+    int npcol = 1;
+    char layout = 'R';
+    int info = 0;
+    int iam = 0, nprocs = 0;
+    int ictxt = l->p_PRECISION.blacs_ctxt, myrow, mycol;
+    int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
+
+    blacs_pinfo_( &iam, &nprocs); //setting rank and number of blacs-processes
+    blacs_get_(&izero, &izero, &ictxt);			//create context
+    blacs_gridinit_(&ictxt, &layout, &nprow, &npcol );	//create blacs grid
+    blacs_gridinfo_(&ictxt, &nprow, &npcol, &myrow, &mycol);	//set process coordinates of blacs-grid
+
+//setting the descriptors:
+	//TODO may choose a different blocksize, but in beginning start with bs = 2 * num. testvecs
+	//* num inner lattice sites,
+	//probably a good choice
+
+    int bs = l->num_lattice_site_var * l->num_inner_lattice_sites;
+    int nrhs = 1;
+	   
+    int numr = numroc_( &N, &bs, &iam, &izero, &nprow ); // number of rows stored in each process
+    int lddA = numr > 1? numr : 1;	//leading dimension in A (remember, matrix elements are	stored in a column major order)
+
+    printf0("setting the descriptor of coarsest matrix for scalapack.\n");
+    //descinit ( DESC,			    M, N,    MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO )
+    descinit_( l->p_PRECISION.desc_dense_vals, &N, &N, &bs, &bs, &izero, &izero, &ictxt, &lddA, &info);
+    printf0("matrix descriptor done.\n");
+    if (info != 0) error0("Error in descinit for DescA, info = %d\n", info);
+
+    printf0("setting the descriptor of RHS for scalapack.\n");
+    //descinit ( DESC,		    M, N,	MB, NB,	    IRSRC, ICSRC, ICTXT, LLD, INFO )
+    descinit_( l->p_PRECISION.desc_rhs, &N, &nrhs, &bs, &ione, &izero, &izero, &ictxt, &lddA, &info);
+    printf0("RHS descriptor done.\n");
+    if (info != 0) error0("Error in descinit for DescB, info = %d\n", info);
+}
 #endif
 #endif

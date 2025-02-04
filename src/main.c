@@ -178,8 +178,8 @@ int main( int argc, char **argv ) {
 	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
 	
 	//applying the matrix using scalapack
-	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals,
-		lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, N, &threading);
+	coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals,
+		lx->p_float.b, lx->p_float.desc_rhs, N, lx->p_float.ipiv, lx->p_float.blacs_ctxt, &threading);
 	vector_float_copy( xs, lx->p_float.b, start, end, lx);
 
 	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
@@ -202,8 +202,7 @@ int main( int argc, char **argv ) {
 	exit(0);
 	
 //Testing to here
-	invert_coarsest_matrix_scalap_float( lx, lx->p_float.dense_vals,
-		lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, N, &threading);
+//	coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, N, &threading);
         printf0("inverting using scalapack done\n");
 
 	exit(0);

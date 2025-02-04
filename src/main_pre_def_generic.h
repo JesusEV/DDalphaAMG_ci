@@ -223,6 +223,8 @@
     vector_PRECISION dense_vals;
     int *desc_dense_vals;
     int *desc_rhs;
+    int *ipiv;
+    int blacs_ctxt;
 #endif
 
 

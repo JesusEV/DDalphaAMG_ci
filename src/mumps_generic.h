@@ -22,14 +22,16 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc,
 #ifdef COARSE_SCALAP
 // this function computes the inverse for a given Matrix A of size N x N and
 // overwrites the input array with the computed inverse
-void invert_coarsest_matrix_scalap_PRECISION(level_struct *l,
-                                             vector_PRECISION A, int *descA,
-                                             vector_PRECISION B, int *descB,
-                                             int N, struct Thread *threading);
+void coarse_scalap_factorize_PRECISION(level_struct *l, vector_PRECISION A,
+                                       int *descA, vector_PRECISION B,
+                                       int *descB, int N, int *ipiv, int bctxt,
+                                       struct Thread *threading);
 
 // this function will generate a "dense" memory layout for solving with
 // scalapack
-void coord2dense_PRECISION(level_struct *l, struct Thread *threading);
+void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading);
+
+void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading);
 #endif
 
 #endif
