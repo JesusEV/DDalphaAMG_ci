@@ -373,7 +373,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     cmumps_c(&(g.mumps_id));
 #else	//find inverse with scalapack
     coarse_scalap_factorize_PRECISION( l, l->p_PRECISION.dense_vals,
-	    l->p_PRECISION.desc_dense_vals, l->p_PRECISION.b, l->p_PRECISION.desc_rhs, g.mumps_id.n, threading);
+	    l->p_PRECISION.desc_dense_vals, g.mumps_id.n, threading);
 #endif
 
 

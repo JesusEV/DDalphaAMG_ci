@@ -20,11 +20,17 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc,
 #endif
 
 #ifdef COARSE_SCALAP
+// this function computes the solution for a given LU decomposition of A stored
+// in input A for a given RHS B
+void coarse_scalap_solve_PRECISION(level_struct *l, vector_PRECISION A,
+                                   int *descA, int N, int *ipiv,
+                                   vector_PRECISION B, int *descB,
+                                   struct Thread *threading);
+
 // this function computes the inverse for a given Matrix A of size N x N and
-// overwrites the input array with the computed inverse
+// overwrites the input array with the computed LU-Decomposition
 void coarse_scalap_factorize_PRECISION(level_struct *l, vector_PRECISION A,
-                                       int *descA, vector_PRECISION B,
-                                       int *descB, int N, int *ipiv, int bctxt,
+                                       int *descA, int N, int *ipiv,
                                        struct Thread *threading);
 
 // this function will generate a "dense" memory layout for solving with

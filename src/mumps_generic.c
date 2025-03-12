@@ -34,7 +34,8 @@ void descinit_(int*, int*, int*, int*, int*, int*, int*, int*, int*, int*);
 int numroc_(int*, int*, int*, int*, int*);
 
 void pgesv_PRECISION(int*, int*, double*, int*, int*, int*, int*, double*, int*, int*, int*, int* );
-
+void pgetrf_PRECISION( int*, int*, PRECISION*, int*, int*, int*, int*, int* );
+void pgetrs_PRECISION( char*, int*, int*, PRECISION*, int*, int*, int*, int*, PRECISION*, int*,	int*, int*, int* );
 void pgemv_PRECISION(char*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, PRECISION*, int*,
 	int*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, int*);
 #endif
@@ -689,8 +690,17 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, i
 
 
 #ifdef COARSE_SCALAP
-void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int* descA,
-	vector_PRECISION B, int* descB, int N, int* ipiv, int bctxt, struct Thread *threading){
+void coarse_scalap_solve_PRECISION(level_struct *l, vector_PRECISION A, int *descA, int N, int
+	*ipiv, vector_PRECISION B, int *descB, struct Thread *threading){
+    int ione = 1, info = 0;
+    char trans = 'N';
+//void pgetrs_PRECISION( TRANS, N, NRHS, A,	     IA, JA,	 DESCA, IPIV, B, IB, JB, DESCB, INFO );
+    pgetrs_PRECISION( &trans, &N, &ione, A, &ione, &ione, descA, ipiv, B, &ione, &ione, descB, &info );
+    if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
+}
+
+
+void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int* descA, int N, int* ipiv, struct Thread *threading){
     printf0("starting scalap routine\n");
 
     int izero = 0;
@@ -700,18 +710,24 @@ void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int
 
     int ia = 1, ja = 1; //starting indices (global)
     int ib = 1, jb = 1;
+ 
+    //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO )
+    pgetrf_PRECISION( &N, &N, A, &ia, &ja, descA, ipiv, &info );    
+    if (info != 0 ) error0("Error during pgetrf_(), info = %d\n", info);
     
+    /*
     char trans = 'N';
     PRECISION alpha = 1.0, beta = 0.0;
     vector_PRECISION outvector;
     MALLOC( outvector, complex_PRECISION, l->num_inner_lattice_sites * l->num_lattice_site_var);
     memset( outvector, 0, l->num_inner_lattice_sites * l->num_lattice_site_var * sizeof(complex_PRECISION));
 
+
 //    pgemv_PRECISION(char*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, PRECISION*, int*, int*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, int*);
     pgemv_PRECISION( &trans, &N, &N, &alpha, A, &ia, &ja, descA, B, &ib, &jb, descB, &ione, &beta,
 	    outvector, &ib, &jb, descB, &ione);
     vector_PRECISION_copy(B, outvector, 0, l->num_inner_lattice_sites * l->num_lattice_site_var, l);
-
+*/
     /*
     printf0("calling pdgesv_() .... \n");
     pgesv_PRECISION( &N, &ione, A, &ia, &ja, descA, ipiv, B, &ib, &jb, descB, &info);

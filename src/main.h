@@ -134,6 +134,10 @@
 #define pgesv_float pcgesv_
 #define pgemv_double pzgemv_
 #define pgemv_float pcgemv_
+#define pgetrs_double pzgetrs_
+#define pgetrs_float pcgetrs_
+#define pgetrf_double pzgetrf_
+#define pgetrf_float pcgetrf_
 #endif
 
 #ifdef SSE

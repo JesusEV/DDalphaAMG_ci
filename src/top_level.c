@@ -570,7 +570,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
           cmumps_c(&(g.mumps_id));
 #else
 	  coarse_scalap_factorize_float( lx, lx->p_float.dense_vals,
-		  lx->p_float.desc_dense_vals, lx->p_float.b, lx->p_float.desc_rhs, g.mumps_id.n, threading );
+		  lx->p_float.desc_dense_vals, g.mumps_id.n, threading );
 #endif
 
 	  t1 = MPI_Wtime();
