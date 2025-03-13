@@ -117,25 +117,78 @@ int main( int argc, char **argv ) {
 	END_MASTER(threadx)
         SYNC_CORES(threadx)
 
-        double t0,t1;
+        double t0 = 0,t1 = 0;
         START_MASTER(threadx)
         t0 = MPI_Wtime();
 
 #ifndef COARSE_SCALAP
-        printf0("starting analyze from main.c\n");
-        END_MASTER(threadx)
+        END_MASTER(threadx) //TODO: only keep analyze and factorize
         SYNC_CORES(threadx)
     
         START_MASTER(threadx)
         //g.mumps_id.job = 4; //analyze and factorize
         g.mumps_id.job = 1; //analyze
-
         cmumps_c(&(g.mumps_id));
-        printf0("analyze done, starting factorize singlethreaded from main.c\n");
-  
-  
+
         g.mumps_id.job = 2; //factorize
         cmumps_c(&(g.mumps_id));
+       
+	MPI_Barrier(MPI_COMM_WORLD);
+        printf0("mumps analyze + factorize done in main.c\n");
+	
+	START_MASTER(threadx)
+        t1 = MPI_Wtime();
+        END_MASTER(threadx)
+        SYNC_CORES(threadx)
+
+        double ft = 0, st = 0;
+	ft = t1 - t0;
+
+	int start = 0, end = lx->num_inner_lattice_sites * lx->num_lattice_site_var;
+	vector_float mt; 
+	int imt;
+	vector_float rand, xs, xg;
+	int mend = 2*lx->inner_vector_size;
+	MALLOC( rand, complex_float, mend);
+	MALLOC( xs, complex_float, mend);
+	MALLOC( xg, complex_float, mend);
+	memset( rand, 0, mend * sizeof(complex_float));
+	memset( xs, 0, mend * sizeof(complex_float));
+	memset( xg, 0, mend * sizeof(complex_float));
+
+
+	vector_float_define_random( rand, start, end, lx );
+	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
+
+	MPI_Barrier(MPI_COMM_WORLD);
+        printf0("starting mumps solve in main.c\n");
+
+	t0 = MPI_Wtime();
+	mumps_solve_float( lx->p_float.b, mt, lx->p_float.b, imt, lx, &threading );
+	st = MPI_Wtime () - t0;
+
+        printf0("mumps solve done in main.c\n");
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	apply_coarse_operator_float( lx->p_float.x, lx->p_float.b, lx->p_float.op, lx, &threading);
+        printf0("apply coarse_op done in main.c\n");
+	MPI_Barrier(MPI_COMM_WORLD);
+
+
+
+	float r1, r2, r3; //norms 
+	
+
+	vector_float_minus( xs, lx->p_float.x, rand, start, end, lx );
+	    
+	r1 = global_norm_float( xs, start, end, lx, &threading );
+	r1 = r1 / global_norm_float( rand, start, end, lx, &threading );
+	printf0("rel. res. |b - A LU b| / |b| = %f\n", r1);
+	printf0("TIMING FOR MUMPS: Factorize: %f, Solve: %f\n", ft, st);
+	
+	
+	MPI_Barrier(MPI_COMM_WORLD);
+	exit(0);
 #else
         printf0("starting inverting using scalapack from main.c\n");
 	
@@ -177,21 +230,43 @@ int main( int argc, char **argv ) {
 	vector_float_define_random( rand, start, end, lx );
 	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
 	
-	//applying the matrix using scalapack
-	coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals,
-		lx->p_float.b, lx->p_float.desc_rhs, N, lx->p_float.ipiv, lx->p_float.blacs_ctxt, &threading);
-	vector_float_copy( xs, lx->p_float.b, start, end, lx);
+        double ft = 0, st = 0;
+        START_MASTER(threadx)
+        t0 = MPI_Wtime();
+	END_MASTER(threadx)
+        SYNC_CORES(threadx)
 
-	vector_float_copy( lx->p_float.b, rand, start, end, lx );	 // r = eta from start to end on level l
+	//compute LU of matrix using scalapack
+	coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, N, lx->p_float.ipiv, &threading);
+	
+	
+	START_MASTER(threadx)
+	ft = MPI_Wtime() - t0;
+	t1 = MPI_Wtime();
+	END_MASTER(threadx)
+        SYNC_CORES(threadx)
 
+	
+	
+	//solve LU for given RHS
+	coarse_scalap_solve_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, N, lx->p_float.ipiv, lx->p_float.b, lx->p_float.desc_rhs, &threading);
+
+	START_MASTER(threadx)
+	st = MPI_Wtime() - t1;
+	END_MASTER(threadx)
+        SYNC_CORES(threadx)
+
+	
+	
 	//apply coarse operator with DDalphaAMG
 	apply_coarse_operator_float( lx->p_float.x, lx->p_float.b, lx->p_float.op, lx, &threading);
 
-	vector_float_minus( xs, lx->p_float.x, xs, start, end, lx );
+	vector_float_minus( xs, lx->p_float.x, rand, start, end, lx );
 	    
 	r1 = global_norm_float( xs, start, end, lx, &threading );
-	r1 = r1 / global_norm_float( lx->p_float.x, start, end, lx, &threading );
-	printf0("rel. res. |Ax_s - Ax_d| / |Ax_d| = %f\n", r1);
+	r1 = r1 / global_norm_float( rand, start, end, lx, &threading );
+	printf0("rel. res. |b - A LU b| / |b| = %f\n", r1);
+	printf0("TIMING FOR SCALAPACK: Factorize: %f, Solve: %f\n", ft, st);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	FREE( rand, complex_float, mend );

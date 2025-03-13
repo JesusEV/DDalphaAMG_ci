@@ -178,6 +178,11 @@ void next_level_PRECISION_setup( level_struct *l ) {
                                      _COARSE_GMRES, _RIGHT, mumps_solve_PRECISION,
 				     apply_coarse_operator_PRECISION,
                                      &(l->next_level->p_PRECISION), l->next_level );
+#elif COARSE_SCALAP
+      fgmres_PRECISION_struct_alloc( g.coarse_iter, g.coarse_restart, l->next_level->vector_size, g.coarse_tol, 
+                                     _COARSE_GMRES, _RIGHT, coarse_scalap_solve_PRECISION,
+				     apply_coarse_operator_PRECISION,
+                                     &(l->next_level->p_PRECISION), l->next_level );
 #else
       fgmres_PRECISION_struct_alloc( g.coarse_iter, g.coarse_restart, l->next_level->vector_size, g.coarse_tol, 
                                      _COARSE_GMRES, _NOTHING, NULL,

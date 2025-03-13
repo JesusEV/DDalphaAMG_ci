@@ -690,13 +690,27 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, i
 
 
 #ifdef COARSE_SCALAP
-void coarse_scalap_solve_PRECISION(level_struct *l, vector_PRECISION A, int *descA, int N, int
-	*ipiv, vector_PRECISION B, int *descB, struct Thread *threading){
-    int ione = 1, info = 0;
-    char trans = 'N';
-//void pgetrs_PRECISION( TRANS, N, NRHS, A,	     IA, JA,	 DESCA, IPIV, B, IB, JB, DESCB, INFO );
-    pgetrs_PRECISION( &trans, &N, &ione, A, &ione, &ione, descA, ipiv, B, &ione, &ione, descB, &info );
-    if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
+void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
+                           vector_PRECISION eta, int res, level_struct *l,
+                           struct Thread *threading){
+
+    if (!l->idle){
+	int ione = 1, info = 0;
+	char trans = 'N';
+
+	int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
+	vector_PRECISION A 
+	vector_PRECISION B 
+	int * descA 
+	int * descB 
+	int * ipiv
+	int info = 0;
+	
+
+    //void pgetrs_PRECISION( TRANS, N, NRHS, A,	     IA, JA,	 DESCA, IPIV, B, IB, JB, DESCB, INFO );
+	pgetrs_PRECISION( &trans, &N, &ione, A, &ione, &ione, descA, ipiv, B, &ione, &ione, descB, &info );
+	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
+    }
 }
 
 
