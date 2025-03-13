@@ -328,7 +328,8 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
       re_setup_PRECISION( l->next_level, threading );
     }
   }
-#if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI) || defined(MUMPS_ADDS)
+#if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI) || defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+
   else {
 
     SYNC_MASTER_TO_ALL(threading)
@@ -361,7 +362,6 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     // setting up mumps data formatting
     if (!l->idle) mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
-
     // (timing of) factorization
     double t0,t1;
     START_MASTER(threading)
@@ -373,7 +373,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     cmumps_c(&(g.mumps_id));
 #else	//find inverse with scalapack
     coarse_scalap_factorize_PRECISION( l, l->p_PRECISION.dense_vals,
-	    l->p_PRECISION.desc_dense_vals, threading);
+	    l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv, threading);
 #endif
 
 
@@ -382,7 +382,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 #ifndef COARSE_SCALAP
     printf0("MUMPS factorize time (seconds) : %f\n",t1-t0);
 #else
-    printf0("Scalapack invert time (seconds) : %f\n",t1-t0);
+    printf0("Scalapack factorize time (seconds) : %f\n",t1-t0);
 #endif
     END_MASTER(threading)
     SYNC_CORES(threading)

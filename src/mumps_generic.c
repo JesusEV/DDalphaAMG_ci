@@ -694,24 +694,41 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
                            vector_PRECISION eta, int res, level_struct *l,
                            struct Thread *threading){
     if (!l->idle){
+
+//	printf0("solving scalap...\n");
         START_MASTER(threading)
+        g.coarsest_solve_time -= MPI_Wtime();
 	int ione = 1, info = 0;
 	char trans = 'N';
 
 	int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
-	vector_PRECISION A = l->p_PRECISION.dense_vals; 
-	vector_PRECISION B = eta; //eta = in vector
-	int * descA = l->p_PRECISION.desc_dense_vals;
-	int * descB = l->p_PRECISION.desc_rhs;
-	int * ipiv = l->p_PRECISION.ipiv;
-	
+	vector_PRECISION test; 
+	MALLOC(test, complex_PRECISION, l->inner_vector_size);
+	memset(test, 0, l->inner_vector_size * sizeof(complex_PRECISION));
+	vector_PRECISION_copy(test, eta, 0, l->inner_vector_size, l);
 
     //void pgetrs_PRECISION( TRANS, N, NRHS, A,	     IA, JA,	 DESCA, IPIV, B, IB, JB, DESCB, INFO );
-	pgetrs_PRECISION( &trans, &N, &ione, A, &ione, &ione, descA, ipiv, B, &ione, &ione, descB, &info );
+	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals, &ione, &ione,
+		l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv,
+		test, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
 
 	//vector_copy eta -> phi 
-	vector_PRECISION_copy(phi, eta, 0, l->inner_vector_size, l);
+        vector_PRECISION_copy(phi, test, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
+//	vector_PRECISION_copy(phi, eta, 0, l->inner_vector_size, l);
+/*
+	apply_coarse_operator_PRECISION(eta, phi, l->p_PRECISION.op, l, threading);
+	vector_PRECISION_minus( test, test, eta, 0, l->inner_vector_size, l );
+	PRECISION r = global_norm_PRECISION( test, 0, l->inner_vector_size, l, threading );
+	printf0("global norm: %f\n", r);
+	MPI_Barrier(MPI_COMM_WORLD);
+	exit(0);
+*/
+
+        g.coarsest_solve_number ++;
+        g.coarsest_solve_time += MPI_Wtime();
+        printf0("scalap time  = %f, scalap solves:  %d\n", g.coarsest_solve_time, g.coarsest_solve_number);
+	FREE(test, complex_PRECISION, l->inner_vector_size);
 	END_MASTER(threading)
         SYNC_CORES(threading);
     }
@@ -761,7 +778,10 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
     //c being global and use a smart modulo operation
 
     int r, c; //for row and column index for a given matrix element
-    
+   
+    memset(l->p_PRECISION.dense_vals, 0, l->num_inner_lattice_sites * l->num_lattice_site_var *
+	    l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes *
+	    sizeof(complex_PRECISION));
 
     for (int llsite = 0; llsite < l->num_inner_lattice_sites; llsite++ ){ //loop over lattice sites
     //each lattice site contains 9 blocks of each SQUARE(site_var) elements, 1 for self coupling, +
