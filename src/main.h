@@ -474,10 +474,12 @@ typedef struct block_struct {
 #ifdef BLOCK_JACOBI
     int local_polyprec_d;
 #endif
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+    double coarsest_solve_time;
+    double coarsest_fact_time;
+    int coarsest_solve_number;
+#endif
 #ifdef MUMPS_ADDS
-    double mumps_solve_time;
-    double mumps_fact_time;
-    int mumps_solve_number;
     double mumps_drop_tol;
 #endif
     // profiling, analysis, output

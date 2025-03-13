@@ -540,8 +540,8 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 
       }
 #endif
-#ifdef MUMPS_ADDS || COARSE_SCALAP
-      g.mumps_fact_time = 0;
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+      g.coarsest_time = 0;
       {
         level_struct *lx = l;
         int i;
@@ -570,7 +570,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
           cmumps_c(&(g.mumps_id));
 #else
 	  coarse_scalap_factorize_float( lx, lx->p_float.dense_vals,
-		  lx->p_float.desc_dense_vals, g.mumps_id.n, threading );
+		  lx->p_float.desc_dense_vals, lx->p_float.ipiv, threading );
 #endif
 
 	  t1 = MPI_Wtime();
@@ -579,7 +579,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #else
 	  if (g.my_rank == 0) printf("Invert using scalapack time (seconds) : %f \t from top_level.c\n",t1-t0);
 #endif
-	  g.mumps_fact_time += t1-t0;
+	  g.coarsest_fact_time += t1-t0;
 	  END_MASTER(threading)
 	  SYNC_CORES(threading)
 	}

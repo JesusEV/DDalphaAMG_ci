@@ -358,7 +358,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     SYNC_MASTER_TO_ALL(threading)
     SYNC_CORES(threading)
 
-#ifdef MUMPS_ADDS
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     // setting up mumps data formatting
     if (!l->idle) mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
 
@@ -366,19 +366,19 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     double t0,t1;
     START_MASTER(threading)
     t0 = MPI_Wtime();
-    g.mumps_fact_time -= MPI_Wtime();
+    g.coarsest_fact_time -= MPI_Wtime();
 #ifndef COARSE_SCALAP   //find LU with mumps
     g.mumps_id.job = 2;	//factorize
     // call to factorize
     cmumps_c(&(g.mumps_id));
 #else	//find inverse with scalapack
     coarse_scalap_factorize_PRECISION( l, l->p_PRECISION.dense_vals,
-	    l->p_PRECISION.desc_dense_vals, g.mumps_id.n, threading);
+	    l->p_PRECISION.desc_dense_vals, threading);
 #endif
 
 
     t1 = MPI_Wtime();
-    g.mumps_fact_time += MPI_Wtime();
+    g.coarsest_fact_time += MPI_Wtime();
 #ifndef COARSE_SCALAP
     printf0("MUMPS factorize time (seconds) : %f\n",t1-t0);
 #else

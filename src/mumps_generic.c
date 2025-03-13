@@ -584,7 +584,7 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
 {
     if (!lx->idle){
       START_MASTER(threading)
-      g.mumps_solve_time -= MPI_Wtime();
+      g.coarsest_solve_time -= MPI_Wtime();
       //END_MASTER(threading)
 
       gmres_PRECISION_struct* px = &(lx->p_PRECISION);
@@ -621,9 +621,9 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
       // counting solves and measure time not only for mumps_solve but also distributing solution to
       // processes.
       //START_MASTER(threading) 
-      g.mumps_solve_number ++;
-      g.mumps_solve_time += MPI_Wtime();
-      printf0("mumps time  = %f, mumps solves:  %d\n", g.mumps_solve_time, g.mumps_solve_number);
+      g.coarsest_solve_number ++;
+      g.coarsest_solve_time += MPI_Wtime();
+      printf0("mumps time  = %f, mumps solves:  %d\n", g.coarsest_solve_time, g.coarsest_solve_number);
       END_MASTER(threading)
       SYNC_CORES(threading);
     }
@@ -693,38 +693,41 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, i
 void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
                            vector_PRECISION eta, int res, level_struct *l,
                            struct Thread *threading){
-
     if (!l->idle){
+        START_MASTER(threading)
 	int ione = 1, info = 0;
 	char trans = 'N';
 
 	int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
-	vector_PRECISION A 
-	vector_PRECISION B 
-	int * descA 
-	int * descB 
-	int * ipiv
-	int info = 0;
+	vector_PRECISION A = l->p_PRECISION.dense_vals; 
+	vector_PRECISION B = eta; //eta = in vector
+	int * descA = l->p_PRECISION.desc_dense_vals;
+	int * descB = l->p_PRECISION.desc_rhs;
+	int * ipiv = l->p_PRECISION.ipiv;
 	
 
     //void pgetrs_PRECISION( TRANS, N, NRHS, A,	     IA, JA,	 DESCA, IPIV, B, IB, JB, DESCB, INFO );
 	pgetrs_PRECISION( &trans, &N, &ione, A, &ione, &ione, descA, ipiv, B, &ione, &ione, descB, &info );
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
+
+	//vector_copy eta -> phi 
+	vector_PRECISION_copy(phi, eta, 0, l->inner_vector_size, l);
+	END_MASTER(threading)
+        SYNC_CORES(threading);
     }
 }
 
 
-void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int* descA, int N, int* ipiv, struct Thread *threading){
+void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int* descA, int* ipiv, struct Thread *threading){
     printf0("starting scalap routine\n");
 
-    int izero = 0;
-    int ione = 1;
+//    int izero = 0, ione = 1;
     int info = 0;
 
 
     int ia = 1, ja = 1; //starting indices (global)
     int ib = 1, jb = 1;
- 
+    int N = l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes; 
     //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO )
     pgetrf_PRECISION( &N, &N, A, &ia, &ja, descA, ipiv, &info );    
     if (info != 0 ) error0("Error during pgetrf_(), info = %d\n", info);

@@ -124,8 +124,8 @@ void prof_init( level_struct *l ) {
 #ifdef GCRODR
   if ( l->depth == 0 ) { g.gcrodr_buildAB_time=0; g.gcrodr_buildCU_time=0; g.gcrodr_LSP_time=0; }
 #endif
-#ifdef MUMPS_ADDS
-  if ( l->depth == 0 ) { g.mumps_solve_time=0; g.mumps_solve_number=0; }
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+  if ( l->depth == 0 ) { g.coarsest_solve_time=0; g.coarsest_solve_number=0; }
 #endif
   prof_double_init( l );
   prof_float_init( l );

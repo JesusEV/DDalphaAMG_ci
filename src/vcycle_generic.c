@@ -178,7 +178,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 	    END_MASTER(threading)
 
 //TODO: add here call to scalapack solver as preconditioner of gmres
-#ifdef MUMPS_ADDS
+#ifdef MUMPS_ADDS_deactivated
               l->next_level->p_PRECISION.preconditioner = mumps_solve_PRECISION;
 #endif
 	    START_MASTER(threading)
