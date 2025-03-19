@@ -111,7 +111,7 @@ int main( int argc, char **argv ) {
         START_MASTER(threadx)
 	printf0("call to mumps_setup from main.c\n");
 	END_MASTER(threadx)
-        mumps_setup_float(lx, &threading);        //setup vals, Is, Js
+        mumps_setup_float(lx, threadx);        //setup vals, Is, Js
         START_MASTER(threadx)
         printf0("mumps_setup done in main.c\n");
 	END_MASTER(threadx)
@@ -137,7 +137,8 @@ int main( int argc, char **argv ) {
         printf0("mumps analyze + factorize done in main.c\n");
 #else
 	//compute LU of matrix using scalapack
-	coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals, lx->p_float.ipiv, &threading);
+	coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals,
+		lx->p_float.ipiv, threadx);
         printf0("scalapack factorize done in main.c\n");
 #endif
         t1 = MPI_Wtime();
@@ -221,15 +222,29 @@ int main( int argc, char **argv ) {
 
     solve_driver( &l, &threading );
   }
-  
+
+  printf0("CHECKPOINT 0\n");
+  MPI_Barrier(MPI_COMM_WORLD);
+
   finalize_common_thread_data(commonthreaddata);
+  printf0("CHECKPOINT 0.1\n");
+  MPI_Barrier(MPI_COMM_WORLD);
   finalize_no_threading(no_threading);
+  printf0("CHECKPOINT 0.2\n");
+  MPI_Barrier(MPI_COMM_WORLD);
   free(commonthreaddata);
+  printf0("CHECKPOINT 0.3\n");
+  MPI_Barrier(MPI_COMM_WORLD);
   free(no_threading);
+
+  printf0("CHECKPOINT 1\n");
+  MPI_Barrier(MPI_COMM_WORLD);
 
   method_free( &l );
   method_finalize( &l );
-  
+ 
+  printf0("CHECKPOINT 2\n");
+  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
   
   return 0;
