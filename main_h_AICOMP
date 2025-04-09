@@ -38,51 +38,62 @@
   #define EPS_float 1E-6
   #define EPS_double 1E-14
 
-  #define HAVE_TM      // flag for enable twisted mass
-  #define HAVE_TM1p1   // flag for enable doublet for twisted mass
+#define HAVE_TM    // flag for enable twisted mass
+#define HAVE_TM1p1 // flag for enable doublet for twisted mass
 
-  #undef INIT_ONE_PREC // flag undef for enabling additional features in the lib
-  
-  #define FOR2( e )  { e e }
-  #define FOR3( e )  { e e e }
-  #define FOR4( e )  { e e e e }
-  #define FOR6( e )  { e e e  e e e }
-  #define FOR10( e ) { e e e e e  e e e e e }
-  #define FOR12( e ) { e e e  e e e  e e e  e e e }
-  #define FOR20( e ) { FOR10( e ) FOR10( e )  }
-  #define FOR24( e ) { FOR12( e ) FOR12( e ) }
-  #define FOR36( e ) { FOR12( e ) FOR12( e ) FOR12( e ) }
-  #define FOR40( e ) { FOR20( e ) FOR20( e ) }
-  #define FOR42( e ) { FOR36( e ) FOR6( e ) }
-  
-  #define SQUARE( e ) (e)*(e)
-  #define NORM_SQUARE_float( e ) SQUARE(crealf( e ))+SQUARE(cimagf( e ))
-  #define NORM_SQUARE_double( e ) SQUARE(creal( e ))+SQUARE(cimag( e ))
-  #define CSPLIT( e ) creal(e), cimag(e)
-  
-  #define MPI_double MPI_DOUBLE
-  #define MPI_float MPI_FLOAT
-  #define MPI_COMPLEX_double MPI_DOUBLE_COMPLEX
-  #define MPI_COMPLEX_float MPI_COMPLEX
-  #define I _Complex_I
-  #define conj_double conj
-  #define conj_float conjf
-  #define cabs_double cabs
-  #define cabs_float cabsf
-  #define creal_double creal
-  #define creal_float crealf
-  #define cimag_double cimag
-  #define cimag_float cimagf
-  #define csqrt_double csqrt
-  #define csqrt_float csqrtf
-  #define sqrt_double sqrt
-  #define sqrt_float sqrtf
-  #define cpow_double cpow
-  #define cpow_float cpowf
-  #define pow_double pow
-  #define pow_float powf
-  #define abs_double fabs
-  #define abs_float fabsf
+#undef INIT_ONE_PREC // flag undef for enabling additional features in the lib
+
+#define FOR2(e)                                                                \
+  { e e }
+#define FOR3(e)                                                                \
+  { e e e }
+#define FOR4(e)                                                                \
+  { e e e e }
+#define FOR6(e)                                                                \
+  { e e e e e e }
+#define FOR10(e)                                                               \
+  { e e e e e e e e e e }
+#define FOR12(e)                                                               \
+  { e e e e e e e e e e e e }
+#define FOR20(e)                                                               \
+  { FOR10(e) FOR10(e) }
+#define FOR24(e)                                                               \
+  { FOR12(e) FOR12(e) }
+#define FOR36(e)                                                               \
+  { FOR12(e) FOR12(e) FOR12(e) }
+#define FOR40(e)                                                               \
+  { FOR20(e) FOR20(e) }
+#define FOR42(e)                                                               \
+  { FOR36(e) FOR6(e) }
+
+#define SQUARE(e) (e) * (e)
+#define NORM_SQUARE_float(e) SQUARE(crealf(e)) + SQUARE(cimagf(e))
+#define NORM_SQUARE_double(e) SQUARE(creal(e)) + SQUARE(cimag(e))
+#define CSPLIT(e) creal(e), cimag(e)
+
+#define MPI_double MPI_DOUBLE
+#define MPI_float MPI_FLOAT
+#define MPI_COMPLEX_double MPI_DOUBLE_COMPLEX
+#define MPI_COMPLEX_float MPI_COMPLEX
+#define I _Complex_I
+#define conj_double conj
+#define conj_float conjf
+#define cabs_double cabs
+#define cabs_float cabsf
+#define creal_double creal
+#define creal_float crealf
+#define cimag_double cimag
+#define cimag_float cimagf
+#define csqrt_double csqrt
+#define csqrt_float csqrtf
+#define sqrt_double sqrt
+#define sqrt_float sqrtf
+#define cpow_double cpow
+#define cpow_float cpowf
+#define pow_double pow
+#define pow_float powf
+#define abs_double fabs
+#define abs_float fabsf
   
 #if defined(GCRODR) || defined(POLYPREC)
   #define geev_double LAPACKE_zgeev 
@@ -117,6 +128,16 @@
 #define JOB_INIT -1
 #define JOB_END -2
 #define USE_COMM_WORLD -987654
+#endif
+#ifdef COARSE_SCALAP
+#define pgesv_double pzgesv_
+#define pgesv_float pcgesv_
+#define pgemv_double pzgemv_
+#define pgemv_float pcgemv_
+#define pgetrs_double pzgetrs_
+#define pgetrs_float pcgetrs_
+#define pgetrf_double pzgetrf_
+#define pgetrf_float pcgetrf_
 #endif
 
 #ifdef SSE
@@ -453,10 +474,12 @@ typedef struct block_struct {
 #ifdef BLOCK_JACOBI
     int local_polyprec_d;
 #endif
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+    double coarsest_solve_time;
+    double coarsest_fact_time;
+    int coarsest_solve_number;
+#endif
 #ifdef MUMPS_ADDS
-    double mumps_solve_time;
-    double mumps_fact_time;
-    int mumps_solve_number;
     double mumps_drop_tol;
 #endif
     // profiling, analysis, output
@@ -716,7 +739,7 @@ typedef struct block_struct {
   #include "polyprec_float.h"
 #endif
 
-#ifdef MUMPS_ADDS
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 #include "mumps_double.h"
 #include "mumps_float.h"
 #endif

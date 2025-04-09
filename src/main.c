@@ -122,10 +122,6 @@ int main( int argc, char **argv ) {
         t0 = MPI_Wtime();
 
 #ifndef COARSE_SCALAP
-        END_MASTER(threadx) //TODO: only keep analyze and factorize
-        SYNC_CORES(threadx)
-    
-        START_MASTER(threadx)
         //g.mumps_id.job = 4; //analyze and factorize
         g.mumps_id.job = 1; //analyze
         cmumps_c(&(g.mumps_id));

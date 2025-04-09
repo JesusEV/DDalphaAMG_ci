@@ -698,6 +698,9 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 //	printf0("solving scalap...\n");
         START_MASTER(threading)
         g.coarsest_solve_time -= MPI_Wtime();
+	END_MASTER(threading)
+        SYNC_CORES(threading);
+	
 	int ione = 1, info = 0;
 	char trans = 'N';
 
@@ -711,6 +714,8 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals, &ione, &ione,
 		l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv,
 		test, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
+
+        START_MASTER(threading)
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
 
 	//vector_copy eta -> phi 
