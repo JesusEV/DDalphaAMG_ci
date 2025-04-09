@@ -617,7 +617,7 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
 	      +1);
 
       
-      blacs_gridexit_( p->blacs_ctxt);
+      blacs_gridexit_( &(p->blacs_ctxt));
 #endif
   }
 #endif
