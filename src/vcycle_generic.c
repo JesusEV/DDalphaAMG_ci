@@ -125,7 +125,8 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               START_MASTER(threading)
               g.coarsest_time -= MPI_Wtime();
               END_MASTER(threading)
-
+		
+	      int fgmres_iters = -1;
 #ifdef COARSE_ODDEVEN_FULL
 
               // using entire vector length for fgmres_PRECISION()
@@ -139,7 +140,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               // x = l->next_level->p_PRECISION->x, 
               // A = l->next_level->oe_op_PRECISION, 
               // b = l->next_level->p_PRECISION->b
-	      int fgmres_iters = fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
+	      fgmres_iters = fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
 
 	      // restore old operator function handle
               l->next_level->p_PRECISION.eval_operator = coarse_apply_schur_complement_PRECISION;

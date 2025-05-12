@@ -22,7 +22,7 @@
 #include "main.h"
 
 #ifdef COARSE_SCALAP
-void blacs_gridexit_(int*);
+void blacs_gridexit_(const int*);
 #endif
 
 void print_Matrix_PRECISION(complex_PRECISION** A, int mv, int mh )
@@ -617,7 +617,7 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
 	      +1);
 
       
-      blacs_gridexit_( p->blacs_ctxt);
+      blacs_gridexit_( &(p->blacs_ctxt));
 #endif
   }
 #endif

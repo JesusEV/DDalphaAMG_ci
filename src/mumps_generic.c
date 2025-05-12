@@ -26,16 +26,18 @@
 #include "mumps_PRECISION.h"
 
 #ifdef COARSE_SCALAP
-void blacs_get_(int*, int*, int*);
+void blacs_get_(const int*, const int*, int*);
 void blacs_pinfo_(int*, int*);
-void blacs_gridinit_(int*, char*, int*, int*);
-void blacs_gridinfo_(int*, int*, int*, int*, int*);
-void descinit_(int*, int*, int*, int*, int*, int*, int*, int*, int*, int*);
-int numroc_(int*, int*, int*, int*, int*);
+void blacs_gridinit_(int*, const char*, const int*, const int*);
+void blacs_gridinfo_(const int*, int*, int*, int*, int*);
+void descinit_(int*, const int*, const int*, const int*, const int*, const int*, const int*, const int*, const int*, int*);
+int numroc_(const int*, const int*, const int*, const int*, const int*);
 
-void pgesv_PRECISION(int*, int*, double*, int*, int*, int*, int*, double*, int*, int*, int*, int* );
-void pgetrf_PRECISION( int*, int*, PRECISION*, int*, int*, int*, int*, int* );
-void pgetrs_PRECISION( char*, int*, int*, PRECISION*, int*, int*, int*, int*, PRECISION*, int*,	int*, int*, int* );
+void pgesv_PRECISION(const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, int*, complex_PRECISION*, const int*, const int*, const int*, int* );
+void pgetrf_PRECISION(const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, int*, int* );
+//		void(const int *, const int *, _Complex float *, const int *, const int *, const int *, int *, int *)
+void pgetrs_PRECISION(const char*, const int*, const int*, const complex_PRECISION*, const int*, const int*, const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, int* );
+//		 void(const char *, const int *, const int *, const _Complex float *, const int *, const int *, const int *, const int *, _Complex float *, const int *, const int *, const int *, int *)
 void pgemv_PRECISION(char*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, PRECISION*, int*,
 	int*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, int*);
 #endif

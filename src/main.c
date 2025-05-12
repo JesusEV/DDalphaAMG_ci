@@ -219,28 +219,12 @@ int main( int argc, char **argv ) {
     solve_driver( &l, &threading );
   }
 
-  printf0("CHECKPOINT 0\n");
-  MPI_Barrier(MPI_COMM_WORLD);
-
   finalize_common_thread_data(commonthreaddata);
-  printf0("CHECKPOINT 0.1\n");
-  MPI_Barrier(MPI_COMM_WORLD);
   finalize_no_threading(no_threading);
-  printf0("CHECKPOINT 0.2\n");
-  MPI_Barrier(MPI_COMM_WORLD);
   free(commonthreaddata);
-  printf0("CHECKPOINT 0.3\n");
-  MPI_Barrier(MPI_COMM_WORLD);
   free(no_threading);
-
-  printf0("CHECKPOINT 1\n");
-  MPI_Barrier(MPI_COMM_WORLD);
-
   method_free( &l );
   method_finalize( &l );
- 
-  printf0("CHECKPOINT 2\n");
-  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
   
   return 0;
