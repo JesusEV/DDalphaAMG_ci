@@ -5,6 +5,10 @@ CC = mpicc
 
 # --- CFLAGS -----------------------------------------
 CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -DMKL_Complex8="complex_float" -DMKL_Complex16="complex_double"
+
+#(const int*, const int*, complex_float*, const int*, const int*, const int*, int*, complex_float*, const int*, const int*, const int*, int* );
+#(const int *, const int *, MKL_Complex8 *, const int *, const int *, const int *, int *, MKL_Complex8 *, const int *, const int *, const int *, int *)«
+
 #CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
 #CFLAGS = $(CFLAGS_intel)
 CFLAGS = $(CFLAGS_gnu)
@@ -52,14 +56,14 @@ LIMELIB = $(LIMEDIR)/lib/liblime.a
 # -DSINGLE_ALLREDUCE_ARNOLDI
 # -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DDEBUG
 
-OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES -DPROFILING -DCOARSE_ODDEVEN_FULL
+OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES -DPROFILING -DCOARSE_ODDEVEN_FULL #-DOPENMP
 #OPT_VERSION_FLAGS += -DGCRODR
 #OPT_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
 #OPT_VERSION_FLAGS += -DBLOCK_JACOBI -DLOC_POLYPREC
 #OPT_VERSION_FLAGS += -DPOLYPREC
 #OPT_VERSION_FLAGS += $(LIBSMUMPS)
 
-DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DCOARSE_ODDEVEN_FULL -DOPENMP
+DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DCOARSE_ODDEVEN_FULL  # -DOPENMP
 
 #DEVEL_VERSION_FLAGS += -DGCRODR
 #DEVEL_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
@@ -88,21 +92,21 @@ LSCOTCH = -L$(LSCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lscotch -lscotch
 LPORD=-L$(MUMPS_LIBS) -lpord
 LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
 
-LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/p/software/juwels/stages/2025/software/psmpi/5.11.0-1-GCC-13.3.0/lib64/ #-lmpi -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
+LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/p/software/juwels/stages/2025/software/psmpi/5.11.0-1-GCC-13.3.0/lib64/ -lmpi #-lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
 #LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/p/software/juwels/stages/2020/software/psmpi/5.4.10-1-GCC-10.3.0/lib64/ -lmpi -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
 
 # Enable the following three to activate MUMPS within DDalphaAMG
 LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
-OPT_VERSION_FLAGS += -DMUMPS_ADDS 
-DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
-MUMPS_INCLUDE = -I/p/software/juwels/stages/2025/software/MUMPS/5.7.3-gpsfbf-2024a-parmetis/include/
+#OPT_VERSION_FLAGS += -DMUMPS_ADDS
+#DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
+#MUMPS_INCLUDE = -I/p/software/juwels/stages/2025/software/MUMPS/5.7.3-gpsfbf-2024a-parmetis/include/
 #MUMPS_INCLUDE = -I/p/software/juwels/stages/2020/software/MUMPS/5.3.4-gpsmkl-2020/include/
-
-# OPT_VERSION_FLAGS += -DCOARSE_SCALAP
-# DEVEL_VERSION_FLAGS += -DCOARSE_SCALAP
 
 # OPT_VERSION_FLAGS += -DAGGLO
 # DEVEL_VERSION_FLAGS += -DAGGLO
+
+OPT_VERSION_FLAGS += -DCOARSE_SCALAP
+DEVEL_VERSION_FLAGS += -DCOARSE_SCALAP
 
 #---------------------------------------------------
 
@@ -125,10 +129,11 @@ LAPACK_LIBRARIES =
 
 SPBLAS_LIBRARIES = 
 
-SCALAPACK_DIR = /p/software/juwels/stages/2025/software/ScaLAPACK/2.2.0-gpsmpi-2024a-fb/
-SCALAPACK_INCLUDE = -I"$(SCALAPACK_DIR)"
-SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib64/ -lscalapack -lflexiblas 
-
+SCALAPACK_DIR = /p/project/mul-tra/leemhuis1/installs/scalapack/
+SCALAPACK_INCLUDE = -I"$(SCALAPACK_DIR)/include/"
+#SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib/intel64/ -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64
+#SCALAPACK_LIBRARIES = -m64 -L$(SCALAPACK_DIR)/lib -lmkl_scalapack_lp64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_blacs_openmpi_lp64 -lgomp -lpthread -lm -ldl
+SCALAPACK_LIBRARIES = -m64 -L$(SCALAPACK_DIR)/lib -lscalapack -lflexiblas 
 #---------------------------------------------------
 
 all: execs library # exec-tests
@@ -143,12 +148,13 @@ install: copy
 .SECONDARY:
 
 $(BINDIR)/DDalphaAMG : $(OBJ) 
-	mpif90 $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS) #-fopenmp -Dintel_ -DALLOW_NON_INIT
+	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS) #-fopenmp -Dintel_ -DALLOW_NON_INIT
 
 DDalphaAMG : $(BINDIR)/DDalphaAMG
 	ln -sf $(BINDIR)/$@ $@
 
 $(BINDIR)/DDalphaAMG_devel : $(OBJDB)
+	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS) #-fopenmp -Dintel_ -DALLOW_NON_INIT
 	mpif90 -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) $(SPBLAS_LIBRARIES) -lm -lgfortran $(LIBSMUMPS) -fopenmp -Dintel_ -DALLOW_NON_INIT
 
 $(LIBDIR)/libDDalphaAMG.a: $(OBJ)
