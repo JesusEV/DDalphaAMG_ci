@@ -360,34 +360,38 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     SYNC_CORES(threading)
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-    // setting up mumps data formatting
-    if (!l->idle) mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
-    // (timing of) factorization
-    double t0,t1;
-    START_MASTER(threading)
-    t0 = MPI_Wtime();
-    g.coarsest_fact_time -= MPI_Wtime();
+    //only do this during solve, no direct solves during setup phase, due to too many inversion during setup
+    if (g.on_solve){
+		// setting up mumps data formatting
+	if (!l->idle){
+		mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
+// (timing of) factorization
+		double t0,t1;
+		START_MASTER(threading)
+		t0 = MPI_Wtime();
+		g.coarsest_fact_time -= MPI_Wtime();
 #ifndef COARSE_SCALAP   //find LU with mumps
-    g.mumps_id.job = 2;	//factorize
-    // call to factorize
-    cmumps_c(&(g.mumps_id));
+		g.mumps_id.job = 2;	//factorize
+		// call to factorize
+		cmumps_c(&(g.mumps_id));
 #else	//find inverse with scalapack
-    coarse_scalap_factorize_PRECISION( l, l->p_PRECISION.dense_vals,
-	    l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv, threading);
+		coarse_scalap_factorize_PRECISION( l, l->p_PRECISION.dense_vals,
+			    l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv, threading);
 #endif
 
 
-    t1 = MPI_Wtime();
-    g.coarsest_fact_time += MPI_Wtime();
+		t1 = MPI_Wtime();
+		g.coarsest_fact_time += MPI_Wtime();
 #ifndef COARSE_SCALAP
-    printf0("MUMPS factorize time (seconds) : %f\n",t1-t0);
+		printf0("MUMPS factorize time (seconds) : %f\n",t1-t0);
 #else
-    printf0("Scalapack factorize time (seconds) : %f\n",t1-t0);
+		printf0("Scalapack factorize time (seconds) : %f\n",t1-t0);
 #endif
-    END_MASTER(threading)
-    SYNC_CORES(threading)
+		END_MASTER(threading)
+		SYNC_CORES(threading)
+	}
+    }
 #endif
-
   }
 #endif
 }

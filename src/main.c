@@ -125,24 +125,30 @@ int main( int argc, char **argv ) {
         //g.mumps_id.job = 4; //analyze and factorize
         g.mumps_id.job = 1; //analyze
         cmumps_c(&(g.mumps_id));
-
-        g.mumps_id.job = 2; //factorize
-        cmumps_c(&(g.mumps_id));
+	
+	if (g.on_solve) {
+	        g.mumps_id.job = 2; //factorize
+        	cmumps_c(&(g.mumps_id));//only factorize when on solve
+	}
        
 	MPI_Barrier(MPI_COMM_WORLD);
         printf0("mumps analyze + factorize done in main.c\n");
 #else
 	//compute LU of matrix using scalapack
-	coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals,
-		lx->p_float.ipiv, threadx);
-        printf0("scalapack factorize done in main.c\n");
+	if (g.on_solve){ 
+		coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals,
+		lx->p_float.ipiv, threadx);//only factorize when on solve
+        	printf0("scalapack factorize done in main.c\n");
+	}
 #endif
         t1 = MPI_Wtime();
 	g.coarsest_fact_time += t1 - t0;
 #ifndef COARSE_SCALAP
-	printf0("MUMPS analyze and factorize time (seconds) : %f \t in main.c\n",t1-t0);
+	printf0("MUMPS analyze ");
+	if (g.on_solve) printf0("and factorize ");
+	printf0("time (seconds) : %f \t in main.c\n",t1-t0);
 #else
-	printf0("Invert using scalapack time (seconds) : %f \t in main.c\n",t1-t0);
+	if (g.on_sovle) printf0("Invert using scalapack time (seconds) : %f \t in main.c\n",t1-t0);
 #endif
         END_MASTER(threadx)
         SYNC_CORES(threadx)

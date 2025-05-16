@@ -118,6 +118,17 @@
 #define JOB_END -2
 #define USE_COMM_WORLD -987654
 #endif
+#ifdef COARSE_SCALAP
+#define pgesv_double pzgesv_
+#define pgesv_float pcgesv_
+#define pgemv_double pzgemv_
+#define pgemv_float pcgemv_
+#define pgetrs_double pzgetrs_
+#define pgetrs_float pcgetrs_
+#define pgetrf_double pzgetrf_
+#define pgetrf_float pcgetrf_
+#endif
+
 
 #ifdef SSE
   #define MALLOC( variable, kind, length ) do{ if ( variable != NULL ) { \
@@ -453,10 +464,12 @@ typedef struct block_struct {
 #ifdef BLOCK_JACOBI
     int local_polyprec_d;
 #endif
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+    double coarsest_solve_time;
+    double coarsest_fact_time;
+    int coarsest_solve_number;
+#endif
 #ifdef MUMPS_ADDS
-    double mumps_solve_time;
-    double mumps_fact_time;
-    int mumps_solve_number;
     double mumps_drop_tol;
 #endif
     // profiling, analysis, output
@@ -702,11 +715,11 @@ typedef struct block_struct {
   #include <mkl_blacs.h>
 
 #if defined(GCRODR) || defined(POLYPREC)
-  #include <lapacke.h>
+//  #include <lapacke.h>
 #ifdef GCRODR
-  //#include <mkl_scalapack.h>
-  //#include <mkl_blacs.h>
-  //#include <mkl_pblas.h>
+//  #include <mkl_scalapack.h>
+//  #include <mkl_blacs.h>
+//  #include <mkl_pblas.h>
 #endif
   #include "lapackwrap_double.h"
   #include "lapackwrap_float.h"
@@ -717,10 +730,10 @@ typedef struct block_struct {
   #include "polyprec_float.h"
 #endif
 
-#ifdef MUMPS_ADDS
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 #include "mumps_double.h"
 #include "mumps_float.h"
 #endif
 
-#include "sparse_mv_float.h"
-#include "sparse_mv_double.h"
+//#include "sparse_mv_float.h"
+//#include "sparse_mv_double.h"

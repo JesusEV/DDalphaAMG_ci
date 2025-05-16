@@ -22,7 +22,7 @@
 #include "main.h"
 
 #ifdef COARSE_SCALAP
-void blacs_gridexit_(int*);
+void blacs_gridexit_(const int*);
 #endif
 
 void print_Matrix_PRECISION(complex_PRECISION** A, int mv, int mh )

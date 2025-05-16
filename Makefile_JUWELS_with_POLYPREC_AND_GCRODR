@@ -3,7 +3,7 @@
 CC = mpicc
 
 # --- CFLAGS -----------------------------------------
-CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -msse4.2 -fopenmp 
+CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -DMKL_Complex8="complex_float" -DMKL_Complex16="complex_double"
 #CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
 #CFLAGS = $(CFLAGS_intel)
 CFLAGS = $(CFLAGS_gnu)
@@ -40,8 +40,7 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-#LIMEDIR = ../projects/CPU_tests/DDalphaAMG_ci_F_polytests/dependencies/qio/build/
-LIMEDIR = dependencies/qio/build/
+LIMEDIR = ../../qio/build
 LIMEFLAGS = -DHAVE_LIME -I$(LIMEDIR)/include
 LIMELIB = $(LIMEDIR)/lib/liblime.a
 
@@ -63,21 +62,28 @@ DEVEL_VERSION_FLAGS += -DPOLYPREC
 DEVEL_VERSION_FLAGS += -DBLOCK_JACOBI -DBJ_DIR_SOLVS #-DPERS_COMMS
 
 #---------------------------------------------------
+# lapack and scalapack linkages
+
 LAPACK_DIR = dependencies/lapack-3.9.0
 LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
-LAPACKE_INCLUDE = $(LAPACKE_DIR)/include
+LAPACKE_INCLUDE = -I$(LAPACKE_DIR)/include
 BLASLIB      = $(LAPACK_DIR)/librefblas.a
 LAPACKLIB    = $(LAPACK_DIR)/liblapack.a
 LAPACKELIB   = $(LAPACK_DIR)/liblapacke.a
 LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
 
-#SCALAPACK_DIR = /usr/local/sw/intel/composer_xe_2013.0.079/mkl
-#SCALAPACK_INCLUDE = /usr/local/sw/intel/composer_xe_2013.0.079/mkl/include
-#SCALAPACK_LIBRARIES  =
-#SCALAPACK_LIBRARIES += -L/home/ramirez/Documents/DDalphaAMG_ci/dependencies/scalapack/lib -lscalapack
-SCALAPACK_DIR = 
+#LAPACKE_INCLUDE =
+#LAPACK_LIBRARIES =
+
+SPBLAS_LIBRARIES = 
+
+SCALAPACK_DIR = /p/software/juwels/stages/2025/software/ScaLAPACK/2.2.0-gpsmpi-2024a-fb/
+#SCALAPACK_INCLUDE = -I"$(SCALAPACK_DIR)"
+#SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib64/ -lscalapack -lflexiblas 
+
 SCALAPACK_INCLUDE = 
-SCALAPACK_LIBRARIES =
+SCALAPACK_LIBRARIES = 
+
 #---------------------------------------------------
 
 
