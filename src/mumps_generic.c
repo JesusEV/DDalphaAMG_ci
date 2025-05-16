@@ -571,7 +571,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   // timing the setup
 //  START_MASTER(threading)
   t1 = MPI_Wtime();
-  printf0("MUMPS pre-setup time (seconds) : %f\n",t1-t0);
+  printf0("direct coarse pre-setup time (seconds) : %f\n",t1-t0);
   END_MASTER(threading)
   SYNC_CORES(threading)
   

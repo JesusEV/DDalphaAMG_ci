@@ -163,8 +163,8 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
  
             }
           } else {
-#ifdef MUMPS_ADDS_deactivated
-	    if (!g.on_solve) { //deactivate mumps during set up
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+	    if (!g.on_solve) { //deactivate direct solves during set up
               l->next_level->p_PRECISION.preconditioner = NULL;
 	    }
 #endif
@@ -178,9 +178,10 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 	    g.coarsest_time += MPI_Wtime();
 	    END_MASTER(threading)
 
-//TODO: add here call to scalapack solver as preconditioner of gmres
-#ifdef MUMPS_ADDS_deactivated
+#if definded(MUMPS_ADDS)
               l->next_level->p_PRECISION.preconditioner = mumps_solve_PRECISION;
+#elif defined(COARSE_SCALAP)
+              l->next_level->p_PRECISION.preconditioner = coarse_scalap_solve_PRECISION;
 #endif
 	    START_MASTER(threading)
             printf0("gmres iters = %d\n", fgmres_iters);
