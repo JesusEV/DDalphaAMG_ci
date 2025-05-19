@@ -148,7 +148,7 @@ int main( int argc, char **argv ) {
 	if (g.on_solve) printf0("and factorize ");
 	printf0("time (seconds) : %f \t in main.c\n",t1-t0);
 #else
-	if (g.on_sovle) printf0("Invert using scalapack time (seconds) : %f \t in main.c\n",t1-t0);
+	if (g.on_solve) printf0("Invert using scalapack time (seconds) : %f \t in main.c\n",t1-t0);
 #endif
         END_MASTER(threadx)
         SYNC_CORES(threadx)

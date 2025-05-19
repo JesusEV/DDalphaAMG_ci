@@ -586,6 +586,7 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
 {
     if (!lx->idle){
       START_MASTER(threading)
+
       g.coarsest_solve_time -= MPI_Wtime();
       //END_MASTER(threading)
 
@@ -625,7 +626,7 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
       //START_MASTER(threading) 
       g.coarsest_solve_number ++;
       g.coarsest_solve_time += MPI_Wtime();
-      printf0("mumps time  = %f, mumps solves:  %d\n", g.coarsest_solve_time, g.coarsest_solve_number);
+      printf0("mumps time = %f, mumps solves:  %d\n", g.coarsest_solve_time, g.coarsest_solve_number);
       END_MASTER(threading)
       SYNC_CORES(threading);
     }
