@@ -698,6 +698,104 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
                            struct Thread *threading){
     if (!l->idle){
 
+
+
+	printf0("T %d, Z  %d, Y %d, X%d\n", T, Z, Y, X);
+	for (int i = 0; i< g.num_processes; i++){
+	    if(g.my_rank == i){
+		printf("my rank: %d, my coords: 0:%d 1:%d 2:%d 3:%d \t X:%d, Y:%d, Z:%d, T:%d\n", g.my_rank,
+		    g.my_coords[0], g.my_coords[1], g.my_coords[2], g.my_coords[3], 
+		    g.my_coords[X], g.my_coords[Y], g.my_coords[Z], g.my_coords[T] ); 
+		fflush(stdout);
+	    }	    
+	    MPI_Barrier(MPI_COMM_WORLD);
+	}
+
+	printf0("\n\n\n");
+	printf0("local_lattice: 0 %d, 1 %d, 2 %d, 3 %d, \t X %d, Y %d, Z %d, T %d\n",
+		l->local_lattice[0], l->local_lattice[1], l->local_lattice[2], l->local_lattice[3],
+		l->local_lattice[X], l->local_lattice[Y], l->local_lattice[Z], l->local_lattice[T]);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+
+
+
+	vector_PRECISION test2 = NULL; 
+	MALLOC(test2, complex_PRECISION, l->inner_vector_size);
+	memset(test2, 0, l->inner_vector_size * sizeof(complex_PRECISION));
+
+	int rax = 2, ps = 5;
+	if (g.my_rank != rax) memset(eta, 0, l->inner_vector_size * sizeof(complex_PRECISION));
+
+	vector_PRECISION_copy(test2, eta, 0, l->inner_vector_size, l);
+	
+	
+	
+	for (int ra = 0; ra < ps; ra++){
+	    if (g.my_rank == ra) for (int i = 0; i < l->num_inner_lattice_sites * l->num_lattice_site_var; i++){
+		if( creal(eta[i]) == 0) printf("P%d, i: %5d, site: %5d\t:\n", g.my_rank, i, i/l->num_lattice_site_var);		
+		else printf("P%d, i: %5d, site: %5d\t: %+f %+fi\n", g.my_rank, i, i/l->num_lattice_site_var, CSPLIT(eta[i]));		
+		i = i + l->num_lattice_site_var - 1;
+	    }
+	    fflush(stdout);
+	    MPI_Barrier(MPI_COMM_WORLD);
+	}
+
+	
+        translate2scalap_vectors_PRECISION( l, eta);
+	printf0("hinweg abgeschlossen!\n");
+
+	for (int ra = 0; ra < ps; ra++){
+	    if (g.my_rank == ra) for (int i = 0; i < l->num_inner_lattice_sites * l->num_lattice_site_var; i++){
+		if ( creal(eta[i]) == 0) printf("P%d, i: %5d, site: %5d\t:\n", g.my_rank, i, i/l->num_lattice_site_var);		
+		else printf("P%d, i: %5d, site: %5d\t: %+f %+fi\n", g.my_rank, i, i/l->num_lattice_site_var, CSPLIT(eta[i]));		
+		i = i + l->num_lattice_site_var - 1;
+	    }
+	    fflush(stdout);
+	    MPI_Barrier(MPI_COMM_WORLD);
+	}
+
+	
+	translate2original_vectors_PRECISION( l, eta);
+
+	printf0("rückweg abgeschlossen!\n");
+
+	for (int ra = 0; ra < ps; ra++){
+	    if (g.my_rank == ra) for (int i = 0; i < l->num_inner_lattice_sites * l->num_lattice_site_var; i++){
+		if ( creal(eta[i]) == 0) printf("P%d, i: %5d, site: %5d\t:\n", g.my_rank, i, i/l->num_lattice_site_var);		
+		else printf("P%d, i: %5d, site: %5d\t: %+f %+fi\n", g.my_rank, i, i/l->num_lattice_site_var, CSPLIT(eta[i]));		
+		i = i + l->num_lattice_site_var - 1;
+	    }
+	    fflush(stdout);
+	    MPI_Barrier(MPI_COMM_WORLD);
+	}
+
+
+	vector_PRECISION_minus( eta, eta, test2, 0, l->inner_vector_size, l );
+
+	printf0("DIFF:\n");
+
+	for (int ra = 0; ra < ps; ra++){
+	    if (g.my_rank == ra) for (int i = 0; i < l->num_inner_lattice_sites * l->num_lattice_site_var; i++){
+		if ( creal(eta[i]) == 0) printf("P%d, i: %5d, site: %5d\t:\n", g.my_rank, i, i/l->num_lattice_site_var);		
+		else printf("P%d, i: %5d, site: %5d\t: %+f %+fi\n", g.my_rank, i, i/l->num_lattice_site_var, CSPLIT(eta[i]));		
+		i = i + l->num_lattice_site_var - 1;
+	    }
+	    fflush(stdout);
+	    MPI_Barrier(MPI_COMM_WORLD);
+	}
+
+
+
+	PRECISION r2 = global_norm_PRECISION( test2, 0, l->inner_vector_size, l, threading );
+	PRECISION r = global_norm_PRECISION( eta, 0, l->inner_vector_size, l, threading);
+	printf0("global norm: %e\n", r/r2);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Finalize();
+        exit(0);
+
+   
 //	printf0("solving scalap...\n");
         START_MASTER(threading)
         g.coarsest_solve_time -= MPI_Wtime();
@@ -718,20 +816,24 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 		l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv,
 		test, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
 
+	// test <- LU * test
+
         START_MASTER(threading)
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
 
 	//vector_copy eta -> phi 
-        vector_PRECISION_copy(phi, test, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
-//	vector_PRECISION_copy(phi, eta, 0, l->inner_vector_size, l);
-/*
-	apply_coarse_operator_PRECISION(eta, phi, l->p_PRECISION.op, l, threading);
-	vector_PRECISION_minus( test, test, eta, 0, l->inner_vector_size, l );
-	PRECISION r = global_norm_PRECISION( test, 0, l->inner_vector_size, l, threading );
-	printf0("global norm: %f\n", r);
+//uncomment this line to use solution        vector_PRECISION_copy(phi, test, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
+
+
+
+	apply_coarse_operator_PRECISION(phi, test, l->p_PRECISION.op, l, threading);
+	vector_PRECISION_minus( phi, phi, eta, 0, l->inner_vector_size, l );
+	PRECISION r2 = global_norm_PRECISION( eta, 0, l->inner_vector_size, l, threading );
+	PRECISION r = global_norm_PRECISION(phi, 0, l->inner_vector_size, l, threading);
+	printf0("global norm: %e\n", r/r2);
 	MPI_Barrier(MPI_COMM_WORLD);
 	exit(0);
-*/
+
 
         g.coarsest_solve_number ++;
         g.coarsest_solve_time += MPI_Wtime();
@@ -754,7 +856,7 @@ void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int
     int ib = 1, jb = 1;
     int N = l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes; 
     //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO )
-    pgetrf_PRECISION( &N, &N, A, &ia, &ja, descA, ipiv, &info );    
+//TODO: Re-enable this line!    pgetrf_PRECISION( &N, &N, A, &ia, &ja, descA, ipiv, &info );    
     if (info != 0 ) error0("Error during pgetrf_(), info = %d\n", info);
     
     /*
@@ -786,7 +888,6 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
     //c being global and use a smart modulo operation
 
     int r, c; //for row and column index for a given matrix element
-   
     memset(l->p_PRECISION.dense_vals, 0, l->num_inner_lattice_sites * l->num_lattice_site_var *
 	    l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes *
 	    sizeof(complex_PRECISION));
@@ -801,6 +902,9 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 	        c = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
 		l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] += l->p_PRECISION.mumps_vals[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
 	    }
+	    r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var)] -
+			g.my_rank * l->num_inner_lattice_sites * l->num_lattice_site_var;
+	    c = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var)];
 	}
     }
     //REMEMBER: Column major storage for Scalapack due to fortran calls!
@@ -847,5 +951,434 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
     printf0("RHS descriptor done.\n");
     if (info != 0) error0("Error in descinit for DescB, info = %d\n", info);
 }
+
+void translate2scalap_vectors_PRECISION( level_struct *l, vector_PRECISION phi){
+/**
+  * Each process checks its own local lattice domain. 
+  * For each lattice site, we find the global index
+    -> j coords: process-coord in process grid * size of local domain in dir j + j coord of site
+  * with the global index of the lattice site, we see the position of this "chunk" of the vector in
+    -> int lex_index( int t, int z, int y, int x, int N[3] ) gives the lexicographic index
+    -> check for each site whether this is in "my part" of the global vector, i.e. compare with
+    something proportional to g.my_rank
+  * the global "block row format" storage scheme. 
+    -> if not in "my part" send it to the process whose part it is.
+    -> if yes, put it in correct position, by finding the correct position i.e. the local
+    lexicographic index. (use coords from outer for loop)
+  * check vector, compare from where to take data, if not own domain, receive data from corresponding process (not necessary neighbour process!).
+    
+  */
+
+
+    /* mu = [X, Y, Z, T];
+    size of global lattice on this level: l->global_lattice[mu];
+    size of local domain: l->local_lattice[mu];
+    quota global/local: l->splitting[mu];
+    number of local lattice sites: l->num_inner_lattice_sites
+    global rank: g.my_rank
+    local process coords: g.my_coords[mu]
+
+       */
+
+    
+    
+    vector_PRECISION phi_out = NULL; 
+    MALLOC(phi_out, complex_PRECISION, l->inner_vector_size);
+    memset(phi_out, 0, l->inner_vector_size * sizeof(complex_PRECISION));
+
+    int* visited_sites = NULL;
+    MALLOC(visited_sites, int, l->inner_vector_size);
+    memset(visited_sites, 0, l->inner_vector_size * sizeof(int));
+    complex_PRECISION* buf = NULL;
+    MALLOC(buf, complex_PRECISION, l->num_lattice_site_var);
+    memset(buf, 0, l->num_lattice_site_var * sizeof(complex_PRECISION));
+
+
+    int ra = 0;
+    
+    
+    MPI_Request req;
+    MPI_Status s;
+    int source, target; //process ranks for communication (message will be sent from source to target)
+    int gx, gy, gz, gt; //site coordinates in a global scheme
+    int glex, llex; //lexicographic index for site with coords(gx, gy, gz, gt)
+
+
+    //process coords are in order: Z Y X T
+    //local lattice is in order: X Y Z T
+
+    
+    //TODO: remove this line:
+    if (g.my_rank == 0) 
+
+
+    
+    for (int lt = 0; lt < l->local_lattice[T]; lt++){
+	gt = g.my_coords[T] * l->local_lattice[T] + lt;
+	for (int lz = 0; lz < l->local_lattice[Z]; lz++){
+	    gz = g.my_coords[Z] * l->local_lattice[Z] + lz;
+	    for (int ly = 0; ly < l->local_lattice[Y]; ly++){
+		gy = g.my_coords[Y] * l->local_lattice[Y] + ly;
+		for (int lx = 0; lx < l->local_lattice[X]; lx++){
+		    gx = g.my_coords[X] * l->local_lattice[X] + lx;
+		   
+		    glex = lex_mod_index( gt, gz, gy, gx, l->global_lattice );
+	     
+		    llex = lex_mod_index( lt, lz, ly, lx, l->local_lattice );
+
+		    if (glex/l->num_inner_lattice_sites == g.my_rank ){ //my chunk of RHS
+			// put in pos: glex%l->nummer_inner_lattice_sites
+			for (int j = 0; j < l->num_lattice_site_var; j++){
+			    phi_out[ glex%l->num_inner_lattice_sites * l->num_lattice_site_var + j]
+				= phi[ llex * l->num_lattice_site_var + j];
+			}
+			
+			visited_sites[glex%l->num_inner_lattice_sites] = 1;
+			if (g.my_rank == ra) {
+			    printf("   ");
+			}
+		    } else {
+			if (g.my_rank == ra) {
+			    printf("com");
+			}	
+			//communicate to process with rank
+			target = glex/l->num_inner_lattice_sites;
+			//copy corresponding data	
+
+			//TODO: keep this line?
+			memset(buf, 0, l->num_lattice_site_var * sizeof(complex_PRECISION));
+
+
+			vector_PRECISION_copy( buf, phi + llex * l->num_lattice_site_var, 0, l->num_lattice_site_var, l);
+			//send data (non blocking)
+			MPI_Isend(buf, l->num_lattice_site_var, MPI_COMPLEX_PRECISION, target, glex, g.comm_cart, &req);
+			
+		    }
+		    if (g.my_rank == ra) {
+			printf("rank: %d, gx: %d, gy: %d, gz: %d, gt: %d, glex/gsite %d, llex %d, l/ns: %d, lx: %d, ly: %d, lz: %d, lt: %d\n",
+					g.my_rank, gx, gy, gz, gt, glex, llex, glex/l->num_inner_lattice_sites,
+					lx, ly, lz, lt );
+		    }
+
+		}
+	    }
+	}
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    printf0("sending done!\n");
+
+    //check my chunk of RHS in search for open position, which are not yet
+    //set/communicated. 
+    int gsite; //global site index
+    int coords[4];  //coordinates of lattice site
+    int pcoords[4]; //coordinates of processor
+   
+
+
+    ra = 2;
+
+    coords[0] = 0; coords[1] = 0; coords[2] = 0; coords[3] = 0;
+
+//    printf0("num sites: %d\nX: %d, Y: %d, Z: %d, T:%d\n", l->num_inner_lattice_sites, X, Y, Z, T);
+//    printf0("local_lattice: %d, %d, %d, %d\n", l->local_lattice[X], l->local_lattice[Y], l->local_lattice[Z], l->local_lattice[T]);
+    for (int lsite = 0; lsite < l->num_inner_lattice_sites; lsite++){
+	if (visited_sites[lsite] == 0){	//not yet set, receive this from other process
+	    //find global site index, get coordinates from there
+	    // -> get process coordinates from site coordinates
+	    // -> get process rank from process coordinates
+	    
+	    //global index for lattice site
+	    gsite = g.my_rank * l->num_inner_lattice_sites + lsite;
+	    //global coordinates of lattice site
+	    
+	    
+	    coords4d(coords, gsite, l->global_lattice);
+//	    llex = lex_index( coords[T], coords[Z], coords[Y], coords[X], l->local_lattice );
+//	    llex = coords[X] + l->local_lattice[X] * (coords[Y] + l->local_lattice[Y] * (coords[Z] + l->local_lattice[Z] * coords[T]));
+	    llex = lsite; 
+	    if (g.my_rank == ra) {
+		printf("site coords: %d %d %d %d, gsite %3d, llex %3d,\t ll %d %d %d %d\n", coords[X], coords[Y], coords[Z],
+			coords[T], gsite, llex, l->local_lattice[X], l->local_lattice[Y], l->local_lattice[Z], l->local_lattice[T]);
+	    }
+	    //lexicographic index will be used as Tag during communication
+//	    glex = lex_index( coords[T], coords[Z], coords[Y], coords[X], l->global_lattice );
+
+	    //get from site coords the process coords:
+	    pcoords[T] = coords[T] / l->local_lattice[T];
+	    pcoords[Z] = coords[Z] / l->local_lattice[Z];
+	    pcoords[Y] = coords[Y] / l->local_lattice[Y];
+	    pcoords[X] = coords[X] / l->local_lattice[X];
+
+	    //what is the rank of process with pcoords? -> store in source
+	    MPI_Cart_rank(g.comm_cart, pcoords, &source);
+	    //must be different from own rank!
+
+
+	    //tag = gsite (to ensure, the correct lattice site is received and there is no overtaking by other messages
+	    if (g.my_rank == ra) {
+	/*	printf("ll: %d, %d, %d, %d, coords: %d, %d, %d, %d, pcoords: %d, %d, %d, %d,\n",
+			l->local_lattice[X], l->local_lattice[Y], l->local_lattice[Z], l->local_lattice[T],
+			coords[X], coords[Y], coords[Z], coords[T], 
+			pcoords[X], pcoords[Y], pcoords[Z], pcoords[T]); */
+		printf("receiv. glex/gsite %d, from process %d at %d,  ... lsite %d,", gsite, source,
+			g.my_rank, lsite);fflush(stdout);
+		    }
+
+	
+	    
+	    //TODO: keep this line?
+	    memset(buf, 0, l->num_lattice_site_var * sizeof(complex_PRECISION));
+
+
+    
+	    //TODO: remove this line:
+	    if (source == 0) 
+
+	    MPI_Recv( buf, l->num_lattice_site_var, MPI_COMPLEX_PRECISION, source, gsite, g.comm_cart, &s);
+	    //copy received data to output
+	    vector_PRECISION_copy( phi_out + llex*l->num_lattice_site_var, buf, 0, l->num_lattice_site_var, l);
+	
+	    if (g.my_rank == ra) printf("received!\n");
+	    
+ 
+
+	    visited_sites[lsite] = 1;
+	} //else: already set since this was in own domain.
+    }
+
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    //copy phi_out to phi
+    vector_PRECISION_copy( phi, phi_out, 0, l->num_lattice_site_var * l->num_inner_lattice_sites, l);
+
+    FREE(phi_out, complex_PRECISION, l->inner_vector_size);
+    FREE(visited_sites, int, l->inner_vector_size);
+    FREE(buf, complex_PRECISION, l->num_lattice_site_var);
+
+}
+
+void translate2original_vectors_PRECISION( level_struct *l, vector_PRECISION phi){
+/**
+  * This function returns from Block-Row-Storage (used in SCALAPACK) back to DDalphaAMG storage
+  * scheme.
+
+  * Each process goes over local piece of vector, check, if site belongs to own domain
+  * For each lattice site, we find the global index
+    -> if not in "my part" send it to the process whose part it is.
+    -> if yes, put it in correct position, by finding the correct position i.e. the local
+    lexicographic index. (use coords from outer for loop)
+  * check own domain for not yet set lattice sites, check coordinates to know where to take data
+  * from, if not own domain, receive data from corresponding process (not necessary neighbour process!).
+
+  */
+
+
+    /* mu = [X, Y, Z, T];
+    size of global lattice on this level: l->global_lattice[mu];
+    size of local domain: l->local_lattice[mu];
+    quota global/local: l->splitting[mu];
+    number of local lattice sites: l->num_inner_lattice_sites
+    global rank: g.my_rank
+    local process coords: g.my_coords[mu]
+
+       */
+    vector_PRECISION phi_out = NULL; 
+    MALLOC(phi_out, complex_PRECISION, l->inner_vector_size);
+    memset(phi_out, 0, l->inner_vector_size * sizeof(complex_PRECISION));
+
+    int* visited_sites = NULL;
+    MALLOC(visited_sites, int, l->inner_vector_size);
+    memset(visited_sites, 0, l->inner_vector_size * sizeof(int));
+    complex_PRECISION* buf = NULL;
+    MALLOC(buf, complex_PRECISION, l->num_lattice_site_var);
+    memset(buf, 0, l->num_lattice_site_var * sizeof(complex_PRECISION));
+
+    
+    MPI_Request req;
+    MPI_Status s;
+    int source, target; //process ranks for communication (message will be sent from source to target)
+    int gx, gy, gz, gt; //site coordinates in a global scheme
+    int glex; //global lexicographic index for site with coords(gx, gy, gz, gt)
+    int llex; //local lexicographic index for site with coords(lx, ly, lz, lt)
+    int coords[4];  //global coordinates of lattice site
+    int lcoords[4];  //local coordinates of lattice site
+    int pcoords[4]; //coordinates of processor
+    
+
+    coords[0] = 0; coords[1] = 0; coords[2] = 0; coords[3] = 0;
+    lcoords[0] = 0; lcoords[1] = 0; lcoords[2] = 0; lcoords[3] = 0;
+
+
+
+
+    int ra = 0; 
+
+
+
+    for (int lsite = 0; lsite < l->num_inner_lattice_sites; lsite++){
+	//find global site index, get coordinates from there
+	// -> get process coordinates from site coordinates
+	// -> get process rank from process coordinates
+	
+	//global index for lattice site
+	glex = g.my_rank * l->num_inner_lattice_sites + lsite;
+	//global coordinates of lattice site
+	coords4d(coords, glex, l->global_lattice);
+
+	//get from site coords the target process coords:
+	pcoords[T] = coords[T] / l->local_lattice[T];
+	pcoords[Z] = coords[Z] / l->local_lattice[Z];
+	pcoords[Y] = coords[Y] / l->local_lattice[Y];
+	pcoords[X] = coords[X] / l->local_lattice[X];
+
+	//what is the rank of process with pcoords? -> store in target
+	MPI_Cart_rank(g.comm_cart, pcoords, &target);
+
+	if (g.my_rank == ra) {
+	    printf("r %d, ", g.my_rank);
+	}
+    
+	
+	lcoords[T] = coords[T]%l->local_lattice[T];
+	lcoords[Z] = coords[Z]%l->local_lattice[Z];
+	lcoords[Y] = coords[Y]%l->local_lattice[Y];
+	lcoords[X] = coords[X]%l->local_lattice[X];
+
+
+	//llex = lex_mod_index(coords[T], coords[Z], coords[Y], coords[X], l->local_lattice);
+	llex = lcoords[X] + l->local_lattice[X]*(lcoords[Y] + l->local_lattice[Y]*(lcoords[Z] + l->local_lattice[Z]*lcoords[T]));
+
+
+	if (target == g.my_rank){	//site belongs to "my domain"
+		//local coordinates 
+	    lcoords[T] = coords[T]%l->local_lattice[T];
+	    lcoords[Z] = coords[Z]%l->local_lattice[Z];
+	    lcoords[Y] = coords[Y]%l->local_lattice[Y];
+	    lcoords[X] = coords[X]%l->local_lattice[X];
+	    //local lex index:
+	    llex = lcoords[X] + l->local_lattice[X]*(lcoords[Y] + l->local_lattice[Y]*(lcoords[Z] + l->local_lattice[Z]*lcoords[T]));
+    //this must be the same as lsite  = lex_mod_index( coords[3], coords[2], coords[1], coords[0], l->local_lattice );
+	    for (int j = 0; j < l->num_lattice_site_var; j++){
+		phi_out[ llex * l->num_lattice_site_var + j] = phi[ lsite * l->num_lattice_site_var + j];
+	    }
+	    visited_sites[ llex ] = 1;
+
+	    if (g.my_rank == ra){
+		printf("___ glex %3d, from %d, to  , lsite: %d, vs: %d, llex %d, gcoords %d %d %d %d, \t lcoords %d %d %d %d, \tpcoords %d %d %d %d\n", 
+			glex, g.my_rank, lsite, visited_sites[lsite], llex, 
+			coords[X], coords[Y], coords[Z], coords[T], 
+			lcoords[X], lcoords[Y], lcoords[Z], lcoords[T], 
+			pcoords[X], pcoords[Y], pcoords[Z], pcoords[T]);
+	    }
+	} else { //site belongs to domain of process with rank _target_
+	    //TODO: keep this line?
+	    memset(buf, 0, l->num_lattice_site_var * sizeof(complex_PRECISION));
+
+
+	    //copy corresponding data	
+	    if (g.my_rank == ra && target == 0 && creal(phi[lsite*l->num_lattice_site_var]) == 0) {printf("copying zero!\n"); exit(0);}
+	    vector_PRECISION_copy( buf, phi + lsite * l->num_lattice_site_var, 0, l->num_lattice_site_var, l);
+	    //send data (non blocking)
+	    MPI_Isend(buf, l->num_lattice_site_var, MPI_COMPLEX_PRECISION, target, glex, g.comm_cart, &req);
+	    if (g.my_rank == ra){
+		printf("com glex %3d, from %d, to %d, lsite: %d, vs: %d, llex %d, gcoords %d %d %d %d, \t lcoords %d %d %d %d, \tpcoords %d %d %d %d\n", 
+			glex, g.my_rank, target, lsite, visited_sites[lsite], llex, 
+			coords[X], coords[Y], coords[Z], coords[T], 
+			lcoords[X], lcoords[Y], lcoords[Z], lcoords[T], 
+			pcoords[X], pcoords[Y], pcoords[Z], pcoords[T]);
+	    }
+
+	}
+    }
+   
+    ra = 0;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    printf0("sending done!\n");
+
+    //process coords are in order: Z Y X T
+    //local lattice is in order: X Y Z T
+    int lsite = 0;
+    for (int lt = 0; lt < l->local_lattice[T]; lt++){
+	gt = g.my_coords[T] * l->local_lattice[T] + lt;
+	for (int lz = 0; lz < l->local_lattice[Z]; lz++){
+	    gz = g.my_coords[Z] * l->local_lattice[Z] + lz;
+	    for (int ly = 0; ly < l->local_lattice[Y]; ly++){
+		gy = g.my_coords[Y] * l->local_lattice[Y] + ly;
+		for (int lx = 0; lx < l->local_lattice[X]; lx++){
+		    gx = g.my_coords[X] * l->local_lattice[X] + lx;
+
+		    lsite = lex_mod_index(lt, lz, ly, lx, l->local_lattice);
+//		    lsite = lx + l->local_lattice[X]*(ly + l->local_lattice[Y]*(lz + l->local_lattice[Z]*lt));
+		    
+		    glex = lex_mod_index(gt, gz, gy, gx, l->global_lattice);
+//		    glex = gx + l->global_lattice[X]*(gy + l->global_lattice[Y]*(gz + l->global_lattice[Z] * gt)); //lex_mod_index( gt, gz, gy, gx, l->global_lattice );
+
+		    
+		    if (g.my_rank == ra) {
+			    printf("rank %d, lsite %3d, glex %3d, glex_mod %3d, gt %d, gz %d, gy %d, gx %d, \t\t px %d, py %d, pz %d, pt %d\n", g.my_rank, lsite, glex, glex%l->num_inner_lattice_sites, gt, gz, gy, gx, g.my_coords[X], g.my_coords[Y], g.my_coords[Z], g.my_coords[T]);
+//			    printf(" product: %d, lz: %d\n", g.my_coords[0] * l->local_lattice[2], lz);
+		    }
+
+
+		    if (visited_sites[ lsite ] == 0){ //not yet set, data comes from different process
+/*
+			// get process coords from site coords
+			//process coords are in order: Z Y X T
+			//local lattice is in order: X Y Z T
+			pcoords[2] = gx / l->local_lattice[0];
+			pcoords[1] = gy / l->local_lattice[1];
+			pcoords[0] = gz / l->local_lattice[2];
+			pcoords[3] = gt / l->local_lattice[3];
+
+			
+			//what is the rank of process with pcoords? -> store in source
+			MPI_Cart_rank(g.comm_cart, pcoords, &source);  //must be different from my_rank
+*/
+
+			source = glex/l->num_inner_lattice_sites;
+
+			if (g.my_rank == ra) {
+//				printf("pX %d, pY %d, pZ %d, pT %d, gx %d, llx %d, \tgy %d lly %d, \tgz %d, llz %d, \tgt %d, llt %d \t", pcoords[2], pcoords[1], pcoords[0], pcoords[3], gx, l->local_lattice[0], gy, l->local_lattice[1], gz, l->local_lattice[2], gt, l->local_lattice[3]);
+				printf("rank %d, waiting for site %3d, from %d, to %d... lsite: %3d",
+					g.my_rank, glex, source, g.my_rank, lsite);	fflush(stdout);
+			}
+
+			//receive data from source
+
+			MPI_Recv( buf, l->num_lattice_site_var, MPI_COMPLEX_PRECISION, source, glex, g.comm_cart, &s);
+			//copy received data to output
+			vector_PRECISION_copy( phi_out + lsite*l->num_lattice_site_var, buf, 0, l->num_lattice_site_var, l);
+			visited_sites[ lsite ] = 1;
+
+			if (g.my_rank == ra) printf(" received!\n");
+		    } 
+
+		}
+	    }
+	}
+    }
+
+//    printf("process finished: %d\n", g.my_rank);
+    MPI_Barrier(MPI_COMM_WORLD);
+    //copy phi_out to phi
+    vector_PRECISION_copy( phi, phi_out, 0, l->num_lattice_site_var * l->num_inner_lattice_sites, l);
+  
+    int c = 0;
+    for (int lsite = 0; lsite < l->num_inner_lattice_sites; lsite++){
+	if (visited_sites[lsite] == 0){
+	    printf("site %3d not visited on process %d\n", lsite, g.my_rank);
+	    c = 1;
+	}	
+    }
+    if (c != 0) exit(0);   
+    
+   
+    
+    FREE(phi_out, complex_PRECISION, l->inner_vector_size);
+    FREE(visited_sites, int, l->inner_vector_size);
+    FREE(buf, complex_PRECISION, l->num_lattice_site_var);
+}
+
 #endif
 #endif

@@ -85,8 +85,8 @@ LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/usr/lib/hpc/gnu7/mpi/op
 
 # Enable the following three to activate MUMPS within DDalphaAMG
  LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
- OPT_VERSION_FLAGS += -DCOARSE_SCALAP #-DMUMPS_ADDS #-DCOARSE_SCALAP
- DEVEL_VERSION_FLAGS += -DCOARSE_SCALAP #-DMUMPS_ADDS #-DCOARSE_SCALAP 
+ OPT_VERSION_FLAGS += -DMUMPS_ADDS
+ DEVEL_VERSION_FLAGS += -DMUMPS_ADDS 
 
 #---------------------------------------------------
 

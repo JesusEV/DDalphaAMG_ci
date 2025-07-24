@@ -44,4 +44,12 @@
     return index_table[ lex_mod_index( t, z, y, x, N ) ];
   }
 
+  static inline void coords4d(int COORDS[4], int lex, int N[4]) {
+    COORDS[T] = lex / (N[Z] * N[Y] * N[X]); // will hold T coordinate
+    COORDS[Z] =
+        (lex % (N[Z] * N[Y] * N[X])) / (N[Y] * N[X]); // will hold Z coordinate
+    COORDS[Y] = (lex % (N[Y] * N[X])) / N[X];         // will hold Y coordinate
+    COORDS[X] = lex % N[X];                           // will hold X coordinate
+  }
+
 #endif
