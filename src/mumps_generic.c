@@ -699,102 +699,6 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
     if (!l->idle){
 
 
-
-	printf0("T %d, Z  %d, Y %d, X%d\n", T, Z, Y, X);
-	for (int i = 0; i< g.num_processes; i++){
-	    if(g.my_rank == i){
-		printf("my rank: %d, my coords: 0:%d 1:%d 2:%d 3:%d \t X:%d, Y:%d, Z:%d, T:%d\n", g.my_rank,
-		    g.my_coords[0], g.my_coords[1], g.my_coords[2], g.my_coords[3], 
-		    g.my_coords[X], g.my_coords[Y], g.my_coords[Z], g.my_coords[T] ); 
-		fflush(stdout);
-	    }	    
-	    MPI_Barrier(MPI_COMM_WORLD);
-	}
-
-	printf0("\n\n\n");
-	printf0("local_lattice: 0 %d, 1 %d, 2 %d, 3 %d, \t X %d, Y %d, Z %d, T %d\n",
-		l->local_lattice[0], l->local_lattice[1], l->local_lattice[2], l->local_lattice[3],
-		l->local_lattice[X], l->local_lattice[Y], l->local_lattice[Z], l->local_lattice[T]);
-
-	MPI_Barrier(MPI_COMM_WORLD);
-
-
-
-
-	vector_PRECISION test2 = NULL; 
-	MALLOC(test2, complex_PRECISION, l->inner_vector_size);
-	memset(test2, 0, l->inner_vector_size * sizeof(complex_PRECISION));
-
-	int rax = 7, ps = 5;
-//	if (g.my_rank != rax) memset(eta, 0, l->inner_vector_size * sizeof(complex_PRECISION));
-
-	vector_PRECISION_copy(test2, eta, 0, l->inner_vector_size, l);
-	
-	
-	
-	for (int ra = 0; ra < ps; ra++){
-	    if (g.my_rank == ra) for (int i = 0; i < l->num_inner_lattice_sites * l->num_lattice_site_var; i++){
-		if( creal(eta[i]) == 0) printf("P%d, i: %5d, site: %5d\t:\n", g.my_rank, i, i/l->num_lattice_site_var);		
-		else printf("P%d, i: %5d, site: %5d\t: %+f %+fi\n", g.my_rank, i, i/l->num_lattice_site_var, CSPLIT(eta[i]));		
-		i = i + l->num_lattice_site_var - 1;
-	    }
-	    fflush(stdout);
-	    MPI_Barrier(MPI_COMM_WORLD);
-	}
-
-	
-        translate2scalap_vectors_PRECISION( l, eta);
-	printf0("hinweg abgeschlossen!\n");
-
-	for (int ra = 0; ra < ps; ra++){
-	    if (g.my_rank == ra) for (int i = 0; i < l->num_inner_lattice_sites * l->num_lattice_site_var; i++){
-		if ( creal(eta[i]) == 0) printf("P%d, i: %5d, site: %5d\t:\n", g.my_rank, i, i/l->num_lattice_site_var);		
-		else printf("P%d, i: %5d, site: %5d\t: %+f %+fi\n", g.my_rank, i, i/l->num_lattice_site_var, CSPLIT(eta[i]));		
-		i = i + l->num_lattice_site_var - 1;
-	    }
-	    fflush(stdout);
-	    MPI_Barrier(MPI_COMM_WORLD);
-	}
-
-	
-	translate2original_vectors_PRECISION( l, eta);
-
-	printf0("rückweg abgeschlossen!\n");
-
-	for (int ra = 0; ra < ps; ra++){
-	    if (g.my_rank == ra) for (int i = 0; i < l->num_inner_lattice_sites * l->num_lattice_site_var; i++){
-		if ( creal(eta[i]) == 0) printf("P%d, i: %5d, site: %5d\t:\n", g.my_rank, i, i/l->num_lattice_site_var);		
-		else printf("P%d, i: %5d, site: %5d\t: %+f %+fi\n", g.my_rank, i, i/l->num_lattice_site_var, CSPLIT(eta[i]));		
-		i = i + l->num_lattice_site_var - 1;
-	    }
-	    fflush(stdout);
-	    MPI_Barrier(MPI_COMM_WORLD);
-	}
-
-
-	vector_PRECISION_minus( eta, eta, test2, 0, l->inner_vector_size, l );
-
-	printf0("DIFF:\n");
-
-	for (int ra = 0; ra < ps; ra++){
-	    if (g.my_rank == ra) for (int i = 0; i < l->num_inner_lattice_sites * l->num_lattice_site_var; i++){
-		if ( creal(eta[i]) == 0) printf("P%d, i: %5d, site: %5d\t:\n", g.my_rank, i, i/l->num_lattice_site_var);		
-		else printf("P%d, i: %5d, site: %5d\t: %+f %+fi\n", g.my_rank, i, i/l->num_lattice_site_var, CSPLIT(eta[i]));		
-		i = i + l->num_lattice_site_var - 1;
-	    }
-	    fflush(stdout);
-	    MPI_Barrier(MPI_COMM_WORLD);
-	}
-
-
-
-	PRECISION r2 = global_norm_PRECISION( test2, 0, l->inner_vector_size, l, threading );
-	PRECISION r = global_norm_PRECISION( eta, 0, l->inner_vector_size, l, threading);
-	printf0("global norm: %e\n", r/r2);
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Finalize();
-        exit(0);
-
    
 //	printf0("solving scalap...\n");
         START_MASTER(threading)
@@ -811,13 +715,18 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 	memset(test, 0, l->inner_vector_size * sizeof(complex_PRECISION));
 	vector_PRECISION_copy(test, eta, 0, l->inner_vector_size, l);
 
+	translate2scalap_vectors_PRECISION( l, test);
     //void pgetrs_PRECISION( TRANS, N, NRHS, A,	     IA, JA,	 DESCA, IPIV, B, IB, JB, DESCB, INFO );
 	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals, &ione, &ione,
 		l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv,
 		test, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
-
+	translate2original_vectors_PRECISION( l, test);
+	
 	// test <- LU * test
 
+
+	printf0("finished pgetrs!\n");
+	exit(0);
         START_MASTER(threading)
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
 
@@ -994,7 +903,7 @@ void translate2scalap_vectors_PRECISION( level_struct *l, vector_PRECISION phi){
     memset(buf, 0, l->num_lattice_site_var * sizeof(complex_PRECISION));
 
 
-    int ra = 1;
+  //  int ra = 1;
     
     
     MPI_Request req;
@@ -1029,15 +938,15 @@ void translate2scalap_vectors_PRECISION( level_struct *l, vector_PRECISION phi){
 			}
 			
 			visited_sites[glex%l->num_inner_lattice_sites] = 1;
-			if (g.my_rank == ra) {
+/*			if (g.my_rank == ra) {
 			    printf("   ");
 			}
-			
+*/			
 		    } else {
-			if (g.my_rank == ra) {
+/*			if (g.my_rank == ra) {
 			    printf("com");
 			}	
-			
+*/			
 			//communicate to process with rank
 			target = glex/l->num_inner_lattice_sites;
 			//copy corresponding data	
@@ -1047,26 +956,27 @@ void translate2scalap_vectors_PRECISION( level_struct *l, vector_PRECISION phi){
 
 
 			vector_PRECISION_copy( buf, phi + llex * l->num_lattice_site_var, 0, l->num_lattice_site_var, l);
-			if (g.my_rank == ra && glex == 8) {
+/*			if (g.my_rank == ra && glex == 8) {
 				printf("content of buf, glex: %d:\n", glex);
 //				for (int ii = 0; ii < l->num_lattice_site_var; ii++) printf("%+f %+fi\n", CSPLIT(buf[ii]));
 			}
+			*/
 			//send data (non blocking)
 			MPI_Isend(buf, l->num_lattice_site_var, MPI_COMPLEX_PRECISION, target, glex, g.comm_cart, &req);
 			
 		    }
-		    if (g.my_rank == ra) {
+/*		    if (g.my_rank == ra) {
 			printf("rank: %d, gx: %d, gy: %d, gz: %d, gt: %d, glex/gsite %d, llex %d, l/ns: %d, lx: %d, ly: %d, lz: %d, lt: %d\n",
 					g.my_rank, gx, gy, gz, gt, glex, llex, glex/l->num_inner_lattice_sites,
 					lx, ly, lz, lt );
 		    }
-		    
+		    */
 		}
 	    }
 	}
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    printf0("sending done!\n");
+//    printf0("sending done!\n");
 
 
     //check my chunk of RHS in search for open position, which are not yet
@@ -1077,7 +987,7 @@ void translate2scalap_vectors_PRECISION( level_struct *l, vector_PRECISION phi){
    
 
 
-    ra = 0;
+//    ra = 0;
 
     coords[0] = 0; coords[1] = 0; coords[2] = 0; coords[3] = 0;
 
@@ -1098,10 +1008,11 @@ void translate2scalap_vectors_PRECISION( level_struct *l, vector_PRECISION phi){
 //	    llex = lex_index( coords[T], coords[Z], coords[Y], coords[X], l->local_lattice );
 //	    llex = coords[X] + l->local_lattice[X] * (coords[Y] + l->local_lattice[Y] * (coords[Z] + l->local_lattice[Z] * coords[T]));
 	    llex = lsite; 
-	    if (g.my_rank == ra) {
+/*	    if (g.my_rank == ra) {
 		printf("site coords: %d %d %d %d, gsite %3d, llex %3d,\t ll %d %d %d %d\n", coords[X], coords[Y], coords[Z],
 			coords[T], gsite, llex, l->local_lattice[X], l->local_lattice[Y], l->local_lattice[Z], l->local_lattice[T]);
 	    }
+	    */
 	    
 	    //lexicographic index will be used as Tag during communication
 //	    glex = lex_index( coords[T], coords[Z], coords[Y], coords[X], l->global_lattice );
@@ -1118,15 +1029,15 @@ void translate2scalap_vectors_PRECISION( level_struct *l, vector_PRECISION phi){
 
 
 	    //tag = gsite (to ensure, the correct lattice site is received and there is no overtaking by other messages
-	    if (g.my_rank == ra) {
-	/*	printf("ll: %d, %d, %d, %d, coords: %d, %d, %d, %d, pcoords: %d, %d, %d, %d,\n",
-			l->local_lattice[X], l->local_lattice[Y], l->local_lattice[Z], l->local_lattice[T],
-			coords[X], coords[Y], coords[Z], coords[T], 
-			pcoords[X], pcoords[Y], pcoords[Z], pcoords[T]); */
+/*	    if (g.my_rank == ra) {
+	//	printf("ll: %d, %d, %d, %d, coords: %d, %d, %d, %d, pcoords: %d, %d, %d, %d,\n",
+	//		l->local_lattice[X], l->local_lattice[Y], l->local_lattice[Z], l->local_lattice[T],
+	//		coords[X], coords[Y], coords[Z], coords[T], 
+	//		pcoords[X], pcoords[Y], pcoords[Z], pcoords[T]); 
 		printf("receiv. glex/gsite %d, from process %d at %d,  ... lsite %d,", gsite, source,
 			g.my_rank, lsite);fflush(stdout);
 		    }
-
+*/
 	
 	    
 	    //TODO: keep this line?
@@ -1139,15 +1050,15 @@ void translate2scalap_vectors_PRECISION( level_struct *l, vector_PRECISION phi){
 
 	    MPI_Recv( buf, l->num_lattice_site_var, MPI_COMPLEX_PRECISION, source, gsite, g.comm_cart, &s);
 	    //copy received data to output
-	    if (g.my_rank == ra) {
+/*	    if (g.my_rank == ra) {
 		    printf("content of buf, gsite: %d:\n", gsite);
 //		    for (int ii = 0; ii < l->num_lattice_site_var; ii++) printf("%+f %+fi\n", CSPLIT(buf[ii]));
 //		    exit(0);
 	    }
-
+*/
 	    vector_PRECISION_copy( phi_out + llex*l->num_lattice_site_var, buf, 0, l->num_lattice_site_var, l);
 	
-	    if (g.my_rank == ra) printf("received!\n");
+//	    if (g.my_rank == ra) printf("received!\n");
 	    
  
 
@@ -1305,7 +1216,7 @@ void translate2original_vectors_PRECISION( level_struct *l, vector_PRECISION phi
 //    ra = 0;
 
     MPI_Barrier(MPI_COMM_WORLD);
-    printf0("sending done!\n");
+//    printf0("sending done!\n");
 
     //process coords are in order: Z Y X T
     //local lattice is in order: X Y Z T
