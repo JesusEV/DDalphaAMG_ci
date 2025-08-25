@@ -767,10 +767,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
   }
   compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
 
-  
-  
-
-
   // compute U_mu^dagger coupling
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;
@@ -808,7 +804,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     coarse_daggered_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
 
-
   //START_MASTER(threading)
   //printf0("print 3 ...\n");
   //END_MASTER(threading)
@@ -832,11 +827,7 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     start = op->num_even_sites, num_lattice_sites = op->num_odd_sites;
   }
   compute_core_start_end_custom(start, start+num_lattice_sites, &core_start, &core_end, l, threading, 1);
-
-  //TODO: remove this lines:
-  if (!g.on_solve){
-
-
+ 
   // compute U_mu couplings
   for ( i=core_start; i<core_end; i++ ) {
     index = 5*i;
@@ -858,11 +849,6 @@ void coarse_hopping_term_PRECISION( vector_PRECISION out, vector_PRECISION in, o
     in_pt = in + num_site_var*op->neighbor_table[index+X];
     coarse_hopp_PRECISION( out_pt, in_pt, D_pt, l );
   }
-
-  //TODO: remvoe this bracket
-  }
-
-
 
   START_LOCKED_MASTER(threading)
   if ( op->c.comm ) {

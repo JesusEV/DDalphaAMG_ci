@@ -463,43 +463,39 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
         buffer_d_pt = num_link_var * buffer_i_pt;
 	// A*
 	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
-	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + k) = 
-			*(buff_d_recv[dir] + buffer_d_pt + k); 
-	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + k) = 
+	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + k) = 
+			*(buff_d_recv[dir] + buffer_d_pt + k);
+	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + k) = 
 			i_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + k/(int)(num_site_var*0.5);
-	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + k) = 
-			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +
-			k%(int)(num_site_var*0.5));
+	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + k) = 
+			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + k%(int)(num_site_var*0.5));
         }
 	// -C*
 	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
-	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) =
+	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) =
 			*(buff_d_recv[dir] + buffer_d_pt + 1 * SQUARE((int)(num_site_var*0.5)) + k);
-	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
+	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			i_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + k/(int)(num_site_var*0.5);
-	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) =
-			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +
-			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
+	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) =
+			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
         }
 	// -B*
 	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
-	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) =
+	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) =
 			*(buff_d_recv[dir] + buffer_d_pt + 2 * SQUARE((int)(num_site_var*0.5)) + k);
-	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
+	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			i_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
-	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
-			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +
-			 k%(int)(num_site_var*0.5));
+	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + k%(int)(num_site_var*0.5));
         } 
 	// D*
 	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
-	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) =
+	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) =
 			*(buff_d_recv[dir] + buffer_d_pt + 3 * SQUARE((int)(num_site_var*0.5)) + k);
-	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
+	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			i_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
-	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
-			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] +
-			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
+	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			(neighbors_j_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
         }
       }
     }//end if (comm_nr[dir] > 0)
@@ -523,47 +519,39 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // regular mu- coupling
       // A*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
-        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + k) = 
-			-1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] +
-			dir*num_link_var + k));
-        *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + k) = 
+        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + k) = 
+			-1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + k));
+        *(l->p_PRECISION.mumps_Is   + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + k) = 
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5);
-        *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + k) = 
-			(j_start + num_site_var * op->neighbor_table[index] +
-			 k%(int)(num_site_var*0.5));
+        *(l->p_PRECISION.mumps_Js   + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + k) = 
+			(j_start + num_site_var * op->neighbor_table[index] +	 k%(int)(num_site_var*0.5));
       }
       // -C*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
-        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k ) = 
-			1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] +
-			dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k)); 
-        *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
+        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k ) = 
+			1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k)); 
+        *(l->p_PRECISION.mumps_Is   + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5);
-        *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
-			(j_start + num_site_var * op->neighbor_table[index] +
-			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
+        *(l->p_PRECISION.mumps_Js   + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			(j_start + num_site_var * op->neighbor_table[index] + k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
       }
       // -B*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
-        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k ) = 
-			1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] +
-			dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k)); 
-        *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
+        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k ) = 
+			1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k)); 
+        *(l->p_PRECISION.mumps_Is   + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
-        *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
-			(j_start + num_site_var * op->neighbor_table[index] +
-			 k%(int)(num_site_var*0.5));
+        *(l->p_PRECISION.mumps_Js   + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			(j_start + num_site_var * op->neighbor_table[index] + k%(int)(num_site_var*0.5));
       }
       // D*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
-        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k ) = 
-			-1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] +
-			dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k)); 
-        *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
+        *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k ) = 
+			-1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k)); 
+        *(l->p_PRECISION.mumps_Is   + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
-        *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
-			(j_start + num_site_var * op->neighbor_table[index] +
-			 k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
+        *(l->p_PRECISION.mumps_Js   + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
+			(j_start + num_site_var * op->neighbor_table[index] + k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5));
       }
     }	//loop over nodes  
     printf0("mu- on node %d, dir %d done!\n", node, dir);
@@ -747,7 +735,7 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 	memset(test, 0, l->inner_vector_size * sizeof(complex_PRECISION));
 	
 	
-	if (g.my_rank != 0) memset(eta, 0, l->inner_vector_size * sizeof(complex_PRECISION));
+	//if (g.my_rank != 0) memset(eta, 0, l->inner_vector_size * sizeof(complex_PRECISION));
 	vector_PRECISION_copy(test, eta, 0, l->inner_vector_size, l);
 	PRECISION rt1 = 0, rt2 = 0;
 
@@ -813,11 +801,11 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
    int start;
   int end;
   compute_core_start_end_custom(0, l->num_inner_lattice_sites, &start, &end, l, threading, 1);
-  coarse_self_couplings_PRECISION( phi, test, l->p_PRECISION.op, start, end, l);
+  //coarse_self_couplings_PRECISION( phi, test, l->p_PRECISION.op, start, end, l);
 
-//  coarse_hopping_term_PRECISION( phi, test, l->p_PRECISION.op, _FULL_SYSTEM, l, threading );
+  //coarse_hopping_term_PRECISION( phi, test, l->p_PRECISION.op, _FULL_SYSTEM, l, threading );
 
-//	apply_coarse_operator_PRECISION(phi, test, l->p_PRECISION.op, l, threading);
+	apply_coarse_operator_PRECISION(phi, test, l->p_PRECISION.op, l, threading);
     
 	vector_PRECISION_minus( phi, phi, eta, 0, l->inner_vector_size, l );
 	PRECISION r2 = global_norm_PRECISION( eta, 0, l->inner_vector_size, l, threading );
@@ -911,7 +899,7 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 	    //[self, T-, T+, Z-, Z+, Y-, Y+, X-, X+] 
 //	    if (d == 0){ 
 //	    if (d == 0 || d == 2 || d == 4 || d == 6 || d == 8){
-	    if (d == 0 || d == 1 || d == 3 || d == 5 || d == 7){
+//	    if (d == 0 || d == 1 || d == 3 || d == 5 || d == 7){
 
 	    if (g.my_rank == ra){
 		printf("rank: %d, lr: %5d, lc: %5d", g.my_rank, lr, lc);
@@ -931,18 +919,18 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 	    
 	    for (int i = 0; i < l->num_lattice_site_var; i++)
 		for (int j = 0; j < l->num_lattice_site_var; j++){ //local index to copy elementwise within a block
-		r = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + 
+		r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + 
 		    i * l->num_lattice_site_var + j] - 
 			   g.my_rank * l->num_inner_lattice_sites * l->num_lattice_site_var;
-		c = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + 
+		c = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + 
 		    i * l->num_lattice_site_var + j];
 		l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var +
 		    r] += l->p_PRECISION.mumps_vals[llsite*9*SQUARE(l->num_lattice_site_var) + d *
-		    SQUARE(l->num_lattice_site_var) + j * l->num_lattice_site_var + i];
+		    SQUARE(l->num_lattice_site_var) + i * l->num_lattice_site_var + j];
             }
 
 	    // this bracket
-	    }
+//	    }
 
 
 //copy chunk d 
