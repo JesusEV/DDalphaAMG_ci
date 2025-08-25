@@ -690,13 +690,11 @@ void apply_coarse_operator_PRECISION( vector_PRECISION eta, vector_PRECISION phi
   SYNC_CORES(threading)
 
   PROF_PRECISION_START( _NC, threading );
-
 #ifndef OPTIMIZED_COARSE_NEIGHBOR_COUPLING_PRECISION
   coarse_hopping_term_PRECISION( eta, phi, op, _FULL_SYSTEM, l, threading );
 #else
   coarse_hopping_term_PRECISION_vectorized( eta, phi, op, _FULL_SYSTEM, l, threading ); 
 #endif
-
   PROF_PRECISION_STOP( _NC, 1, threading );
 
   SYNC_MASTER_TO_ALL(threading)

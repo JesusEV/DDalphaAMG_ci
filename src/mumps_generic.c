@@ -238,7 +238,13 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   int bt_index;
   int num_site_var=site_var;
 
+  int lcoords[4]; //will hold T, Z, Y, X coords of given lattice site
+  for (int d = 0; d < 4; d++) lcoords[d] =0;
+  int li = 0; //lex index for site
+
   printf0("allocs for hopping done!\n");
+
+
 
   /* FINDME */
   for (dir = T; dir <= X; dir++){
@@ -272,13 +278,23 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 
     for (node = core_start; node < core_end; node ++){
       index = 5 * node; // neighbor table will contain site numbers in chunks of 5 for each lattice site: [my_site_number, T neighbor, Z neighbor, Y neighbor, X neighbor]
-     
+    
+/*      index = 5 * 1;
+      printf0("site 1 has following neighbors:\n");
+      for (int ii = 0; ii < 5; ii++){
+	  printf0("site: %d, ", op->neighbor_table[index + ii]);
+      }
+      printf0("\n"); fflush(stdout);
+      MPI_Barrier(MPI_COMM_WORLD);
+      exit(0);
+*/
       // make mu+ couplings as usual (Values + Row indices aka. Is)
       // A
       for (k = 0; k < SQUARE(num_site_var/2); k ++){ 
         //find correct block row       skip self coupl., find pos of mu+ coupl. ("2*mu +1" due to structure of vals[self, T-, T+, Z-, Z+...]
         *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir + 1)*num_link_var + k) = 
-			-1.0 * *(op->D + 	num_4link_var*op->neighbor_table[index] + 	dir*num_link_var + k);
+			-1.0 * *(op->D + 	num_4link_var*op->neighbor_table[index] +
+			dir*num_link_var + k); 
 	//					find correct block row				start of mu- coupling
         *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir +1)*num_link_var + k) = 
 			i_start +	num_site_var * op->neighbor_table[index] + 		k%((int)(num_site_var*0.5));
@@ -288,7 +304,8 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // C
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
         *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir+1)*num_link_var + 1 * (int)SQUARE(num_site_var/2) + k) = 
-			-1.0 * *(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + 1 * (int)SQUARE(num_site_var/2) + k);
+			-1.0 * *(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var
+			+ 1 * (int)SQUARE(num_site_var/2) + k); 
         *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir +1)*num_link_var + 1 * (int)SQUARE(num_site_var/2) + k) = 
 			i_start + num_site_var * op->neighbor_table[index] + k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5);
       }
@@ -296,7 +313,8 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // B
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
         *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir+1)*num_link_var + 2 * (int)SQUARE(num_site_var/2) + k) = 
-			-1.0 * *(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + 2 * (int)SQUARE(num_site_var/2) + k);
+			-1.0 * *(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var
+			+ 2 * (int)SQUARE(num_site_var/2) + k); 
         *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir+1)*num_link_var + 2 * (int)SQUARE(num_site_var/2) + k) = 
 			i_start + num_site_var * op->neighbor_table[index] + k%(int)(num_site_var*0.5) + 0;
       }
@@ -304,7 +322,8 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // D
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
         *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir+1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
-			-1.0 * *(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k);
+			-1.0 * *(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var
+			+ 3 * (int)SQUARE(num_site_var/2) + k); 
         *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir +1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) = 
 			i_start + num_site_var * op->neighbor_table[index] + k%(int)(num_site_var*0.5) + (int)(num_site_var*0.5);
       }
@@ -312,28 +331,35 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 
      // computing and storing column indices Js
       if (comm_nr[dir] > 0 && op->neighbor_table[index+1+dir] >= l->num_inner_lattice_sites){
+	//continue from here:
+	// 1. get coords for op->neighbor_table[index]
+	// 2. get lex_mod_index of coords from (1.) but with +1 in _dir_
+	// 3. thats the local site index needed for mumps_Js
+
+
+	coords4d(lcoords, op->neighbor_table[index], l->local_lattice); //1.
+	lcoords[dir]++; //2.1.
+	li = lex_mod_index( lcoords[T], lcoords[Z], lcoords[Y], lcoords[X], l->local_lattice); //2.2
+	
+
 
         for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //FINDME
           //A
           *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir +1)*num_link_var + k) = 
-			neighbors_j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
-				l->num_inner_lattice_sites) +
+			neighbors_j_start + num_site_var * li +
 			 k/((int)(num_site_var*0.5));
           //C
 	  *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir +1)*num_link_var + 1 * (int)SQUARE(num_site_var/2) + k) = 
-			neighbors_j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
-				l->num_inner_lattice_sites) +
+			neighbors_j_start + num_site_var * li +
 			 k/((int)(num_site_var*0.5));
           //B
           *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir+1)*num_link_var + 2 * (int)SQUARE(num_site_var/2) + k) = 
-			neighbors_j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
-				l->num_inner_lattice_sites) +
+			neighbors_j_start + num_site_var * li +
 			 k/((int)(num_site_var*0.5)) + (int)(num_site_var*0.5);
           //D
           *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + (2*dir + 1)*num_link_var + 3 * (int)SQUARE(num_site_var/2) + k) =
-			neighbors_j_start + num_site_var * (op->neighbor_table[index + 1 + dir] %
-				l->num_inner_lattice_sites) +
+			neighbors_j_start + num_site_var * li +
 			 k/((int)(num_site_var*0.5)) + (int)(num_site_var*0.5);
         }
 	bt_index++;
@@ -438,7 +464,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 	// A*
 	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
 	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + k) = 
-			*(buff_d_recv[dir] + buffer_d_pt + k);
+			*(buff_d_recv[dir] + buffer_d_pt + k); 
 	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + k) = 
 			i_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + k/(int)(num_site_var*0.5);
 	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + k) = 
@@ -458,7 +484,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 	// -B*
 	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
 	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) =
-			*(buff_d_recv[dir] + buffer_d_pt + 2 * SQUARE((int)(num_site_var*0.5)) + k); 
+			*(buff_d_recv[dir] + buffer_d_pt + 2 * SQUARE((int)(num_site_var*0.5)) + k);
 	  *(l->p_PRECISION.mumps_Is + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			i_start + num_site_var * buff_i_recv[dir][2 * buffer_i_pt] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
 	  *(l->p_PRECISION.mumps_Js + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt + 1] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
@@ -477,7 +503,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
         }
       }
     }//end if (comm_nr[dir] > 0)
-
 
     printf0("recieved communicated couplings in dir: %d\n", dir);
 
@@ -499,7 +524,8 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // A*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
         *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + k) = 
-			-1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + k));
+			-1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] +
+			dir*num_link_var + k));
         *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + k) = 
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5);
         *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + k) = 
@@ -509,7 +535,8 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // -C*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
         *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k ) = 
-			1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k));
+			1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] +
+			dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k)); 
         *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5);
         *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 1 * SQUARE((int)(num_site_var*0.5)) + k) = 
@@ -519,7 +546,8 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // -B*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
         *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k ) = 
-			1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k));
+			1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] +
+			dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k)); 
         *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
         *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 2 * SQUARE((int)(num_site_var*0.5)) + k) = 
@@ -529,7 +557,8 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       // D*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
         *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k ) = 
-			-1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] + dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k));
+			-1.0 * conj_PRECISION(*(op->D + num_4link_var*op->neighbor_table[index] +
+			dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k)); 
         *(l->p_PRECISION.mumps_Is + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
 			i_start + num_site_var * op->neighbor_table[index + 1 + dir] + k/(int)(num_site_var*0.5) + num_site_var*0.5;
         *(l->p_PRECISION.mumps_Js + (9 * num_link_var)*op->neighbor_table[index] + num_link_var + 2*dir*num_link_var + 3 * SQUARE((int)(num_site_var*0.5)) + k) = 
@@ -541,10 +570,13 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   }	//loop over directions
 
   
+
+  MPI_Barrier(MPI_COMM_WORLD);
   printf0("hopping in mu - done!\n");
 
 #ifdef COARSE_SCALAP	//use Scalapack on coarsest level to solve.
   coarse_scalap_setup_PRECISION( l, threading);
+  MPI_Barrier(MPI_COMM_WORLD);
   printf0("generate scalap matrix done\n");
 #else
   // increase global indices by 1 to match fortran indexing.
@@ -713,34 +745,89 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 	vector_PRECISION test; 
 	MALLOC(test, complex_PRECISION, l->inner_vector_size);
 	memset(test, 0, l->inner_vector_size * sizeof(complex_PRECISION));
+	
+	
+	if (g.my_rank != 0) memset(eta, 0, l->inner_vector_size * sizeof(complex_PRECISION));
 	vector_PRECISION_copy(test, eta, 0, l->inner_vector_size, l);
+	PRECISION rt1 = 0, rt2 = 0;
 
-	translate2scalap_vectors_PRECISION( l, test);
+
+
+	//prints nnn elements per lattice site
+	int nnn = 1;
+	int mmm = l->num_lattice_site_var / nnn;
+	for (int ra = 0; ra < l->num_processes; ra++){
+	    if (g.my_rank == ra) {
+		for (int llsite = 0; llsite < l->num_inner_lattice_sites; llsite++){
+		    for (int entr = 0; entr < l->num_lattice_site_var; entr += mmm){
+			printf("r: %d, site: %3d, entry: %+5f%+5fi\n", g.my_rank, llsite, CSPLIT(test[entr]));
+		    }
+		}
+		printf("\n");fflush(stdout);
+	    }
+	    MPI_Barrier(MPI_COMM_WORLD);
+	}
+	
+	printf0("starting translating!\n");
+//	translate2scalap_vectors_PRECISION( l, test);
     //void pgetrs_PRECISION( TRANS, N, NRHS, A,	     IA, JA,	 DESCA, IPIV, B, IB, JB, DESCB, INFO );
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	printf0("right before pgetrs\n");
 	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals, &ione, &ione,
 		l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv,
 		test, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
-	translate2original_vectors_PRECISION( l, test);
 	
 	// test <- LU * test
 
 
 	printf0("finished pgetrs!\n");
-	exit(0);
-        START_MASTER(threading)
+//	exit(0);
+
+
+	//translate2original_vectors_PRECISION( l, test);
+	printf0("re-translate done!\n");
+	
+	
+	START_MASTER(threading)
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
 
 	//vector_copy eta -> phi 
 //uncomment this line to use solution        vector_PRECISION_copy(phi, test, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
 
 
+	MPI_Barrier(MPI_COMM_WORLD);
+	for (int ra = 0; ra < l->num_processes; ra++){
+	    if (g.my_rank == ra) {
+		for (int llsite = 0; llsite < l->num_inner_lattice_sites; llsite++){
+		    for (int entr = 0; entr < l->num_lattice_site_var; entr += mmm){
+			printf("r: %d, site: %3d, entry: %+5f%+5fi\n", g.my_rank, llsite, CSPLIT(test[entr]));
+		    }
+		}
+		printf("\n");fflush(stdout);
+	    }
+	    MPI_Barrier(MPI_COMM_WORLD);
+	}
 
-	apply_coarse_operator_PRECISION(phi, test, l->p_PRECISION.op, l, threading);
+
+   int start;
+  int end;
+  compute_core_start_end_custom(0, l->num_inner_lattice_sites, &start, &end, l, threading, 1);
+  coarse_self_couplings_PRECISION( phi, test, l->p_PRECISION.op, start, end, l);
+
+//  coarse_hopping_term_PRECISION( phi, test, l->p_PRECISION.op, _FULL_SYSTEM, l, threading );
+
+//	apply_coarse_operator_PRECISION(phi, test, l->p_PRECISION.op, l, threading);
+    
 	vector_PRECISION_minus( phi, phi, eta, 0, l->inner_vector_size, l );
 	PRECISION r2 = global_norm_PRECISION( eta, 0, l->inner_vector_size, l, threading );
 	PRECISION r = global_norm_PRECISION(phi, 0, l->inner_vector_size, l, threading);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	printf0("r1 / r2 = %e / %e\n", r, r2);
 	printf0("global norm: %e\n", r/r2);
 	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Finalize();
 	exit(0);
 
 
@@ -765,7 +852,7 @@ void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int
     int ib = 1, jb = 1;
     int N = l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes; 
     //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO )
-//TODO: Re-enable this line!    pgetrf_PRECISION( &N, &N, A, &ia, &ja, descA, ipiv, &info );    
+    pgetrf_PRECISION( &N, &N, A, &ia, &ja, descA, ipiv, &info );    
     if (info != 0 ) error0("Error during pgetrf_(), info = %d\n", info);
     
     /*
@@ -801,19 +888,84 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 	    l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes *
 	    sizeof(complex_PRECISION));
 
+    printf0("sq site_var: %d, inner_sites * site_var * num_processes: %d\n",
+	    SQUARE(l->num_lattice_site_var), l->num_inner_lattice_sites * l->num_lattice_site_var *
+	    l->num_processes);
+    int ra = 0;
+    int lr = 0, lc = 0;
+
+
+
     for (int llsite = 0; llsite < l->num_inner_lattice_sites; llsite++ ){ //loop over lattice sites
     //each lattice site contains 9 blocks of each SQUARE(site_var) elements, 1 for self coupling, +
     //2x4 hopping terms (2 in each dimension)
 	for (int d = 0; d < 9; d++){ //loop over each block as mentioned above
-	    for (int i = 0; i < SQUARE(l->num_lattice_site_var); i++){ //local index to copy elementwise within a block
-	        r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i] -
-			g.my_rank * l->num_inner_lattice_sites * l->num_lattice_site_var;
-	        c = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
-		l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var + r] += l->p_PRECISION.mumps_vals[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + i];
+
+	    lc = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var)];
+	    lr = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var)] - g.my_rank * l->num_inner_lattice_sites * l->num_lattice_site_var;
+
+	    lc = lc / l->num_lattice_site_var;
+	    lr = lr / l->num_lattice_site_var;
+
+	    
+	    //[self, T-, T+, Z-, Z+, Y-, Y+, X-, X+] 
+//	    if (d == 0){ 
+//	    if (d == 0 || d == 2 || d == 4 || d == 6 || d == 8){
+	    if (d == 0 || d == 1 || d == 3 || d == 5 || d == 7){
+
+	    if (g.my_rank == ra){
+		printf("rank: %d, lr: %5d, lc: %5d", g.my_rank, lr, lc);
+		switch (d) {
+		    case 0: printf("  S\n"); break;
+		    case 1: printf(" -T\n"); break;
+		    case 2: printf(" +T\n"); break;
+		    case 3: printf(" -Z\n"); break;
+		    case 4: printf(" +Z\n"); break;
+		    case 5: printf(" -Y\n"); break;
+		    case 6: printf(" +Y\n"); break;
+		    case 7: printf(" -X\n"); break;
+		    case 8: printf(" +X\n"); break;
+		}
 	    }
+
+	    
+	    for (int i = 0; i < l->num_lattice_site_var; i++)
+		for (int j = 0; j < l->num_lattice_site_var; j++){ //local index to copy elementwise within a block
+		r = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + 
+		    i * l->num_lattice_site_var + j] - 
+			   g.my_rank * l->num_inner_lattice_sites * l->num_lattice_site_var;
+		c = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + 
+		    i * l->num_lattice_site_var + j];
+		l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var +
+		    r] += l->p_PRECISION.mumps_vals[llsite*9*SQUARE(l->num_lattice_site_var) + d *
+		    SQUARE(l->num_lattice_site_var) + j * l->num_lattice_site_var + i];
+            }
+
+	    // this bracket
+	    }
+
+
+//copy chunk d 
+	    /*	
 	    r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var)] -
-			g.my_rank * l->num_inner_lattice_sites * l->num_lattice_site_var;
+		    g.my_rank * l->num_inner_lattice_sites * l->num_lattice_site_var;
 	    c = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var)];
+	    for (int i = 0; i < l->num_lattice_site_var; i ++)
+		for (int j = 0; j < l->num_lattice_site_var; j++){
+		    //				staring position of block
+		    l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var + r  
+			// copy of inner block elements
+			+ i * l->num_lattice_site_var + j] = 
+			//			    starting position of block
+			l->p_PRECISION.mumps_vals[llsite * 9 * SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + 
+			//copy of inner block elements
+			i * l->num_lattice_site_var + j];
+	    //copy element-wise but transpose to match scalapacks column major ordering
+
+		if (g.my_rank == ra && i % 12 == 0 && j % 12 == 0) printf("rank: %d, i: %5d, j: %5d, vals: %+f%+fi\n",
+			g.my_rank, i, j, CSPLIT(l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var + r + j * l->num_lattice_site_var + i]));
+	        
+	    }*/
 	}
     }
     //REMEMBER: Column major storage for Scalapack due to fortran calls!
