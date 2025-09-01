@@ -742,6 +742,19 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 	START_MASTER(threading)
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
 
+
+	apply_coarse_operator_PRECISION( phi, test, l->p_PRECISION.op, l, threading);
+	vector_PRECISION_minus( phi, phi, eta, 0, l->inner_vector_size, l );
+        PRECISION r2 = global_norm_PRECISION( eta, 0, l->inner_vector_size, l, threading );
+        PRECISION r = global_norm_PRECISION(phi, 0, l->inner_vector_size, l, threading);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        printf0("r1 / r2 = %e / %e\n", r, r2);
+        printf0("global norm: %e\n", r/r2);
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Finalize();
+        exit(0);
+
 //	printf0("finished pgetrs!\n");
 	//vector_copy eta -> phi 
         vector_PRECISION_copy(phi, test, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );

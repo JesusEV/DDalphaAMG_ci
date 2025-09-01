@@ -112,12 +112,6 @@ int main( int argc, char **argv ) {
 	printf0("call to mumps_setup from main.c\n");
 	END_MASTER(threadx)
         mumps_setup_float(lx, threadx);        //setup vals, Is, Js
-        START_MASTER(threadx)
-	MPI_Barrier(MPI_COMM_WORLD);
-        printf0("mumps_setup done in main.c\n");
-	END_MASTER(threadx)
-        SYNC_CORES(threadx)
-
         double t0 = 0,t1 = 0;
         START_MASTER(threadx)
         t0 = MPI_Wtime();
@@ -139,12 +133,12 @@ int main( int argc, char **argv ) {
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	printf0("possibly calling factorize from main.c\n");
-	if (g.on_solve){
+//	if (g.on_solve){
 		printf0("definitely calling factorize from main.c\n");
 		coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals,
 		lx->p_float.ipiv, threadx);//only factorize when on solve
         	printf0("scalapack factorize done in main.c\n");
-	}
+//	}
 #endif
         t1 = MPI_Wtime();
 	g.coarsest_fact_time += t1 - t0;

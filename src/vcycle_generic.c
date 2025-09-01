@@ -174,7 +174,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
  
             }
           } else {
-#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP_deactivated)
 	    if (!g.on_solve) { //deactivate direct solves during set up
               l->next_level->p_PRECISION.preconditioner = NULL;
 	    }
