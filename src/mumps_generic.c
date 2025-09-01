@@ -717,9 +717,6 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
                            vector_PRECISION eta, int res, level_struct *l,
                            struct Thread *threading){
     if (!l->idle){
-
-
-   
 //	printf0("solving scalap...\n");
         START_MASTER(threading)
         g.coarsest_solve_time -= MPI_Wtime();
@@ -735,89 +732,19 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 	memset(test, 0, l->inner_vector_size * sizeof(complex_PRECISION));
 	
 	
-	//if (g.my_rank != 0) memset(eta, 0, l->inner_vector_size * sizeof(complex_PRECISION));
 	vector_PRECISION_copy(test, eta, 0, l->inner_vector_size, l);
-	PRECISION rt1 = 0, rt2 = 0;
-
-
-
-	//prints nnn elements per lattice site
-	int nnn = 1;
-	int mmm = l->num_lattice_site_var / nnn;
-	for (int ra = 0; ra < l->num_processes; ra++){
-	    if (g.my_rank == ra) {
-		for (int llsite = 0; llsite < l->num_inner_lattice_sites; llsite++){
-		    for (int entr = 0; entr < l->num_lattice_site_var; entr += mmm){
-			printf("r: %d, site: %3d, entry: %+5f%+5fi\n", g.my_rank, llsite, CSPLIT(test[entr]));
-		    }
-		}
-		printf("\n");fflush(stdout);
-	    }
-	    MPI_Barrier(MPI_COMM_WORLD);
-	}
-	
-	printf0("starting translating!\n");
-//	translate2scalap_vectors_PRECISION( l, test);
-    //void pgetrs_PRECISION( TRANS, N, NRHS, A,	     IA, JA,	 DESCA, IPIV, B, IB, JB, DESCB, INFO );
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	printf0("right before pgetrs\n");
 	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals, &ione, &ione,
 		l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv,
 		test, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
-	
-	// test <- LU * test
-
-
-	printf0("finished pgetrs!\n");
-//	exit(0);
-
-
-	//translate2original_vectors_PRECISION( l, test);
-	printf0("re-translate done!\n");
-	
-	
 	START_MASTER(threading)
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
 
+	printf0("finished pgetrs!\n");
 	//vector_copy eta -> phi 
-//uncomment this line to use solution        vector_PRECISION_copy(phi, test, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
-
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	for (int ra = 0; ra < l->num_processes; ra++){
-	    if (g.my_rank == ra) {
-		for (int llsite = 0; llsite < l->num_inner_lattice_sites; llsite++){
-		    for (int entr = 0; entr < l->num_lattice_site_var; entr += mmm){
-			printf("r: %d, site: %3d, entry: %+5f%+5fi\n", g.my_rank, llsite, CSPLIT(test[entr]));
-		    }
-		}
-		printf("\n");fflush(stdout);
-	    }
-	    MPI_Barrier(MPI_COMM_WORLD);
-	}
-
-
-   int start;
-  int end;
-  compute_core_start_end_custom(0, l->num_inner_lattice_sites, &start, &end, l, threading, 1);
-  //coarse_self_couplings_PRECISION( phi, test, l->p_PRECISION.op, start, end, l);
-
-  //coarse_hopping_term_PRECISION( phi, test, l->p_PRECISION.op, _FULL_SYSTEM, l, threading );
-
-	apply_coarse_operator_PRECISION(phi, test, l->p_PRECISION.op, l, threading);
-    
-	vector_PRECISION_minus( phi, phi, eta, 0, l->inner_vector_size, l );
-	PRECISION r2 = global_norm_PRECISION( eta, 0, l->inner_vector_size, l, threading );
-	PRECISION r = global_norm_PRECISION(phi, 0, l->inner_vector_size, l, threading);
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	printf0("r1 / r2 = %e / %e\n", r, r2);
-	printf0("global norm: %e\n", r/r2);
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Finalize();
-	exit(0);
-
+        vector_PRECISION_copy(phi, test, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
 
         g.coarsest_solve_number ++;
         g.coarsest_solve_time += MPI_Wtime();
