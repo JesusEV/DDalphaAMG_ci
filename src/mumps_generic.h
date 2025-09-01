@@ -38,19 +38,6 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading);
 
 void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading);
 
-// since DDalphaAMG works with a 4D process grid over which the lattice sites
-// are distributed and Scalapack works with a 2D process grid over which the
-// matrix is distributed, we need to somehow translate the RHS / vectors as well
-// to a format, with which Scalapack can work properly.
-void translate2scalap_vectors_PRECISION(level_struct *l, vector_PRECISION phi);
-
-// having computed anything with scalapack in the "block row format" we need to
-// retranslate back to original ddalphaamg storage format to continue the
-// computation. Unfortunately, we have to do these two steps every single time
-// Scalapack does some computations.
-void translate2original_vectors_PRECISION(level_struct *l,
-                                          vector_PRECISION phi);
-
 #endif
 
 #endif
