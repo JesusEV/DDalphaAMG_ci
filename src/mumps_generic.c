@@ -728,33 +728,14 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 
 	int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
 	vector_PRECISION test; 
-	MALLOC(test, complex_PRECISION, l->inner_vector_size);
-	memset(test, 0, l->inner_vector_size * sizeof(complex_PRECISION));
-	
-	
-	vector_PRECISION_copy(test, eta, 0, l->inner_vector_size, l);
-
-	MPI_Barrier(MPI_COMM_WORLD);
-//	printf0("right before pgetrs\n");
+	MALLOC(test, complex_PRECISION, l->vector_size);
+	memset(test, 0, l->vector_size * sizeof(complex_PRECISION));
+	vector_PRECISION_copy(test, eta, 0, l->vector_size, l);
 	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals, &ione, &ione,
 		l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv,
 		test, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
 	START_MASTER(threading)
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
-
-
-	apply_coarse_operator_PRECISION( phi, test, l->p_PRECISION.op, l, threading);
-	vector_PRECISION_minus( phi, phi, eta, 0, l->inner_vector_size, l );
-        PRECISION r2 = global_norm_PRECISION( eta, 0, l->inner_vector_size, l, threading );
-        PRECISION r = global_norm_PRECISION(phi, 0, l->inner_vector_size, l, threading);
-
-        MPI_Barrier(MPI_COMM_WORLD);
-        printf0("r1 / r2 = %e / %e\n", r, r2);
-        printf0("global norm: %e\n", r/r2);
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Finalize();
-        exit(0);
-
 //	printf0("finished pgetrs!\n");
 	//vector_copy eta -> phi 
         vector_PRECISION_copy(phi, test, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
@@ -762,7 +743,7 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
         g.coarsest_solve_number ++;
         g.coarsest_solve_time += MPI_Wtime();
         printf0("scalap time  = %f, scalap solves:  %d\n", g.coarsest_solve_time, g.coarsest_solve_number);
-	FREE(test, complex_PRECISION, l->inner_vector_size);
+	FREE(test, complex_PRECISION, l->vector_size);
 	END_MASTER(threading)
         SYNC_CORES(threading);
     }
