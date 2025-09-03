@@ -143,7 +143,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
   	      
 
 	      if (!g.on_solve) { //deactivate direct solves during set up
-//                l->next_level->p_PRECISION.preconditioner = NULL;
+                l->next_level->p_PRECISION.preconditioner = NULL;
 	      }
 
 	      fgmres_iters = fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
@@ -176,7 +176,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
           } else {
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 	    if (!g.on_solve) { //deactivate direct solves during set up
-//              l->next_level->p_PRECISION.preconditioner = NULL;
+              l->next_level->p_PRECISION.preconditioner = NULL;
 	    }
 #endif
 	    START_MASTER(threading)

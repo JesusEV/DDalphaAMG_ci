@@ -109,7 +109,7 @@ int main( int argc, char **argv ) {
 
         SYNC_CORES(threadx)
         START_MASTER(threadx)
-	printf0("call to mumps_setup from main.c\n");
+//	printf0("call to mumps_setup from main.c\n");
 	END_MASTER(threadx)
         mumps_setup_float(lx, threadx);        //setup vals, Is, Js
         double t0 = 0,t1 = 0;
@@ -130,15 +130,11 @@ int main( int argc, char **argv ) {
         printf0("mumps analyze + factorize done in main.c\n");
 #else
 	//compute LU of matrix using scalapack
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	printf0("possibly calling factorize from main.c\n");
-//	if (g.on_solve){
-		printf0("definitely calling factorize from main.c\n");
+	if (g.on_solve){
 		coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals,
 		lx->p_float.ipiv, threadx);//only factorize when on solve
-        	printf0("scalapack factorize done in main.c\n");
-//	}
+        	//printf0("scalapack factorize done in main.c\n");
+	}
 #endif
         t1 = MPI_Wtime();
 	g.coarsest_fact_time += t1 - t0;
