@@ -95,7 +95,7 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
 #ifdef MUMPS_ADDS
 	//			site_var 			no. of nodes
         int mumps_n = l->next_level->num_lattice_site_var * l->next_level->num_inner_lattice_sites * l->next_level->num_processes;        //order of Matrix
-        int nnz = SQUARE(l->next_level->num_lattice_site_var) *l->next_level->num_inner_lattice_sites *9 * g.num_processes; //number of nonzero elements
+//        int nnz = SQUARE(l->next_level->num_lattice_site_var) *l->next_level->num_inner_lattice_sites *9 * g.num_processes; //number of nonzero elements (will not be used in implementation)
         int nnz_loc = SQUARE(l->next_level->num_lattice_site_var) * l->next_level->num_inner_lattice_sites *9;
         int rhs_len = l->next_level->p_float.v_end-l->next_level->p_float.v_start;
 	

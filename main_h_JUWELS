@@ -129,7 +129,6 @@
 #define pgetrf_float pcgetrf_
 #endif
 
-
 #ifdef SSE
   #define MALLOC( variable, kind, length ) do{ if ( variable != NULL ) { \
   printf0("malloc of \"%s\" failed: pointer is not NULL (%s:%d).\n", #variable, __FILE__, __LINE__ ); } \
@@ -507,6 +506,7 @@ typedef struct block_struct {
     // mostly useful, as of now, for PP and GCRODR
     int on_solve;
 
+    int low_level_meas;
     double avg_b1;
     double avg_b2;
     double avg_crst;

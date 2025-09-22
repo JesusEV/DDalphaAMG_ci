@@ -202,9 +202,10 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   int global_comm_size;
   MPI_Comm_size(MPI_COMM_WORLD, &global_comm_size);
 
-  int *glob_ranks, *loc_ranks; //will contain global ranks and corresponding local ranks
+  int *glob_ranks = NULL;
+  int *loc_ranks = NULL; //will contain global ranks and corresponding local ranks
 
-  //TODO: fix threading in here!
+//TODO: fix threading in here!
 //  START_MASTER(threading)
   MALLOC( glob_ranks, int, global_comm_size);
   MALLOC( loc_ranks, int, global_comm_size);
@@ -630,7 +631,7 @@ void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_
       // centralized solution
       if (g.my_rank == 0){
 	// FIXME : do some sort of casting here, to avoid warnings at compile-time
-	g.mumps_id.rhs = px->mumps_SOL;
+	g.mumps_id.rhs = (mumps_complex *)px->mumps_SOL;
       }
 
       // solving
@@ -684,20 +685,20 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc, i
     g.mumps_id.nnz_loc = nnz_loc;
     g.mumps_id.irn_loc = p->mumps_Is;
     g.mumps_id.jcn_loc = p->mumps_Js;
-    g.mumps_id.a_loc = p->mumps_vals;
+    g.mumps_id.a_loc = (mumps_complex *)p->mumps_vals;
 
     // linking RHS
     START_MASTER(threading)
     //printf0("setting rhs\n");
     END_MASTER(threading)
     g.mumps_id.nloc_rhs = rhs_len;
-    g.mumps_id.rhs_loc = p->mumps_rhs_loc;
+    g.mumps_id.rhs_loc = (mumps_complex *)p->mumps_rhs_loc;
     g.mumps_id.irhs_loc = p->mumps_irhs_loc;
     g.mumps_id.lrhs_loc = rhs_len; //leading dimension
 
     // solution only known to P0
     if (g.my_rank == 0){
-      g.mumps_id.rhs = p->mumps_SOL;
+      g.mumps_id.rhs = (mumps_complex *)p->mumps_SOL;
     }
 
     // control parameter for output (0 == suppressed)
