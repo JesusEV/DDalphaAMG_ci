@@ -126,9 +126,9 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               g.coarsest_time -= MPI_Wtime();
               END_MASTER(threading)
 		
-	      int fgmres_iters = -1;
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 
+	      int fgmres_iters = -1;
               // using entire vector length for fgmres_PRECISION()
               int old_v_end = l->next_level->p_PRECISION.v_end;
               l->next_level->p_PRECISION.v_end *=2;
@@ -169,7 +169,9 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               START_MASTER(threading)
               g.coarsest_time += MPI_Wtime();
 	      
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 	      printf0("gmres iters = %d\n", fgmres_iters);
+#endif
               END_MASTER(threading)
  
             }
