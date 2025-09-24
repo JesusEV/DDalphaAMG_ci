@@ -1,5 +1,5 @@
-#ifndef MUMPS_PRECISION_HEADER
-  #define MUMPS_PRECISION_HEADER
+#ifndef CDS_PRECISION_HEADER
+  #define CDS_PRECISION_HEADER
 
   #define ICNTL(I) icntl[(I) -1]	//macro according to docu //bridges from fortran indices to c
 

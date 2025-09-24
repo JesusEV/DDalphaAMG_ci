@@ -740,6 +740,6 @@ typedef struct block_struct {
 #endif
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-#include "mumps_double.h"
-#include "mumps_float.h"
+#include "coarsest_direct_solves_double.h"
+#include "coarsest_direct_solves_float.h"
 #endif

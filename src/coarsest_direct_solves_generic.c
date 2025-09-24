@@ -23,7 +23,7 @@
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 
-#include "mumps_PRECISION.h"
+#include "coarsest_direct_solves_PRECISION.h"
 
 #ifdef COARSE_SCALAP
 void blacs_get_(const int*, const int*, int*);
@@ -728,23 +728,23 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 	char trans = 'N';
 
 	int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
-	vector_PRECISION test; 
-	MALLOC(test, complex_PRECISION, l->vector_size);
-	memset(test, 0, l->vector_size * sizeof(complex_PRECISION));
-	vector_PRECISION_copy(test, eta, 0, l->vector_size, l);
+	vector_PRECISION out = NULL;
+	MALLOC(out, complex_PRECISION, l->vector_size);
+	memset(out, 0, l->vector_size * sizeof(complex_PRECISION));
+	vector_PRECISION_copy(out, eta, 0, l->vector_size, l);
 	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals, &ione, &ione,
 		l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv,
-		test, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
+		out, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
 	START_MASTER(threading)
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
 //	printf0("finished pgetrs!\n");
 	//vector_copy eta -> phi 
-        vector_PRECISION_copy(phi, test, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
+        vector_PRECISION_copy(phi, out, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
 
         g.coarsest_solve_number ++;
         g.coarsest_solve_time += MPI_Wtime();
         printf0("scalap time  = %f, scalap solves:  %d\n", g.coarsest_solve_time, g.coarsest_solve_number);
-	FREE(test, complex_PRECISION, l->vector_size);
+	FREE(out, complex_PRECISION, l->vector_size);
 	END_MASTER(threading)
         SYNC_CORES(threading);
     }
@@ -756,7 +756,6 @@ void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int
     printf0("scalapack factorization ongoing...\n");
     int info = 0;
     int ia = 1, ja = 1; //starting indices (global)
-    int ib = 1, jb = 1;
     int N = l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes; 
     //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO )
     pgetrf_PRECISION( &N, &N, A, &ia, &ja, descA, ipiv, &info );    
