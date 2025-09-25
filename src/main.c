@@ -116,7 +116,7 @@ int main( int argc, char **argv ) {
         START_MASTER(threadx)
         t0 = MPI_Wtime();
 
-#ifndef COARSE_SCALAP
+#ifdef MUMPS_ADDS
         //g.mumps_id.job = 4; //analyze and factorize
         g.mumps_id.job = 1; //analyze
         cmumps_c(&(g.mumps_id));
@@ -149,6 +149,7 @@ int main( int argc, char **argv ) {
 	printf0("done with factorize\n");
         END_MASTER(threadx)
         SYNC_CORES(threadx)
+    
       }
     }
 #endif
@@ -221,7 +222,6 @@ int main( int argc, char **argv ) {
 #endif
 
     g.on_solve = 1;
-
 
     solve_driver( &l, &threading );
   }
