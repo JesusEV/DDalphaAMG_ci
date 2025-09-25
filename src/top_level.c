@@ -582,9 +582,18 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 	  g.coarsest_fact_time += t1-t0;
 	  END_MASTER(threading)
 	  SYNC_CORES(threading)
-	}
-      }
+
+	  //set direct solve as precond during solve phase
+#if defined(MUMPS_ADDS)        
+          lx->p_float.preconditioner = mumps_solve_float;
+#elif defined(COARSE_SCALAP)
+          lx->p_float.preconditioner = coarse_scalap_solve_float;
 #endif
+ 
+        }
+     }
+#endif
+
 
   START_MASTER(threading)
   g.avg_b1 = 0.0;

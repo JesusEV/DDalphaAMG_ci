@@ -127,60 +127,49 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               END_MASTER(threading)
 		
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-
 	      int fgmres_iters = -1;
-              // using entire vector length for fgmres_PRECISION()
-              int old_v_end = l->next_level->p_PRECISION.v_end;
-              l->next_level->p_PRECISION.v_end *=2;
+	      if (g.on_solve){
+		  // using entire vector length for fgmres_PRECISION()
+		  int old_v_end = l->next_level->p_PRECISION.v_end;
+		  l->next_level->p_PRECISION.v_end *=2;
 
-              // assign new operator function handle
-              l->next_level->p_PRECISION.eval_operator = coarse_apply_oddeven_operator_PRECISION;
+		  // assign new operator function handle
+		  l->next_level->p_PRECISION.eval_operator = coarse_apply_oddeven_operator_PRECISION;
 
-              // solve: Ax = b using 
-              // x = l->next_level->p_PRECISION->x, 
-              // A = l->next_level->oe_op_PRECISION, 
-              // b = l->next_level->p_PRECISION->b
-  	      
+		  // solve: Ax = b using 
+		  // x = l->next_level->p_PRECISION->x, 
+		  // A = l->next_level->oe_op_PRECISION, 
+		  // b = l->next_level->p_PRECISION->b
+		  
 
-	      if (!g.on_solve) { //deactivate direct solves during set up
-                l->next_level->p_PRECISION.preconditioner = NULL;
+
+		  fgmres_iters = fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
+
+		  // restore old operator function handle
+		  l->next_level->p_PRECISION.eval_operator = coarse_apply_schur_complement_PRECISION;
+		    
+		  // restoring old v_end
+		  l->next_level->p_PRECISION.v_end = old_v_end;  
+	      } else {
+	              coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION),
+                      &(l->next_level->oe_op_PRECISION), l->next_level, threading );
 	      }
-
-	      fgmres_iters = fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
-
-#if defined(MUMPS_ADDS)	//restore old preconditioner
-              l->next_level->p_PRECISION.preconditioner = mumps_solve_PRECISION;
-#elif defined(COARSE_SCALAP)
-              l->next_level->p_PRECISION.preconditioner = coarse_scalap_solve_PRECISION;
-#endif
-	      // restore old operator function handle
-              l->next_level->p_PRECISION.eval_operator = coarse_apply_schur_complement_PRECISION;
-		
-              // restoring old v_end
-              l->next_level->p_PRECISION.v_end = old_v_end;  
-
 #else
-
               coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION),
                       &(l->next_level->oe_op_PRECISION), l->next_level, threading );
-
 #endif
 
               START_MASTER(threading)
               g.coarsest_time += MPI_Wtime();
 	      
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-	      printf0("gmres iters = %d\n", fgmres_iters);
+	      if (g.on_solve) printf0("gmres iters = %d\n", fgmres_iters);
 #endif
               END_MASTER(threading)
  
             }
           } else {
-#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-	    if (!g.on_solve) { //deactivate direct solves during set up
-              l->next_level->p_PRECISION.preconditioner = NULL;
-	    }
-#endif
+
 	    START_MASTER(threading)
 	    g.coarsest_time -= MPI_Wtime();
 	    END_MASTER(threading)
