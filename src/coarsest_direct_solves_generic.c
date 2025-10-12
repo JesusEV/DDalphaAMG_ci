@@ -246,7 +246,7 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   //printf0("allocs for hopping done!\n");
 
 
-
+  int printrank = 0;
   /* FINDME */
   for (dir = T; dir <= X; dir++){
     boundary_table = op->c.boundary_table[2*dir];
@@ -280,11 +280,19 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     for (node = core_start; node < core_end; node ++){
       index = 5 * node; // neighbor table will contain site numbers in chunks of 5 for each lattice site: [my_site_number, T neighbor, Z neighbor, Y neighbor, X neighbor]
     
-/*      index = 5 * 1;
-      printf0("site 1 has following neighbors:\n");
-      for (int ii = 0; ii < 5; ii++){
-	  printf0("site: %d, ", op->neighbor_table[index + ii]);
+//      if (g.my_rank == printrank){
+//	printf("Rank: %d, working on lattice site %3d: \t \t \t", g.my_rank, node);
+//	printf("dir: %d, i: %3d, ", dir, op->neighbor_table[index]);
+//      }
+/*
+      if (g.my_rank == printrank){
+	      index = 5 * node;
+	      for (int ii = 0; ii < 5; ii++){
+		  printf("site: %d, ", op->neighbor_table[index + ii]);
+	      }
+	      printf("\n");
       }
+      
       printf0("\n"); fflush(stdout);
       MPI_Barrier(MPI_COMM_WORLD);
       exit(0);
@@ -342,7 +350,11 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 	lcoords[dir]++; //2.1.
 	li = lex_mod_index( lcoords[T], lcoords[Z], lcoords[Y], lcoords[X], l->local_lattice); //2.2
 	
+//	li = op->neighbor_table[index + 1 + dir] % l->num_inner_lattice_sites;
 
+//	if (g.my_rank == printrank){
+//	    printf("j: %3d enthält nnz\n", neighbors_j_start/num_site_var + li);
+//	}
 
         for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //FINDME
@@ -393,11 +405,18 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 	// write site index to buffer:
         *(buff_i_send[dir] + 2 * buffer_i_pt) = boundary_table[op->neighbor_table[index + 1 + dir] % comm_nr[dir]];
         *(buff_i_send[dir] + 2 * buffer_i_pt + 1) = op->neighbor_table[index];
+/*
+	if (g.my_rank == 0) printf("node %d has neigbor node %d on different domain\n",
+		buff_i_send[dir][2*buffer_i_pt +1], buff_i_send[dir][2*buffer_i_pt]);
+		*/
  	buffer_i_pt++;
 	//printf0("node %d has neighbor in dir %d on different domain\n", node, dir);
       } else {	// neighboring lattice site is on same/my process-domain
 
 
+//	if (g.my_rank == printrank){
+//	    printf("j: %3d enthält nnz\n", j_start/num_site_var + op->neighbor_table[index +1 +dir]);
+//	}
 
         for (k = 0; k < SQUARE(num_site_var/2); k ++){
           //A
@@ -430,6 +449,18 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 
     // sending both buffers:
     if (comm_nr[dir] > 0){
+/*	
+	//TODO: remove the output:
+//	if (g.odd_even)
+	if (g.my_rank == 0){
+	    printf("from P%d to P%d sending in dir %d containing:\n", g.my_rank, l->neighbor_rank[2*dir], dir);
+	    for (int i = 0; i <  comm_nr[dir]; i ++){
+		printf("%d, %d\n", buff_i_send[dir][2 * i], buff_i_send[dir][2 * i +1]);
+	    }
+	}
+*/
+
+
       MPI_Isend(buff_d_send[dir], comm_nr[dir] * num_link_var, MPI_COMPLEX_PRECISION,
 	      l->neighbor_rank[2*dir], dir, g.comm_cart, &req);
       MPI_Isend(buff_i_send[dir], 2 * comm_nr[dir], MPI_INT, l->neighbor_rank[2*dir], dir,
@@ -442,11 +473,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     }
     //printf0("Isends in dim: %d done!\n", dir);
   }  // loop over directions
-
-
-
-
-
 
   //printf0("hopping in mu+ done!\n");
 
@@ -461,7 +487,14 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       neighbors_j_start = loc_ranks[l->neighbor_rank[2*dir+1]] * l->num_inner_lattice_sites * site_var;	
       // copy buffer content to mumps_vals
       for (buffer_i_pt = 0; buffer_i_pt < comm_nr[dir]; buffer_i_pt++){
-        buffer_d_pt = num_link_var * buffer_i_pt;
+ 
+      if (g.my_rank == printrank) {
+    	printf("Rank: %d, working on lattice site %3d: \t \t \t", g.my_rank, buff_i_recv[dir][2 * buffer_i_pt]);
+	printf("dir: %d, i: %3d, ", dir, i_start/num_site_var + buff_i_recv[dir][2 * buffer_i_pt]);
+	printf("j: %3d \n", neighbors_j_start / num_site_var + buff_i_recv[dir][2 * buffer_i_pt +1]);
+      }
+
+       buffer_d_pt = num_link_var * buffer_i_pt;
 	// A*
 	for (k = 0; k < SQUARE(num_site_var / 2); k++ ){
 	  *(l->p_PRECISION.mumps_vals + 9 * num_link_var * buff_i_recv[dir][2 * buffer_i_pt] + num_link_var + 2*dir*num_link_var + k) = 
@@ -518,6 +551,12 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
       }
       index = 5 * i;
       // regular mu- coupling
+      if (g.my_rank == printrank) {
+    	printf("Rank: %d, working on lattice site %3d: \t \t \t", g.my_rank, i);
+	printf("dir: %d, i: %3d, ", dir, i_start/num_site_var + op->neighbor_table[index + 1 + dir]);
+	printf("j: %3d \n", j_start / num_site_var + op->neighbor_table[index]);
+      }
+
       // A*
       for (k = 0; k < SQUARE(num_site_var/2); k ++){
         *(l->p_PRECISION.mumps_vals + (9 * num_link_var)*op->neighbor_table[index + 1 + dir] + num_link_var + 2*dir*num_link_var + k) = 
@@ -758,6 +797,32 @@ void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int
     int ia = 1, ja = 1; //starting indices (global)
     int N = l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes; 
     //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO )
+    
+    int max_rows = l->num_inner_lattice_sites * l->num_lattice_site_var;
+    int max_cols = l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes;
+    int stepsize = 8; //l->num_lattice_site_var;
+
+    if (g.my_rank == 0){
+	for( int i = 0; i < max_rows; i += stepsize){
+	    for (int j = 0; j < max_cols; j += stepsize){
+		if (A[j * max_rows + i] == 0 ) printf("_ ");
+		else printf("X ");
+	    }
+	    printf("\n");
+	}
+/*	for (int i = 0; i < max_rows; i += stepsize){
+	    for (int j = 0; j < max_cols; j += stepsize){
+		if (cimag(A[i*max_cols *l->num_lattice_site_var+ j*l->num_lattice_site_var]) == 0.0
+			&& creal(A[i*max_cols*l->num_lattice_site_var + j*l->num_lattice_site_var]) == 0.0 ) printf("_ ");
+		else printf("X ");
+	    }
+	    printf("\n");
+	}	*/
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    exit(0);
+
     pgetrf_PRECISION( &N, &N, A, &ia, &ja, descA, ipiv, &info );    
     if (info != 0 ) error0("Error during pgetrf_(), info = %d\n", info);
     printf0("scalap factorization done!\n");
@@ -775,6 +840,9 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
     //each lattice site contains 9 blocks of each SQUARE(site_var) elements, 1 for self coupling, +
     //2x4 hopping terms (2 in each dimension)
 	for (int d = 0; d < 9; d++){ //loop over each block as mentioned above
+	    //if (d == 0){ //
+	    if (d == 2 || d == 4 || d == 6 || d == 8){
+	    //if (d % 2 == 0){
 	    for (int i = 0; i < l->num_lattice_site_var; i++)
 		for (int j = 0; j < l->num_lattice_site_var; j++){ //local index to copy elementwise within a block
 		r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + 
@@ -785,7 +853,9 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 		l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var +
 		    r] += l->p_PRECISION.mumps_vals[llsite*9*SQUARE(l->num_lattice_site_var) + d *
 		    SQUARE(l->num_lattice_site_var) + i * l->num_lattice_site_var + j];
-            }
+		}    
+	    printf0("r: %d, c: %d\n", r, c);
+	}
 	}
     }
 }
