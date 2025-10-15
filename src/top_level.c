@@ -167,7 +167,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       END_MASTER(threading)
 
 #ifdef POLYPREC
-      {
+      if (!g.on_solve){
         // setting flag to re-update lejas
         level_struct *lx = l;
         while (1) {
@@ -188,7 +188,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 #ifdef BLOCK_JACOBI
-      {
+      if (!g.on_solve){
         // setting flag to re-update lejas
         level_struct *lx = l;
         while (1) {
@@ -209,7 +209,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 #ifdef GCRODR
-      {
+      if (!g.on_solve){
         // setting flag to re-update recycling subspace
         level_struct *lx = l;
         while (1) {
@@ -234,7 +234,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       // calling the coarsest-level solver once on setup
 //#if defined(GCRODR) || defined(POLYPREC) || defined(BLOCK_JACOBI)
 #if defined(GCRODR)
-      {
+      if (!g.on_solve){
         level_struct *lx = l;
 
         START_MASTER(threading)
@@ -246,86 +246,84 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 
             if ( !(lx->idle) ) {
 
-            if ( g.mixed_precision==0 ) {
+		if ( g.mixed_precision==0 ) {
 
-              gmres_double_struct* px = &(lx->p_double);
+		  gmres_double_struct* px = &(lx->p_double);
 
-              // set RHS to random
-              START_MASTER(threading)
-              vector_double_define_random( px->b, px->v_start, px->v_end, lx );
-              END_MASTER(threading)
+		  // set RHS to random
+		  START_MASTER(threading)
+		  vector_double_define_random( px->b, px->v_start, px->v_end, lx );
+		  END_MASTER(threading)
 
-              START_MASTER(threading)
-              g.gcrodr_calling_from_setup = 1;
-              END_MASTER(threading)
-              SYNC_MASTER_TO_ALL(threading)
+		  START_MASTER(threading)
+		  g.gcrodr_calling_from_setup = 1;
+		  END_MASTER(threading)
+		  SYNC_MASTER_TO_ALL(threading)
 
-              double buff1x = px->tol;
-              double buff2x = g.coarse_tol;
-              START_MASTER(threading)
-              px->tol = 1.0e-20;
-              g.coarse_tol = 1.0e-20;
-              END_MASTER(threading)
-              SYNC_MASTER_TO_ALL(threading)
-              // call the coarsest-level solver
-              while ( px->gcrodr_double.CU_usable==0 ) {
-                coarse_solve_odd_even_double( px, &(lx->oe_op_double), lx, threading );
-              }
-              START_MASTER(threading)
-              px->tol = buff1x;
-              g.coarse_tol = buff2x;
-              END_MASTER(threading)
-              SYNC_MASTER_TO_ALL(threading)
+		  double buff1x = px->tol;
+		  double buff2x = g.coarse_tol;
+		  START_MASTER(threading)
+		  px->tol = 1.0e-20;
+		  g.coarse_tol = 1.0e-20;
+		  END_MASTER(threading)
+		  SYNC_MASTER_TO_ALL(threading)
+		  // call the coarsest-level solver
+		  while ( px->gcrodr_double.CU_usable==0 ) {
+		    coarse_solve_odd_even_double( px, &(lx->oe_op_double), lx, threading );
+		  }
+		  START_MASTER(threading)
+		  px->tol = buff1x;
+		  g.coarse_tol = buff2x;
+		  END_MASTER(threading)
+		  SYNC_MASTER_TO_ALL(threading)
 
-              START_MASTER(threading)
-              g.gcrodr_calling_from_setup = 0;
-              END_MASTER(threading)
-              SYNC_MASTER_TO_ALL(threading)
+		  START_MASTER(threading)
+		  g.gcrodr_calling_from_setup = 0;
+		  END_MASTER(threading)
+		  SYNC_MASTER_TO_ALL(threading)
 
-            }
-            else {
+		} else {
 
-              gmres_float_struct* px = &(lx->p_float);
+		  gmres_float_struct* px = &(lx->p_float);
 
-              // set RHS to random
-              START_MASTER(threading)
-              vector_float_define_random( px->b, px->v_start, px->v_end, lx );
-              END_MASTER(threading)
+		  // set RHS to random
+		  START_MASTER(threading)
+		  vector_float_define_random( px->b, px->v_start, px->v_end, lx );
+		  END_MASTER(threading)
 
-              START_MASTER(threading)
-              g.gcrodr_calling_from_setup = 1;
-              END_MASTER(threading)
-              SYNC_MASTER_TO_ALL(threading)
+		  START_MASTER(threading)
+		  g.gcrodr_calling_from_setup = 1;
+		  END_MASTER(threading)
+		  SYNC_MASTER_TO_ALL(threading)
 
-              double buff1x = px->tol;
-              double buff2x = g.coarse_tol;
-              START_MASTER(threading)
-              px->tol = 1.0e-20;
-              g.coarse_tol = 1.0e-20;
-              END_MASTER(threading)
-              SYNC_MASTER_TO_ALL(threading)
-              // call the coarsest-level solver
-              while ( px->gcrodr_float.CU_usable==0 ) {
-                coarse_solve_odd_even_float( px, &(lx->oe_op_float), lx, threading );
-              }
-              START_MASTER(threading)
-              px->tol = buff1x;
-              g.coarse_tol = buff2x;
-              END_MASTER(threading)
-              SYNC_MASTER_TO_ALL(threading)
+		  double buff1x = px->tol;
+		  double buff2x = g.coarse_tol;
+		  START_MASTER(threading)
+		  px->tol = 1.0e-20;
+		  g.coarse_tol = 1.0e-20;
+		  END_MASTER(threading)
+		  SYNC_MASTER_TO_ALL(threading)
+		  // call the coarsest-level solver
+		  while ( px->gcrodr_float.CU_usable==0 ) {
+		    coarse_solve_odd_even_float( px, &(lx->oe_op_float), lx, threading );
+		  }
+		  START_MASTER(threading)
+		  px->tol = buff1x;
+		  g.coarse_tol = buff2x;
+		  END_MASTER(threading)
+		  SYNC_MASTER_TO_ALL(threading)
 
-              START_MASTER(threading)
-              g.gcrodr_calling_from_setup = 0;
-              END_MASTER(threading)
-              SYNC_MASTER_TO_ALL(threading)
+		  START_MASTER(threading)
+		  g.gcrodr_calling_from_setup = 0;
+		  END_MASTER(threading)
+		  SYNC_MASTER_TO_ALL(threading)
 
-            }
+		}
 
             } // end of !idle if
 
             break;
-          }
-          else { lx = lx->next_level; }
+          } else { lx = lx->next_level; }
         }
 
         START_MASTER(threading)
@@ -361,7 +359,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 #ifdef POLYPREC
-  {
+  if (!g.on_solve){
 
     SYNC_MASTER_TO_ALL(threading)
     SYNC_CORES(threading)
@@ -394,7 +392,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 #ifdef BLOCK_JACOBI
-  {
+  if (!g.on_solve){
     // setting flag to re-update lejas
     level_struct *lx = l;
     while (1) {
@@ -415,7 +413,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 #ifdef GCRODR
-  {
+  if (!g.on_solve){
     // setting flag to re-update recycling subspace
     level_struct *lx = l;
     while (1) {
@@ -440,7 +438,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       // calling the coarsest-level solver once on setup
 //#if defined(GCRODR) || defined(POLYPREC) || defined(BLOCK_JACOBI)
 #if defined(GCRODR)
-      {
+      if (!g.on_solve){
         level_struct *lx = l;
 
         START_MASTER(threading)
