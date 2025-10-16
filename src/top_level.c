@@ -167,7 +167,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       END_MASTER(threading)
 
 #ifdef POLYPREC
-      if (!g.on_solve){
+#if defined(COARSE_SCALAP) || defined(MUMPS_ADDS)
+      if (!g.on_solve)
+#endif
+      {
         // setting flag to re-update lejas
         level_struct *lx = l;
         while (1) {
@@ -188,7 +191,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 #ifdef BLOCK_JACOBI
-      if (!g.on_solve){
+#if defined(COARSE_SCALAP) || defined(MUMPS_ADDS)
+      if (!g.on_solve)
+#endif
+      {
         // setting flag to re-update lejas
         level_struct *lx = l;
         while (1) {
@@ -209,7 +215,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 #ifdef GCRODR
-      if (!g.on_solve){
+#if defined(COARSE_SCALAP) || defined(MUMPS_ADDS)
+      if (!g.on_solve)
+#endif
+      {
         // setting flag to re-update recycling subspace
         level_struct *lx = l;
         while (1) {
@@ -234,7 +243,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       // calling the coarsest-level solver once on setup
 //#if defined(GCRODR) || defined(POLYPREC) || defined(BLOCK_JACOBI)
 #if defined(GCRODR)
-      if (!g.on_solve){
+#if defined(COARSE_SCALAP) || defined(MUMPS_ADDS)
+      if (!g.on_solve)
+#endif
+      {
         level_struct *lx = l;
 
         START_MASTER(threading)
@@ -359,7 +371,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 #ifdef POLYPREC
-  if (!g.on_solve){
+#if defined(COARSE_SCALAP) || defined(MUMPS_ADDS)
+  if (!g.on_solve)
+#endif
+  {
 
     SYNC_MASTER_TO_ALL(threading)
     SYNC_CORES(threading)
@@ -392,7 +407,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 #ifdef BLOCK_JACOBI
-  if (!g.on_solve){
+#if defined(COARSE_SCALAP) || defined(MUMPS_ADDS)
+  if (!g.on_solve)
+#endif
+  {
     // setting flag to re-update lejas
     level_struct *lx = l;
     while (1) {
@@ -413,7 +431,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #endif
 
 #ifdef GCRODR
-  if (!g.on_solve){
+#if defined(COARSE_SCALAP) || defined(MUMPS_ADDS)
+  if (!g.on_solve)
+#endif
+  {
     // setting flag to re-update recycling subspace
     level_struct *lx = l;
     while (1) {
@@ -438,7 +459,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
       // calling the coarsest-level solver once on setup
 //#if defined(GCRODR) || defined(POLYPREC) || defined(BLOCK_JACOBI)
 #if defined(GCRODR)
-      if (!g.on_solve){
+#if defined(COARSE_SCALAP) || defined(MUMPS_ADDS)
+      if (!g.on_solve)
+#endif
+      {
         level_struct *lx = l;
 
         START_MASTER(threading)
