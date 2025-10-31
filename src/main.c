@@ -130,11 +130,11 @@ int main( int argc, char **argv ) {
         printf0("mumps analyze + factorize done in main.c\n");
 #else
 	//compute LU of matrix using scalapack
-	if (g.on_solve){
+//	if (g.on_solve){
 		coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals,
 		lx->p_float.ipiv, threadx);//only factorize when on solve
         	//printf0("scalapack factorize done in main.c\n");
-	}
+//	}
 #endif
         t1 = MPI_Wtime();
 	g.coarsest_fact_time += t1 - t0;
@@ -143,7 +143,8 @@ int main( int argc, char **argv ) {
 	if (g.on_solve) printf0("and factorize ");
 	printf0("time (seconds) : %f \t in main.c\n",t1-t0);
 #else
-	if (g.on_solve) printf0("Invert using scalapack time (seconds) : %f \t in main.c\n",t1-t0);
+//	if (g.on_solve)
+	    printf0("Invert using scalapack time (seconds) : %f \t in main.c\n",t1-t0);
 #endif
 	MPI_Barrier(MPI_COMM_WORLD);
 	printf0("done with factorize\n");
