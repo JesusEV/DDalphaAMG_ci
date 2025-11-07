@@ -418,7 +418,8 @@ void coarse_oddeven_PRECISION_set_self_couplings( level_struct *l, struct Thread
     cgem_inverse( 2*nv, op->clover_oo_inv_vectorized + i*size_v, 
                   op->clover_vectorized + (op->num_even_sites+i)*size_v, column_offset );
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   // preparation for direct solves in Block Jacobi
   {
     // l->p_PRECISION.block_jacobi_PRECISION.bj_op_inv_vectorized
@@ -451,7 +452,8 @@ void coarse_oddeven_PRECISION_set_self_couplings( level_struct *l, struct Thread
     cgem_inverse( 4*nv, op->clover_doublet_oo_inv_vectorized + i*size_doublet_v, 
                   op->clover_doublet_vectorized + (op->num_even_sites+i)*size_doublet_v, column_doublet_offset );
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   // preparation for direct solves in Block Jacobi
   {
     // l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_inv_vectorized
@@ -542,7 +544,8 @@ void coarse_oddeven_alloc_PRECISION( level_struct *l ) {
 #else
   int column_offset = SIMD_LENGTH_PRECISION*((2*nv+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
   MALLOC_HUGEPAGES( op->clover_oo_inv_vectorized, PRECISION, 2*2*nv*column_offset*op->num_odd_sites, 4*SIMD_LENGTH_PRECISION );
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   l->p_PRECISION.block_jacobi_PRECISION.bj_op_inv_vectorized = NULL;
   MALLOC_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_op_inv_vectorized, PRECISION, 2*2*nv*column_offset*op->num_even_sites, 4*SIMD_LENGTH_PRECISION );
   l->p_PRECISION.block_jacobi_PRECISION.bj_op_vectorized = NULL;
@@ -551,7 +554,8 @@ void coarse_oddeven_alloc_PRECISION( level_struct *l ) {
 #ifdef HAVE_TM1p1
   int column_doublet_offset = SIMD_LENGTH_PRECISION*((4*nv+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
   MALLOC_HUGEPAGES( op->clover_doublet_oo_inv_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_odd_sites, 4*SIMD_LENGTH_PRECISION );
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_inv_vectorized = NULL;
   MALLOC_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_inv_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_even_sites, 4*SIMD_LENGTH_PRECISION );
   l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_vectorized = NULL;
@@ -583,7 +587,8 @@ void coarse_oddeven_alloc_PRECISION( level_struct *l ) {
   else
     l->sp_PRECISION.v_end = op->num_even_sites*l->num_lattice_site_var;
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   // solver
   if ( l->level == 0 )
     l->p_PRECISION.block_jacobi_PRECISION.local_p.v_end = op->num_even_sites*l->num_lattice_site_var;
@@ -690,14 +695,16 @@ void coarse_oddeven_free_PRECISION( level_struct *l ) {
 #else
   int column_offset = SIMD_LENGTH_PRECISION*((2*nv+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
   FREE_HUGEPAGES( op->clover_oo_inv_vectorized, PRECISION, 2*2*nv*column_offset*op->num_odd_sites );
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   FREE_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_op_inv_vectorized, PRECISION, 2*2*nv*column_offset*op->num_even_sites );
   FREE_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_op_vectorized, PRECISION, 2*2*nv*column_offset*op->num_even_sites );
 #endif
 #ifdef HAVE_TM1p1
   int column_doublet_offset = SIMD_LENGTH_PRECISION*((4*nv+SIMD_LENGTH_PRECISION-1)/SIMD_LENGTH_PRECISION);
   FREE_HUGEPAGES( op->clover_doublet_oo_inv_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_odd_sites );
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   FREE_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_inv_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_even_sites );
   FREE_HUGEPAGES( l->p_PRECISION.block_jacobi_PRECISION.bj_doublet_op_vectorized, PRECISION, 2*4*nv*column_doublet_offset*op->num_even_sites );
 #endif
@@ -1441,14 +1448,16 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   int start, end;
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   if ( l->level==0 && l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas == 1 ) {
     // re-construct Lejas
     local_re_construct_lejas_PRECISION( l, threading );
   }
 #endif
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   // if Block Jacobi is enabled, solve the problem : M^{-1}Ax = M^{-1}b
   if ( p->block_jacobi_PRECISION.BJ_usable == 1 ) {
     // create a backup of b
@@ -1487,7 +1496,8 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
   SYNC_MASTER_TO_ALL(threading)
   SYNC_CORES(threading)
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   // restore the rhs
   if ( p->block_jacobi_PRECISION.BJ_usable == 1 ) {
     vector_PRECISION_copy( p->b, p->block_jacobi_PRECISION.b_backup, start, end, l );

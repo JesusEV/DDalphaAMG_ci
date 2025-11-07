@@ -29,7 +29,8 @@ void smoother_PRECISION_def( level_struct *l ) {
   l->p_PRECISION.op = &(l->s_PRECISION.op);
   l->p_PRECISION.v_start = 0;
   l->p_PRECISION.v_end = l->inner_vector_size;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   if ( l->level==0 ) {
     l->p_PRECISION.block_jacobi_PRECISION.local_p.op = &(l->s_PRECISION.op);
     l->p_PRECISION.block_jacobi_PRECISION.local_p.v_start = 0;

@@ -471,7 +471,8 @@ typedef struct block_struct {
     int polyprec_d;
 #endif
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     int local_polyprec_d;
 #endif
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
@@ -541,7 +542,8 @@ typedef struct block_struct {
 #endif
 
     double matmul_time;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     double bj_time;
 #endif
 #ifdef GCRODR
@@ -712,7 +714,8 @@ typedef struct block_struct {
   #include "gcrodr_float.h"
 #endif
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   #include "block_jacobi_double.h"
   #include "block_jacobi_float.h"
   #include "local_polyprec_double.h"

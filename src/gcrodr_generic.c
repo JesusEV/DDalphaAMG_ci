@@ -75,9 +75,13 @@ void flgcrodr_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->gcrodr_PRECISION.Gc = NULL;
   p->gcrodr_PRECISION.hatZ = NULL;
   p->gcrodr_PRECISION.hatW = NULL;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   p->gcrodr_PRECISION.r_aux = NULL;
 #endif
+
+  p->rhs_bk = NULL;
+  p->was_there_stagnation = 0;
 
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
   p->gcrodr_PRECISION.PC = NULL;
@@ -147,7 +151,8 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
       p->gcrodr_PRECISION.U[i] = p->gcrodr_PRECISION.U[0] + i*vl;
     }
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     MALLOC( p->gcrodr_PRECISION.r_aux, complex_PRECISION, vl );
 #endif
 
@@ -281,6 +286,7 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
 #endif
   }
 
+  MALLOC( p->rhs_bk, complex_PRECISION, vl );
 }
 
 
@@ -310,7 +316,8 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
     FREE( p->gcrodr_PRECISION.Gc, complex_PRECISION*, g_ln );
     FREE( p->gcrodr_PRECISION.hatZ, complex_PRECISION*, g_ln );
     FREE( p->gcrodr_PRECISION.hatW, complex_PRECISION*, g_ln+1 );
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     FREE( p->gcrodr_PRECISION.r_aux, complex_PRECISION, p->gcrodr_PRECISION.syst_size );
 #endif
 
@@ -352,6 +359,8 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
     FREE( p->gcrodr_PRECISION.DPC, vector_PRECISION, p->gcrodr_PRECISION.k );
 #endif    
   }
+
+  FREE( p->rhs_bk, complex_PRECISION, p->gcrodr_PRECISION.syst_size );
 }
 
 
@@ -447,7 +456,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
         apply_operator_PRECISION( p->gcrodr_PRECISION.C[i], p->gcrodr_PRECISION.Yk[i], p, l, threading );
       }
 
-      int i_length = p->v_end - p->v_start;
+      //int i_length = p->v_end - p->v_start;
+      int i_length = end-start;
       pqr_PRECISION( i_length, k, p->gcrodr_PRECISION.C, p->gcrodr_PRECISION.R, p, l, threading );
 
       SYNC_MASTER_TO_ALL(threading);
@@ -537,18 +547,19 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     //printf0("OUT OF INITIAL GMRES, m = %d ***\n", m);
 
-    if ( m>20 && m<k ) {
+    //if ( m>20 && m<k ) {
+    if ( m>k ) {
 
       double t0, t1;
       t0 = MPI_Wtime();
 
-      printf0("Quite a lot of iterations. Let's try and construct a deflation/recycling subspace\n");
+      //printf0("Quite a lot of iterations. Let's try and construct a deflation/recycling subspace\n");
 
       {
 
         p->initial_guess_zero = 0;
 
-        vector_PRECISION_define_random( p->x, start, end, l );
+        vector_PRECISION_define_random( p->x, p->v_start, p->v_end, l );
 
         // compute initial residual
         apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
@@ -597,7 +608,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       SYNC_MASTER_TO_ALL(threading);
 
       t1 = MPI_Wtime();
-      printf0("Arnoldi time : %.10f seconds\n", t1-t0);
+      //printf0("Arnoldi time : %.10f seconds\n", t1-t0);
 
     }
     else {
@@ -608,7 +619,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
                                 p->y, p->gamma, p->H, m-1, 1, p, l, threading );
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
 
     // computing the actual residual in case of Block Jacobi
     {
@@ -712,7 +724,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     SYNC_MASTER_TO_ALL(threading);
   } else{ error0("Invalid value for p->gcrodr_PRECISION.CU_usable \n"); }
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
 #endif
 
@@ -788,6 +801,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     // updating p->r
 
+/*
 #ifdef BLOCK_JACOBI
 
     // computing the actual residual in case of Block Jacobi
@@ -826,6 +840,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
 #endif
+*/
+
+    apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+    vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
     int upd_itrs;
     if ( g.on_solve==1 ) { upd_itrs = g.gcrodr_upd_itrs_solve; }
