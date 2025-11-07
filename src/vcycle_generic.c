@@ -175,6 +175,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
 
+              printf("RIGHT BEFORE WHILE(1)\n");
               while( 1 ) {
                 coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
                 if ( l->next_level->p_PRECISION.was_there_stagnation==0 ) { break; }
@@ -194,6 +195,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
                   break;
                 }
               }
+              printf("RIGHT AFTER WHILE(1)\n");
 #else
               coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
 #endif

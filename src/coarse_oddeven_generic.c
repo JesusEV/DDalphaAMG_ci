@@ -1475,7 +1475,9 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 
 #ifdef POLYPREC
   START_MASTER(threading)
-  p->preconditioner = p->polyprec_PRECISION.preconditioner;
+  if ( l->level == 0 ) {
+    p->preconditioner = p->polyprec_PRECISION.preconditioner;
+  }
   END_MASTER(threading)
 
   SYNC_MASTER_TO_ALL(threading)

@@ -430,8 +430,12 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   if ( p->gcrodr_PRECISION.CU_usable==1 ) {
     vector_PRECISION *Uk;
 
+    if ( g.my_rank==0 ) printf("Almost ... before (2) ...\n");
+
     if ( p->initial_guess_zero == 1 )
       vector_PRECISION_define( p->x, 0, start, end, l );
+
+    if ( g.my_rank==0 ) printf("Almost ... before (3) ...\n");
 
     SYNC_MASTER_TO_ALL(threading);
 
@@ -475,7 +479,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       vector_PRECISION *Yk = p->gcrodr_PRECISION.Yk;
       for ( i=0; i<k; i++ ) {
         // set all vectors in Yk to zero, to accumulate
+        if ( g.my_rank==0 ) printf("Almost ... before (4) ...\n");
         vector_PRECISION_define( Uk[i], 0, start, end, l );
+        if ( g.my_rank==0 ) printf("Almost ... before (5) ...\n");
         // and then, multi saxpy to obtain Yk
         // (the <i+1> in the 5th parameter is due to the triangular nature of Rinv)
         vector_PRECISION_multi_saxpy( Uk[i], Yk, Rinv[i], 1, i+1, start, end, l );
@@ -530,8 +536,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   } else if ( p->gcrodr_PRECISION.CU_usable==0 ) {
     // call one cycle of FGMRES
 
+    if ( g.my_rank==0 ) printf("Almost ... before (6) ...\n");
     if ( p->initial_guess_zero == 1 )
       vector_PRECISION_define( p->x, 0, start, end, l );
+    if ( g.my_rank==0 ) printf("Almost ... before (7) ...\n");
 
     int buff1x = p->restart_length;
     START_MASTER(threading)
@@ -1224,7 +1232,10 @@ void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PREC
   // compute Yk
   for ( i=0; i<k; i++ ) {
     // set all vectors in Yk to zero, to accumulate
+    if ( g.my_rank==0 ) printf("Almost ... before (8) ...\n");
+    printf("%p\n", Yk[i]);
     vector_PRECISION_define( Yk[i], 0, start, end, l );
+    if ( g.my_rank==0 ) printf("Almost ... before (9) ...\n");
     // and then, multi saxpy to obtain Yk
 
     if (p->gcrodr_PRECISION.CU_usable == 1) {
@@ -1272,7 +1283,9 @@ void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PREC
   // compute Ck
   for ( i=0; i<k; i++ ) {
     // set all vectors in Yk to zero, to accumulate
+    if ( g.my_rank==0 ) printf("Almost ... before (10) ...\n");
     vector_PRECISION_define( Ck2[i], 0, start, end, l );
+    if ( g.my_rank==0 ) printf("Almost ... before (11) ...\n");
     // and then, multi saxpy to obtain Yk
     vector_PRECISION_multi_saxpy( Ck2[i], W, Q[i], 1, m+1, start, end, l );
   }
@@ -1295,7 +1308,9 @@ void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PREC
   // compute Uk
   for ( i=0; i<k; i++ ) {
     // set all vectors in Yk to zero, to accumulate
+    if ( g.my_rank==0 ) printf("Almost ... before (12) ...\n");
     vector_PRECISION_define( Uk[i], 0, start, end, l );
+    if ( g.my_rank==0 ) printf("Almost ... before (13) ...\n");
     // and then, multi saxpy to obtain Yk
     // (the <i+1> in the 5th parameter is due to the triangular nature of Rinv)
     vector_PRECISION_multi_saxpy( Uk[i], Yk, Rinv[i], 1, i+1, start, end, l );
