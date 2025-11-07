@@ -468,7 +468,7 @@ typedef struct block_struct {
 #endif
 
 #ifdef POLYPREC
-    int polyprec_d;
+    int polyprec_d, polyprec_d_setup, polyprec_d_solve;
 #endif
 
 //#ifdef BLOCK_JACOBI
@@ -547,7 +547,7 @@ typedef struct block_struct {
     double bj_time;
 #endif
 #ifdef GCRODR
-    double gcrodr_LSP_time, gcrodr_buildAB_time, gcrodr_buildCU_time;
+    double gcrodr_LSP_time, gcrodr_buildAB_time, gcrodr_buildCU_time, gcrodr_k_setup, gcrodr_k_solve;
 #endif
 
   } global_struct;
@@ -713,6 +713,10 @@ typedef struct block_struct {
   #include "gcrodr_double.h"
   #include "gcrodr_float.h"
 #endif
+
+#include "miscellaneous.h"
+#include "miscellaneous_float.h"
+#include "miscellaneous_double.h"
 
 //#ifdef BLOCK_JACOBI
 #if 0

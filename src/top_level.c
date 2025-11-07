@@ -191,7 +191,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
     } 
 #endif
 
-    set_some_coarsest_level_improvs_params_for_solve( &l );
+    set_some_coarsest_level_improvs_params_for_solve( l, threading );
 
     // TODO (for Henning) : move all of these sets/resets to a (cleaner) function call
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)

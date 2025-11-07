@@ -85,7 +85,7 @@ int main( int argc, char **argv ) {
     // set up initial MG hierarchy
     method_setup( NULL, &l, &threading );
 
-    set_some_coarsest_level_improvs_params_for_setup( &l );
+    set_some_coarsest_level_improvs_params_for_setup( &l, &threading );
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     {
@@ -149,7 +149,7 @@ int main( int argc, char **argv ) {
     // iterative phase
     method_update( l.setup_iter, &l, &threading );
 
-    set_some_coarsest_level_improvs_params_for_solve( &l );
+    set_some_coarsest_level_improvs_params_for_solve( &l, &threading );
 
     g.on_solve = 1;
 

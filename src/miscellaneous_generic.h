@@ -2,7 +2,7 @@
 #define MISCELLANEOUS_PRECISION_HEADER
 
 #include <stdio.h>
-#include "global_struct.h"
+//#include "global_struct.h"
 
 
   void coarsest_level_resets_PRECISION( level_struct* l, struct Thread* threading );

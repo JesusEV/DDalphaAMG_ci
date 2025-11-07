@@ -198,6 +198,8 @@
     
 #ifdef GCRODR
     gcrodr_PRECISION_struct gcrodr_PRECISION;
+    vector_PRECISION rhs_bk;
+    int was_there_stagnation;
 #endif
 #ifdef POLYPREC
     polyprec_PRECISION_struct polyprec_PRECISION;
