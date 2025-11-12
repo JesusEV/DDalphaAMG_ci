@@ -175,8 +175,8 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               END_MASTER(threading)
               SYNC_MASTER_TO_ALL(threading)
 
-              printf("RIGHT BEFORE WHILE(1)\n");
               while( 1 ) {
+                //if ( g.my_rank == 0 ) printf("*********** p->gcrodr_PRECISION.k = %d\n", l->next_level->p_PRECISION.gcrodr_PRECISION.k);
                 coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
                 if ( l->next_level->p_PRECISION.was_there_stagnation==0 ) { break; }
                 else if ( l->next_level->p_PRECISION.was_there_stagnation==1 && l->next_level->p_PRECISION.gcrodr_PRECISION.CU_usable==1 ) {
@@ -195,7 +195,6 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
                   break;
                 }
               }
-              printf("RIGHT AFTER WHILE(1)\n");
 #else
               coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
 #endif

@@ -355,7 +355,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     l->p_PRECISION.block_jacobi_PRECISION.BJ_usable = 0;
 #endif
 
-    printf0("RESET OF FLAGS FOR : BJ, POLYPREC AND GCRO-DR ***\n");
+    //printf0("RESET OF FLAGS FOR : BJ, POLYPREC AND GCRO-DR ***\n");
     coarsest_level_resets_PRECISION( l, threading );
 
     END_MASTER(threading)

@@ -85,7 +85,11 @@ int main( int argc, char **argv ) {
     // set up initial MG hierarchy
     method_setup( NULL, &l, &threading );
 
+    //if ( g.my_rank == 0 ) printf("*********** p->gcrodr_PRECISION.k = %d\n", l.next_level->next_level->p_float.gcrodr_float.k);
+
     set_some_coarsest_level_improvs_params_for_setup( &l, &threading );
+
+    //if ( g.my_rank == 0 ) printf("*********** p->gcrodr_PRECISION.k = %d\n", l.next_level->next_level->p_float.gcrodr_float.k);
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     {

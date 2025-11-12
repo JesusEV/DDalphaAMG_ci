@@ -229,6 +229,8 @@ void coarsest_level_resets( level_struct* l, struct Thread* threading ) {
 
 void set_some_coarsest_level_improvs_params_for_setup( level_struct* l, struct Thread* threading ) {
 
+  //if ( g.my_rank == 0 ) printf("g.mixed_precision = %d\n", g.mixed_precision);
+
 #if defined(POLYPREC) || defined(GCRODR)
     START_MASTER(threading)
     {
@@ -246,6 +248,7 @@ void set_some_coarsest_level_improvs_params_for_setup( level_struct* l, struct T
           else {
 #ifdef GCRODR
             lx->p_float.gcrodr_float.k = g.gcrodr_k_setup;
+            //if ( g.my_rank == 0 ) printf("SET!!\n");
 #endif
 #ifdef POLYPREC
             lx->p_float.polyprec_float.d_poly = g.polyprec_d_setup;
@@ -260,6 +263,9 @@ void set_some_coarsest_level_improvs_params_for_setup( level_struct* l, struct T
     SYNC_MASTER_TO_ALL(threading)
 #endif
 
+  //if ( g.my_rank == 0 ) printf("g.gcrodr_k_setup = %d\n", g.gcrodr_k_setup);
+  //MPI_Finalize();
+  //exit(0);
 }
 
 

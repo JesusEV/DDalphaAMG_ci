@@ -90,9 +90,9 @@ void coarsest_level_resets_PRECISION( level_struct* l, struct Thread* threading 
                 END_MASTER(threading)
                 SYNC_MASTER_TO_ALL(threading)
 
-                if ( g.my_rank==0 ) printf("Almost ... before (1) ...\n");
+                //if ( g.my_rank==0 ) printf("Almost ... before (1) ...\n");
                 coarse_solve_odd_even_PRECISION( px, &(lx->oe_op_PRECISION), lx, threading );
-                if ( g.my_rank==0 ) printf("Almost ... after ...\n");
+                //if ( g.my_rank==0 ) printf("Almost ... after ...\n");
                 try_ctr++;
                 if ( try_ctr>=2 && px->gcrodr_PRECISION.CU_usable==0 ) {
                   START_MASTER(threading)

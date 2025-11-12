@@ -1508,9 +1508,9 @@ void coarse_solve_odd_even_PRECISION( gmres_PRECISION_struct *p, operator_PRECIS
 
   SYNC_MASTER_TO_ALL(threading)
 
-  START_MASTER(threading)
-  if (g.my_rank==0) printf("coarsest gmres iters = %d\n", fgmres_iters);
-  END_MASTER(threading)
+  //START_MASTER(threading)
+  //if (g.my_rank==0) printf("coarsest gmres iters = %d\n", fgmres_iters);
+  //END_MASTER(threading)
 
   // even to odd
   PROF_PRECISION_START( _NC, threading );
