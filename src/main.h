@@ -548,7 +548,6 @@ typedef struct block_struct {
 #endif
 #ifdef GCRODR
     double gcrodr_LSP_time, gcrodr_buildAB_time, gcrodr_buildCU_time;
-    int gcrodr_k_setup, gcrodr_k_solve;
 #endif
 
   } global_struct;

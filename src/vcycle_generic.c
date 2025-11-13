@@ -155,10 +155,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 		  // restoring old v_end
 		  l->next_level->p_PRECISION.v_end = old_v_end; 
 	      } else {
-		  coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION),
-                      &(l->next_level->oe_op_PRECISION), l->next_level, threading );
-	      }
-#else
+#endif
 
 #ifdef GCRODR
               // NOTE : something that shouldn't be happening here happens, namely the RHS is changed
@@ -198,6 +195,8 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
               coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION), &(l->next_level->oe_op_PRECISION), l->next_level, threading );
 #endif
 
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+	    }	//if on_solve
 #endif
 
               START_MASTER(threading)
