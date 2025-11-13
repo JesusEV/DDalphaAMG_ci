@@ -49,7 +49,8 @@ void fgmres_MP_struct_alloc( int m, int n, long int vl, double tol, const int pr
   p->dp.initial_guess_zero = 1;                  p->sp.initial_guess_zero = 1;
   p->dp.v_start = 0;                             p->sp.v_start = 0;
   p->dp.v_end = l->inner_vector_size;            p->sp.v_end = l->inner_vector_size;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   if ( l->level==0 ) {
     //p->dp.block_jacobi_double.local_p.v_end = l->inner_vector_size;
     p->sp.block_jacobi_float.local_p.v_end = l->inner_vector_size;
@@ -299,7 +300,8 @@ int fgmres_MP( gmres_MP_struct *p, level_struct *l, struct Thread *threading ) {
               g.coarsest_time, 100*(g.coarsest_time/(t1-t0)) );
     printf0("| coarsest grid matmul time: %-8.4lf seconds (%04.1lf%%)        |\n",
               g.matmul_time, 100*(g.matmul_time/(t1-t0)) );
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     printf0("|     coarsest grid BJ time: %-8.4lf seconds (%04.1lf%%)        |\n",
               g.bj_time, 100*(g.bj_time/(t1-t0)) );
 #endif

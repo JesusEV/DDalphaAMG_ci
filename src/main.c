@@ -82,19 +82,14 @@ int main( int argc, char **argv ) {
     setup_threading(&threading, commonthreaddata, &l);
     setup_no_threading(no_threading, &l);
 
-    //double t0x=0, t1x=0, elap_time=0;
-
-    //t0x = MPI_Wtime();
-
-
-    // setup up initial MG hierarchy
+    // set up initial MG hierarchy
     method_setup( NULL, &l, &threading );
 
-    //t1x = MPI_Wtime();
-    //elap_time = t1x-t0x;
-    //if (g.my_rank==0) printf("elapsed time (init setup phase): %-8.4lf seconds\n", elap_time);
+    //if ( g.my_rank == 0 ) printf("*********** p->gcrodr_PRECISION.k = %d\n", l.next_level->next_level->p_float.gcrodr_float.k);
 
-    //t0x = MPI_Wtime();
+    set_some_coarsest_level_improvs_params_for_setup( &l, &threading );
+
+    //if ( g.my_rank == 0 ) printf("*********** p->gcrodr_PRECISION.k = %d\n", l.next_level->next_level->p_float.gcrodr_float.k);
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     {
@@ -109,7 +104,6 @@ int main( int argc, char **argv ) {
 
         SYNC_CORES(threadx)
         START_MASTER(threadx)
-//	printf0("call to mumps_setup from main.c\n");
 	END_MASTER(threadx)
         mumps_setup_float(lx, threadx);        //setup vals, Is, Js
         double t0 = 0,t1 = 0;
@@ -154,72 +148,13 @@ int main( int argc, char **argv ) {
     }
 #endif
 
-#if defined(POLYPREC) || defined(GCRODR)
-    {
-      level_struct *lx = &l;
-      while (1) {
-        if ( lx->level==0 ) {
-          if ( g.mixed_precision==0 ) {
-#ifdef GCRODR
-            lx->p_double.gcrodr_double.k = g.gcrodr_k_setup;
-#endif
-#ifdef POLYPREC
-            lx->p_float.polyprec_float.d_poly = g.polyprec_d_setup;
-#endif
-          }
-          else {
-#ifdef GCRODR
-            lx->p_float.gcrodr_float.k = g.gcrodr_k_setup;
-#endif
-#ifdef POLYPREC
-            lx->p_float.polyprec_float.d_poly = g.polyprec_d_setup;
-#endif
-          }
-          break;
-        }
-        else { lx = lx->next_level; }
-      }
-    }
-#endif
-
-
     MPI_Barrier(MPI_COMM_WORLD);
     printf0("starting iterative Phase\n");
 
     // iterative phase
     method_update( l.setup_iter, &l, &threading );
 
-    //t1x = MPI_Wtime();
-    //elap_time = t1x-t0x;
-    //if (g.my_rank==0) printf("elapsed time (iterative setup phase): %-8.4lf seconds\n", elap_time);
-
-#if defined(POLYPREC) || defined(GCRODR)
-    {
-      level_struct *lx = &l;
-      while (1) {
-        if ( lx->level==0 ) {
-          if ( g.mixed_precision==0 ) {
-#ifdef POLYPREC
-            lx->p_double.polyprec_double.d_poly = g.polyprec_d_solve;
-#endif
-#ifdef GCRODR
-            lx->p_double.gcrodr_double.k = g.gcrodr_k_solve;
-#endif
-          }
-          else {
-#ifdef POLYPREC
-            lx->p_float.polyprec_float.d_poly = g.polyprec_d_solve;
-#endif
-#ifdef GCRODR
-            lx->p_float.gcrodr_float.k = g.gcrodr_k_solve;
-#endif
-          }
-          break;
-        }
-        else { lx = lx->next_level; }
-      }
-    }
-#endif
+    set_some_coarsest_level_improvs_params_for_solve( &l, &threading );
 
     g.on_solve = 1;
 

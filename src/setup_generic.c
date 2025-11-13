@@ -70,7 +70,8 @@ void coarse_grid_correction_PRECISION_setup( level_struct *l, struct Thread *thr
       coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
       START_LOCKED_MASTER(threading)
       l->next_level->p_PRECISION.op = &(l->next_level->s_PRECISION.op);
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
       if ( l->next_level->level==0 ) l->next_level->p_PRECISION.block_jacobi_PRECISION.local_p.op = &(l->next_level->s_PRECISION.op);
 #endif
       END_LOCKED_MASTER(threading)
@@ -328,7 +329,8 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
       re_setup_PRECISION( l->next_level, threading );
     }
   }
-#if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI) || defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+//#if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI) || defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+#if defined(POLYPREC) || defined(GCRODR) || defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 
   else {
 
@@ -347,12 +349,14 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
     l->p_PRECISION.gcrodr_PRECISION.upd_ctr = 0;
     l->p_PRECISION.gcrodr_PRECISION.CU_usable = 0;
 #endif
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     l->p_PRECISION.block_jacobi_PRECISION.local_p.polyprec_PRECISION.update_lejas = 1;
     l->p_PRECISION.block_jacobi_PRECISION.BJ_usable = 0;
 #endif
 
     //printf0("RESET OF FLAGS FOR : BJ, POLYPREC AND GCRO-DR ***\n");
+    coarsest_level_resets_PRECISION( l, threading );
 
     END_MASTER(threading)
 
@@ -509,7 +513,8 @@ void set_kcycle_tol_PRECISION( PRECISION tol, level_struct *l ) {
   
   if ( !l->idle ){
     l->p_PRECISION.tol = tol;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     if ( l->level==0 ) l->p_PRECISION.block_jacobi_PRECISION.local_p.tol = tol;
 #endif
   }

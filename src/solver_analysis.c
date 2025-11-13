@@ -118,7 +118,8 @@ void test_routine( level_struct *l, struct Thread *threading ) {
 
 void prof_init( level_struct *l ) {
   if ( l->depth == 0 ) { g.coarse_time=0; g.coarse_iter_count=0; g.coarsest_time=0; g.matmul_time=0; }
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   if ( l->depth == 0 ) { g.bj_time=0; }
 #endif
 #ifdef GCRODR

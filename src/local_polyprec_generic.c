@@ -21,7 +21,8 @@
 
 #include "main.h"
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
 
 void local_fgmres_PRECISION_struct_init( local_gmres_PRECISION_struct *p ) {
 

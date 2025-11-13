@@ -124,7 +124,8 @@ void DDalphaAMG_update_parameters( DDalphaAMG_parameters *mg_params, DDalphaAMG_
   g.coarse_time = 0;
   g.coarsest_time = 0;
   g.matmul_time = 0;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   g.bj_time = 0;
 #endif
 #ifdef GCRODR
@@ -371,7 +372,8 @@ void DDalphaAMG_change_mu_sign( DDalphaAMG_status *mg_status ) {
   g.coarse_time = 0;
   g.coarsest_time = 0;
   g.matmul_time = 0;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   g.bj_time = 0;
 #endif
 #ifdef GCRODR
@@ -545,7 +547,8 @@ void DDalphaAMG_setup( DDalphaAMG_status * mg_status ) {
   g.coarse_time = 0;
   g.coarsest_time = 0;
   g.matmul_time = 0;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   g.bj_time = 0;
 #endif
 #ifdef GCRODR
@@ -593,7 +596,8 @@ void DDalphaAMG_update_setup( int iterations, DDalphaAMG_status * mg_status ) {
     g.coarse_time = 0;
     g.coarsest_time = 0;
     g.matmul_time = 0;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     g.bj_time = 0;
 #endif
 #ifdef GCRODR
@@ -735,7 +739,8 @@ static inline void DDalphaAMG_driver( double *vector1_out, double *vector1_in, d
   g.coarse_time = 0;
   g.coarsest_time = 0;
   g.matmul_time = 0;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   g.bj_time = 0;
 #endif
 #ifdef GCRODR

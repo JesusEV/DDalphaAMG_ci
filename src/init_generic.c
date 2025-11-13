@@ -201,7 +201,8 @@ void next_level_PRECISION_setup( level_struct *l ) {
 #endif
         l->next_level->p_PRECISION.v_start = 0;
         l->next_level->p_PRECISION.v_end = l->next_level->inner_vector_size;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
         if ( l->next_level->level==0 ) {
           l->next_level->p_PRECISION.block_jacobi_PRECISION.local_p.v_start = 0;
           l->next_level->p_PRECISION.block_jacobi_PRECISION.local_p.v_end = l->next_level->inner_vector_size;

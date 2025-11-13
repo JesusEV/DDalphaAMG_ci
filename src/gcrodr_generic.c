@@ -75,9 +75,12 @@ void flgcrodr_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   p->gcrodr_PRECISION.Gc = NULL;
   p->gcrodr_PRECISION.hatZ = NULL;
   p->gcrodr_PRECISION.hatW = NULL;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   p->gcrodr_PRECISION.r_aux = NULL;
 #endif
+
+  p->rhs_bk = NULL;
 
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
   p->gcrodr_PRECISION.PC = NULL;
@@ -91,6 +94,8 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
 
   fgmres_PRECISION_struct_alloc( m, n, vl, tol, type, prec_kind, precond, eval_op, p, l );
 
+  if ( l->level == 0 ) {
+
 #ifdef HAVE_TM1p1
   vl*=2;
 #endif
@@ -100,6 +105,9 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
       error0("The value of k in GCRO-DR needs to be smaller than the restart length m\n");
     }
     p->gcrodr_PRECISION.k = g.gcrodr_k;
+    //printf("gcrodr_PRECISION.k = %d\n", p->gcrodr_PRECISION.k);
+    //MPI_Finalize();
+    //exit(0);
 
     // g_ln is the length m+k of subspaces used in FL-GCRO-DR
     int g_ln = p->restart_length + p->gcrodr_PRECISION.k;
@@ -143,11 +151,15 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
     MALLOC( p->gcrodr_PRECISION.U, vector_PRECISION, p->gcrodr_PRECISION.k );
     p->gcrodr_PRECISION.U[0] = NULL;
     MALLOC( p->gcrodr_PRECISION.U[0], complex_PRECISION, vl * p->gcrodr_PRECISION.k );
-    for ( i=1; i<p->gcrodr_PRECISION.k; i++ ) {
+    for ( i=1; i<(p->gcrodr_PRECISION.k); i++ ) {
       p->gcrodr_PRECISION.U[i] = p->gcrodr_PRECISION.U[0] + i*vl;
+      //if ( g.my_rank == 0 ) printf("%p\n", p->gcrodr_PRECISION.U[i]);
     }
+    //MPI_Finalize();
+    //exit(0);
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     MALLOC( p->gcrodr_PRECISION.r_aux, complex_PRECISION, vl );
 #endif
 
@@ -179,11 +191,19 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
   
     // matrix Y containing Yk = Zm * Pk
     MALLOC( p->gcrodr_PRECISION.Yk, complex_PRECISION*, p->gcrodr_PRECISION.k );
+    
+    //if ( g.my_rank == 0 ) printf("%d\n", p->gcrodr_PRECISION.k);
+    //MPI_Finalize();
+    //exit(0);
+    
     p->gcrodr_PRECISION.Yk[0] = NULL;
     MALLOC( p->gcrodr_PRECISION.Yk[0], complex_PRECISION, vl * p->gcrodr_PRECISION.k );
-    for ( i=1; i<p->gcrodr_PRECISION.k; i++ ) {
+    for ( i=1; i<(p->gcrodr_PRECISION.k); i++ ) {
       p->gcrodr_PRECISION.Yk[i] = p->gcrodr_PRECISION.Yk[0] + i*vl;
+      //if ( g.my_rank == 0 ) printf("%p\n", p->gcrodr_PRECISION.Yk[i]);
     }
+    //MPI_Finalize();
+    //exit(0);
 
     MALLOC( p->gcrodr_PRECISION.Pk, complex_PRECISION*, p->gcrodr_PRECISION.k );
 
@@ -281,6 +301,10 @@ void flgcrodr_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, 
 #endif
   }
 
+  p->was_there_stagnation = 0;
+  MALLOC( p->rhs_bk, complex_PRECISION, vl );
+
+  }
 }
 
 
@@ -310,7 +334,8 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
     FREE( p->gcrodr_PRECISION.Gc, complex_PRECISION*, g_ln );
     FREE( p->gcrodr_PRECISION.hatZ, complex_PRECISION*, g_ln );
     FREE( p->gcrodr_PRECISION.hatW, complex_PRECISION*, g_ln+1 );
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     FREE( p->gcrodr_PRECISION.r_aux, complex_PRECISION, p->gcrodr_PRECISION.syst_size );
 #endif
 
@@ -352,6 +377,8 @@ void flgcrodr_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l 
     FREE( p->gcrodr_PRECISION.DPC, vector_PRECISION, p->gcrodr_PRECISION.k );
 #endif    
   }
+
+  FREE( p->rhs_bk, complex_PRECISION, p->gcrodr_PRECISION.syst_size );
 }
 
 
@@ -371,7 +398,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     p->gcrodr_PRECISION.hatZ[i] = p->gcrodr_PRECISION.U[i];
     p->gcrodr_PRECISION.hatW[i] = p->gcrodr_PRECISION.C[i];
   }
-  for ( i=p->gcrodr_PRECISION.k; i<g_ln; i++ ) {
+  for ( i=(p->gcrodr_PRECISION.k); i<g_ln; i++ ) {
     if ( p->preconditioner==NULL ) {
       p->gcrodr_PRECISION.hatZ[i] = p->V[i - p->gcrodr_PRECISION.k];
     } else {
@@ -421,8 +448,12 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   if ( p->gcrodr_PRECISION.CU_usable==1 ) {
     vector_PRECISION *Uk;
 
+    //if ( g.my_rank==0 ) printf("Almost ... before (2) ...\n");
+
     if ( p->initial_guess_zero == 1 )
       vector_PRECISION_define( p->x, 0, start, end, l );
+
+    //if ( g.my_rank==0 ) printf("Almost ... before (3) ...\n");
 
     SYNC_MASTER_TO_ALL(threading);
 
@@ -447,7 +478,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
         apply_operator_PRECISION( p->gcrodr_PRECISION.C[i], p->gcrodr_PRECISION.Yk[i], p, l, threading );
       }
 
-      int i_length = p->v_end - p->v_start;
+      //int i_length = p->v_end - p->v_start;
+      int i_length = end-start;
       pqr_PRECISION( i_length, k, p->gcrodr_PRECISION.C, p->gcrodr_PRECISION.R, p, l, threading );
 
       SYNC_MASTER_TO_ALL(threading);
@@ -465,7 +497,9 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       vector_PRECISION *Yk = p->gcrodr_PRECISION.Yk;
       for ( i=0; i<k; i++ ) {
         // set all vectors in Yk to zero, to accumulate
+        //if ( g.my_rank==0 ) printf("Almost ... before (4) ...\n");
         vector_PRECISION_define( Uk[i], 0, start, end, l );
+        //if ( g.my_rank==0 ) printf("Almost ... before (5) ...\n");
         // and then, multi saxpy to obtain Yk
         // (the <i+1> in the 5th parameter is due to the triangular nature of Rinv)
         vector_PRECISION_multi_saxpy( Uk[i], Yk, Rinv[i], 1, i+1, start, end, l );
@@ -520,8 +554,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
   } else if ( p->gcrodr_PRECISION.CU_usable==0 ) {
     // call one cycle of FGMRES
 
+    //if ( g.my_rank==0 ) printf("Almost ... before (6) ...\n");
     if ( p->initial_guess_zero == 1 )
       vector_PRECISION_define( p->x, 0, start, end, l );
+    //if ( g.my_rank==0 ) printf("Almost ... before (7) ...\n");
 
     int buff1x = p->restart_length;
     START_MASTER(threading)
@@ -537,18 +573,19 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     //printf0("OUT OF INITIAL GMRES, m = %d ***\n", m);
 
-    if ( m>20 && m<k ) {
+    //if ( m>20 && m<k ) {
+    if ( m>k ) {
 
       double t0, t1;
       t0 = MPI_Wtime();
 
-      printf0("Quite a lot of iterations. Let's try and construct a deflation/recycling subspace\n");
+      //printf0("Quite a lot of iterations. Let's try and construct a deflation/recycling subspace\n");
 
       {
 
         p->initial_guess_zero = 0;
 
-        vector_PRECISION_define_random( p->x, start, end, l );
+        vector_PRECISION_define_random( p->x, p->v_start, p->v_end, l );
 
         // compute initial residual
         apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
@@ -597,7 +634,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
       SYNC_MASTER_TO_ALL(threading);
 
       t1 = MPI_Wtime();
-      printf0("Arnoldi time : %.10f seconds\n", t1-t0);
+      //printf0("Arnoldi time : %.10f seconds\n", t1-t0);
 
     }
     else {
@@ -608,7 +645,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     compute_solution_PRECISION( p->x, (p->preconditioner&&p->kind==_RIGHT)?p->Z:p->V,
                                 p->y, p->gamma, p->H, m-1, 1, p, l, threading );
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
 
     // computing the actual residual in case of Block Jacobi
     {
@@ -712,7 +750,8 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     SYNC_MASTER_TO_ALL(threading);
   } else{ error0("Invalid value for p->gcrodr_PRECISION.CU_usable \n"); }
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   PRECISION norm_r0xx = global_norm_PRECISION( p->block_jacobi_PRECISION.b_backup, start, end, l, threading );
 #endif
 
@@ -788,6 +827,7 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
 
     // updating p->r
 
+/*
 #ifdef BLOCK_JACOBI
 
     // computing the actual residual in case of Block Jacobi
@@ -826,6 +866,10 @@ int flgcrodr_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Threa
     vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
 #endif
+*/
+
+    apply_operator_PRECISION( p->w, p->x, p, l, threading ); // compute w = D*x
+    vector_PRECISION_minus( p->r, p->b, p->w, start, end, l ); // compute r = b - w
 
     int upd_itrs;
     if ( g.on_solve==1 ) { upd_itrs = g.gcrodr_upd_itrs_solve; }
@@ -1076,15 +1120,14 @@ int fgmresx_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread
           // if the residual hasn't changed, exit
           if ( nr1_i == nr2_i ) {
 
-            printf0( "WARNING : stagnation to three significant digits in the residual, the recycling subspace needs to be rebuilt\n" );
-            START_MASTER(threading)
-            p->gcrodr_PRECISION.CU_usable = 0;
-            END_MASTER(threading)
-            SYNC_MASTER_TO_ALL(threading);
+            //printf0( "WARNING : stagnation to three significant digits in the residual, the recycling subspace needs to be rebuilt\n" );
 
             finish = 1;
 
-            //was_there_stagnation = 1;
+            START_MASTER(threading)
+            p->was_there_stagnation = 1;
+            END_MASTER(threading)
+            SYNC_MASTER_TO_ALL(threading)
           }
         }
       }
@@ -1178,6 +1221,9 @@ void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PREC
   // ---------------- then, computing C and U
 
   int i, j, kl, start, end, g_ln=p->restart_length + p->gcrodr_PRECISION.k, k=p->gcrodr_PRECISION.k;
+  //printf("p->gcrodr_PRECISION.k = %d\n", p->gcrodr_PRECISION.k);
+  //MPI_Finalize();
+  //exit(0);
 
   compute_core_start_end(p->v_start, p->v_end, &start, &end, l, threading);
 
@@ -1206,7 +1252,10 @@ void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PREC
   // compute Yk
   for ( i=0; i<k; i++ ) {
     // set all vectors in Yk to zero, to accumulate
+    //if ( g.my_rank == 0 ) printf("Almost ... before (8) ...\n");
+    //if ( g.my_rank == 0 ) printf("%p, depth = %d, i = %d, k = %d\n", Yk[i], l->depth, i, k);
     vector_PRECISION_define( Yk[i], 0, start, end, l );
+    //if ( g.my_rank==0 ) printf("Almost ... before (9) ...\n");
     // and then, multi saxpy to obtain Yk
 
     if (p->gcrodr_PRECISION.CU_usable == 1) {
@@ -1254,7 +1303,9 @@ void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PREC
   // compute Ck
   for ( i=0; i<k; i++ ) {
     // set all vectors in Yk to zero, to accumulate
+    //if ( g.my_rank==0 ) printf("Almost ... before (10) ...\n");
     vector_PRECISION_define( Ck2[i], 0, start, end, l );
+    //if ( g.my_rank==0 ) printf("Almost ... before (11) ...\n");
     // and then, multi saxpy to obtain Yk
     vector_PRECISION_multi_saxpy( Ck2[i], W, Q[i], 1, m+1, start, end, l );
   }
@@ -1277,7 +1328,9 @@ void build_CU_PRECISION( complex_PRECISION **G, vector_PRECISION *W, vector_PREC
   // compute Uk
   for ( i=0; i<k; i++ ) {
     // set all vectors in Yk to zero, to accumulate
+    //if ( g.my_rank==0 ) printf("Almost ... before (12) ...\n");
     vector_PRECISION_define( Uk[i], 0, start, end, l );
+    //if ( g.my_rank==0 ) printf("Almost ... before (13) ...\n");
     // and then, multi saxpy to obtain Yk
     // (the <i+1> in the 5th parameter is due to the triangular nature of Rinv)
     vector_PRECISION_multi_saxpy( Uk[i], Yk, Rinv[i], 1, i+1, start, end, l );

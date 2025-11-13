@@ -39,7 +39,7 @@
   #define EPS_double 1E-14
 
 #define HAVE_TM    // flag for enable twisted mass
-#define HAVE_TM1p1 // flag for enable doublet for twisted mass
+//#define HAVE_TM1p1 // flag for enable doublet for twisted mass
 
 #undef INIT_ONE_PREC // flag undef for enabling additional features in the lib
 
@@ -471,7 +471,8 @@ typedef struct block_struct {
     int polyprec_d, polyprec_d_setup, polyprec_d_solve;
 #endif
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     int local_polyprec_d;
 #endif
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
@@ -541,11 +542,13 @@ typedef struct block_struct {
 #endif
 
     double matmul_time;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     double bj_time;
 #endif
 #ifdef GCRODR
     double gcrodr_LSP_time, gcrodr_buildAB_time, gcrodr_buildCU_time;
+    int gcrodr_k_setup, gcrodr_k_solve;
 #endif
 
   } global_struct;
@@ -712,7 +715,12 @@ typedef struct block_struct {
   #include "gcrodr_float.h"
 #endif
 
-#ifdef BLOCK_JACOBI
+#include "miscellaneous.h"
+#include "miscellaneous_float.h"
+#include "miscellaneous_double.h"
+
+//#ifdef BLOCK_JACOBI
+#if 0
   #include "block_jacobi_double.h"
   #include "block_jacobi_float.h"
   #include "local_polyprec_double.h"

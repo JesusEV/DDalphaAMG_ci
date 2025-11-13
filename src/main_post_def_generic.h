@@ -28,7 +28,7 @@
   #include "block_jacobi_PRECISION.h"
 
   static inline void apply_operator_PRECISION( vector_PRECISION output, vector_PRECISION input, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
-
+/*
 #ifdef BLOCK_JACOBI
     if ( l->level==0 && p->block_jacobi_PRECISION.BJ_usable==1 ) {
       START_MASTER(threading)
@@ -59,6 +59,8 @@
 #else
     p->eval_operator( output, input, p->op, l, threading );
 #endif
+*/
+    p->eval_operator( output, input, p->op, l, threading );
   }
 
   static inline void apply_operator_dagger_PRECISION( vector_PRECISION output, vector_PRECISION input, gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {

@@ -21,7 +21,8 @@
 
 #include "main.h"
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
 
   // main functions here -- IMPORTANT : all Block Jacobi functions are, for now,
   //			                exclusively per-process operations

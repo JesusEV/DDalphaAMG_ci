@@ -111,7 +111,8 @@
     PRECISION b_norm, norm_r0;
 
     vector_PRECISION *Pk, *C, *Cc, *U, *Yk, *hatZ, *hatW;
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     vector_PRECISION r_aux;
 #endif
     // Gc is used to copy G
@@ -150,7 +151,8 @@
   } polyprec_PRECISION_struct;
 #endif
 
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
   typedef struct {
     vector_PRECISION x, b, r, w, *V, *Z;
     complex_PRECISION **H, *y, *gamma, *c, *s;
@@ -196,11 +198,14 @@
     
 #ifdef GCRODR
     gcrodr_PRECISION_struct gcrodr_PRECISION;
+    vector_PRECISION rhs_bk;
+    int was_there_stagnation;
 #endif
 #ifdef POLYPREC
     polyprec_PRECISION_struct polyprec_PRECISION;
 #endif
-#ifdef BLOCK_JACOBI
+//#ifdef BLOCK_JACOBI
+#if 0
     block_jacobi_PRECISION_struct block_jacobi_PRECISION;
 #endif
 #if defined(SINGLE_ALLREDUCE_ARNOLDI) && defined(PIPELINED_ARNOLDI)
