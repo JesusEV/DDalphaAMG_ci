@@ -128,8 +128,7 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 		
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 	      int fgmres_iters = 0;
-	   //   if (g.on_solve)
-	      {
+	      if (g.on_solve){
 		  // using entire vector length for fgmres_PRECISION()
 		  
 		  int old_v_end = l->next_level->p_PRECISION.v_end;
@@ -155,9 +154,9 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 */		
 		  // restoring old v_end
 		  l->next_level->p_PRECISION.v_end = old_v_end; 
-//	      } else {
-//		  coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION),
-//                      &(l->next_level->oe_op_PRECISION), l->next_level, threading );
+	      } else {
+		  coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION),
+                      &(l->next_level->oe_op_PRECISION), l->next_level, threading );
 	      }
 #else
               coarse_solve_odd_even_PRECISION( &(l->next_level->p_PRECISION),

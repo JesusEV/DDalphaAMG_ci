@@ -361,7 +361,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     //only do this during solve, no direct solves during setup phase, due to too many inversion during setup
-//    if (g.on_solve){
+    if (g.on_solve){
 		// setting up mumps data formatting
 	if (!l->idle){
 		mumps_setup_PRECISION(l, threading);	//setup vals, Is, Js
@@ -390,7 +390,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 		END_MASTER(threading)
 		SYNC_CORES(threading)
 	}
-//    }	//g.on_solve? 
+    }
 #endif
   }
 #endif
