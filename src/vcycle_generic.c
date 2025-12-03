@@ -202,6 +202,11 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 	    END_MASTER(threading)
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+	    printf0("PLEASE MAKE SURE THAT ODD_EVEN_PRECONDITIONING IS ENABLED.\n");
+	    fflush(stdout);
+	    MPI_Barrier(MPI_COMM_WORLD);
+	    exit(1);
+
 	    if (!g.on_solve){
 	        l->next_level->p_PRECISION.preconditioner = NULL;
 	    }
