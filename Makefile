@@ -40,9 +40,9 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-LIMEDIR = /home/ramirez/Documents/installs/qio/bin
+LIMEDIR = /home/ramirez/installs/qio/bin
 LIMEFLAGS = -DHAVE_LIME -I$(LIMEDIR)/include
-LIMELIB = $(LIMEDIR)/lib/liblime.a
+LIMELIB = $(LIMEDIR)/lib64/liblime.a
 
 # Available flags:
 # -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING
@@ -61,6 +61,35 @@ DEVEL_VERSION_FLAGS += -DGCRODR
 DEVEL_VERSION_FLAGS += -DPOLYPREC
 #DEVEL_VERSION_FLAGS += -DBLOCK_JACOBI -DBJ_DIR_SOLVS #-DPERS_COMMS
 
+ OPT_VERSION_FLAGS += -DMUMPS_ADDS
+ DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
+
+# OPT_VERSION_FLAGS += -DCOARSE_SCALAP
+# DEVEL_VERSION_FLAGS += -DCOARSE_SCALAP 
+
+#---------------------------------------------------
+
+# Integration of MUMPS within DDalphaAMG
+
+MUMPSDIR = /usr/local/sw/mumps-5.4.1/
+MUMPS_LIBS = $(MUMPSDIR)lib/
+
+LMETISDIR = /usr/local/sw/metis-5.1.0/install/lib/
+LMETIS=-L$(LMETISDIR) -lmetis
+LPMETISDIR = /usr/local/sw/parmetis-4.0.3/install/lib/
+LPMETIS=-L$(LPMETISDIR) -lparmetis
+
+LSCOTCHDIR = /usr/local/sw/scotch-6.1.1/lib/
+LSCOTCH = -L$(LSCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lscotch -lscotcherr
+
+LPORD=-L$(MUMPS_LIBS) -lpord
+LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
+
+LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
+
+# Enable the following three to activate MUMPS within DDalphaAMG
+ LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
+
 #---------------------------------------------------
 # lapack and scalapack linkages
 
@@ -77,12 +106,9 @@ LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
 
 SPBLAS_LIBRARIES = 
 
-SCALAPACK_DIR = /p/software/juwels/stages/2025/software/ScaLAPACK/2.2.0-gpsmpi-2024a-fb/
-#SCALAPACK_INCLUDE = -I"$(SCALAPACK_DIR)"
-#SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib64/ -lscalapack -lflexiblas 
-
-SCALAPACK_INCLUDE = 
-SCALAPACK_LIBRARIES = 
+SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi3/scalapack/2.0.2/
+SCALAPACK_INCLUDE = -I$(SCALAPACK_DIR)/include/
+SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib64/ -lscalapack -lblacs
 
 #---------------------------------------------------
 
@@ -99,7 +125,7 @@ install: copy
 .SECONDARY:
 
 $(BINDIR)/DDalphaAMG : $(OBJ) 
-	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
+	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
 
 DDalphaAMG : $(BINDIR)/DDalphaAMG
 	ln -sf $(BINDIR)/$@ $@
@@ -108,7 +134,7 @@ DDalphaAMG_devel: $(BINDIR)/DDalphaAMG_devel
 	ln -sf $(BINDIR)/$@ $@
 
 $(BINDIR)/DDalphaAMG_devel : $(OBJDB)
-	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
+	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
 
 $(LIBDIR)/libDDalphaAMG.a: $(OBJ)
 	ar rc $@ $(OBJ)
@@ -121,7 +147,7 @@ $(LIBDIR)/libDDalphaAMG_devel.a: $(OBJDB)
 	ranlib $@
 
 $(TSTDIR)/%: $(LIB) $(TSTDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) $(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
+	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) $(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
 
 $(DOCDIR)/user_doc.pdf: $(DOCDIR)/user_doc.tex $(DOCDIR)/user_doc.bib
 	( cd $(DOCDIR); pdflatex user_doc; bibtex user_doc; pdflatex user_doc; pdflatex user_doc; )
@@ -130,10 +156,10 @@ $(INCDIR)/%: $(SRCDIR)/%
 	cp $(SRCDIR)/`basename $@` $@
 
 $(BUILDDIR)/%.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) $(OPT_VERSION_FLAGS) $(LAPACKE_INCLUDE) -c $< -o $@
+	$(CC) $(OPT_VERSION_FLAGS) $(LAPACKE_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
 
 $(BUILDDIR)/%_devel.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) -g $(DEVEL_VERSION_FLAGS) $(LAPACKE_INCLUDE) -c $< -o $@
+	$(CC) -g $(DEVEL_VERSION_FLAGS) $(LAPACKE_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
 
 $(GSRCDIR)/%.h: $(SRCDIR)/%.h $(firstword $(MAKEFILE_LIST))
 	cp $< $@

@@ -211,7 +211,7 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
           START_MASTER(threading)
           t0 = MPI_Wtime();
 
-#ifndef COARSE_SCALAP
+#if defined(MUMPS_ADDS)
           printf0("starting analyze from top_level.c\n");
 
 	  //    g.mumps_id.job = 4; //analyze and factorize
@@ -222,15 +222,15 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
           printf0("analyze done, starting factorize singlethreaded from top_level.c\n");
           g.mumps_id.job = 2; //factorize
           cmumps_c(&(g.mumps_id)); //only factorize when on solve
-#else
+#elif defined(COARSE_SCALAP)
 	  coarse_scalap_factorize_float( lx, lx->p_float.dense_vals,
 		  lx->p_float.desc_dense_vals, lx->p_float.ipiv, threading );//only factorize when on solve
 #endif
 
 	  t1 = MPI_Wtime();
-#ifndef COARSE_SCALAP
+#if defined(MUMPS_ADDS)
 	  printf0("MUMPS analyze and factorize time (seconds) : %f \t from top_level.c\n",t1-t0);
-#else
+#elif defined(COARSE_SCALAP)
 	  printf0("Invert using scalapack time (seconds) : %f \t from top_level.c\n",t1-t0);
 #endif
 	  g.coarsest_fact_time += t1-t0;
@@ -240,10 +240,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 	  //set direct solve as precond during solve phase
 #if defined(MUMPS_ADDS)        
           lx->p_float.preconditioner = mumps_solve_float;
-#elif defined(COARSE_SCALAP)
-          lx->p_float.preconditioner = coarse_scalap_solve_float;
+	  lx->p_float.eval_operator = coarse_apply_oddeven_operator_float;
 #endif
- 
+	  //use entire coarsest system, not only odd-even Schur-Decomp when using direct solves
+	  if (g.odd_even) lx->p_float.v_end *=2;
         }
      }
 #endif

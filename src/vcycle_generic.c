@@ -128,32 +128,19 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 		
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
 	      int fgmres_iters = 0;
-	      if (g.on_solve){
-		  // using entire vector length for fgmres_PRECISION()
-		  
-		  int old_v_end = l->next_level->p_PRECISION.v_end;
-		  l->next_level->p_PRECISION.v_end *=2;
-		  coarse_scalap_solve_PRECISION(
-			  l->next_level->p_PRECISION.x, NULL, 
-			  l->next_level->p_PRECISION.b, _NO_RES, 
-			  l->next_level, no_threading);  
-/*
-		  // direct solves as precond. already set in top_level.c 
-		  // assign new operator function handle
-		  l->next_level->p_PRECISION.eval_operator = coarse_apply_oddeven_operator_PRECISION;
-
 		  // solve: Ax = b using 
 		  // x = l->next_level->p_PRECISION->x, 
 		  // A = l->next_level->oe_op_PRECISION, 
 		  // b = l->next_level->p_PRECISION->b
+	      if (g.on_solve){
+#if defined(COARSE_SCALAP)
+		  coarse_scalap_solve_PRECISION(
+			  l->next_level->p_PRECISION.x, NULL, 
+			  l->next_level->p_PRECISION.b, _NO_RES, 
+			  l->next_level, no_threading);  
+#elif defined(MUMPS_ADDS)
 		  fgmres_iters = fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
-
-	      // restore preconditioner ?
-              // restore old operator function handle?
-//              l->next_level->p_PRECISION.eval_operator = coarse_apply_schur_complement_PRECISION;
-*/		
-		  // restoring old v_end
-		  l->next_level->p_PRECISION.v_end = old_v_end; 
+#endif
 	      } else {
 #endif
 
