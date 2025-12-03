@@ -142,6 +142,8 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
     p->dense_vals = NULL;
     p->desc_dense_vals = NULL;
     p->desc_rhs = NULL;
+    p->desc_dense_vals2d = NULL;
+    p->desc_rhs2d = NULL;
     p->ipiv = NULL;
 #endif
 #endif
@@ -474,10 +476,17 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     MALLOC( p->desc_rhs, int, 9);
     memset( p->desc_rhs, 0,  9 * sizeof(int));
 
+    MALLOC( p->desc_dense_vals2d, int, 9);
+    memset( p->desc_dense_vals2d, 0,  9 * sizeof(int));
+    
+    MALLOC( p->desc_rhs2d, int, 9);
+    memset( p->desc_rhs2d, 0,  9 * sizeof(int));
+
     MALLOC( p->ipiv, int, mumps_n + 1);
     for (int i = 0; i < mumps_n +1; i++) p->ipiv[i] = i;
 
-    p->blacs_ctxt = 0;
+    p->blacs_ctxt1d = 0;
+    p->blacs_ctxt2d = 0;
 #endif
   }
 #endif
@@ -616,11 +625,13 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
 						* l->num_inner_lattice_sites *l->num_lattice_site_var);
       FREE( p->desc_dense_vals, int, 9);
       FREE( p->desc_rhs, int, 9);    
-      FREE( p->ipiv, int, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var
-	      +1);
+      FREE( p->desc_dense_vals2d, int, 9);
+      FREE( p->desc_rhs2d, int, 9);    
+      FREE( p->ipiv, int, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var +1);
 
       
-      blacs_gridexit_( &(p->blacs_ctxt));
+      blacs_gridexit_( &(p->blacs_ctxt1d));
+      blacs_gridexit_( &(p->blacs_ctxt2d));
 #endif
   }
 #endif

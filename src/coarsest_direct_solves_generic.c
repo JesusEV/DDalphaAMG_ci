@@ -765,6 +765,7 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 
 void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
 
+    //1. Initialize 1D - (cyclic) Blacs-Grid for reading in/out data
     int izero = 0;
     int ione = 1;
     int nprow = l->num_processes;
@@ -772,32 +773,55 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
     char layout = 'R';
     int info = 0;
     int iam = 0, nprocs = 0;
-    int ictxt = l->p_PRECISION.blacs_ctxt, myrow, mycol;
+    int ictxt1d = l->p_PRECISION.blacs_ctxt1d, myrow, mycol;
     int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
 
     blacs_pinfo_( &iam, &nprocs); //setting rank and number of blacs-processes
-    blacs_get_(&izero, &izero, &ictxt);			//create context
-    blacs_gridinit_(&ictxt, &layout, &nprow, &npcol );	//create blacs grid
-    blacs_gridinfo_(&ictxt, &nprow, &npcol, &myrow, &mycol);	//set process coordinates of blacs-grid
+    blacs_get_(&izero, &izero, &ictxt1d);			//create context
+    blacs_gridinit_(&ictxt1d, &layout, &nprow, &npcol );	//create blacs grid
+    blacs_gridinfo_(&ictxt1d, &nprow, &npcol, &myrow, &mycol);	//set process coordinates of blacs-grid
 
-//setting the descriptors:
-	//TODO may choose a different blocksize, but in beginning start with bs = 2 * num. testvecs
-	//* num inner lattice sites,
-	//probably a good choice
-
+    //setting the descriptors:
     int bs = l->num_lattice_site_var * l->num_inner_lattice_sites;
     int nrhs = 1;
 	   
     int numr = numroc_( &N, &bs, &iam, &izero, &nprow ); // number of rows stored in each process
-    int lddA = numr > 1? numr : 1;	//leading dimension in A (remember, matrix elements are	stored in a column major order)
+    int lldA = numr > 1? numr : 1;	//leading dimension in A (remember, matrix elements are	stored in a column major order)
 
     //descinit ( DESC,			    M, N,    MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO )
-    descinit_( l->p_PRECISION.desc_dense_vals, &N, &N, &bs, &bs, &izero, &izero, &ictxt, &lddA, &info);
+    descinit_( l->p_PRECISION.desc_dense_vals, &N, &N, &bs, &bs, &izero, &izero, &ictxt1d, &lldA, &info);
     if (info != 0) error0("Error in descinit for DescA, info = %d\n", info);
 
     //descinit ( DESC,		    M, N,	MB, NB,	    IRSRC, ICSRC, ICTXT, LLD, INFO )
-    descinit_( l->p_PRECISION.desc_rhs, &N, &nrhs, &bs, &ione, &izero, &izero, &ictxt, &lddA, &info);
+    descinit_( l->p_PRECISION.desc_rhs, &N, &nrhs, &bs, &ione, &izero, &izero, &ictxt1d, &lldA, &info);
     if (info != 0) error0("Error in descinit for DescB, info = %d\n", info);
+
+    //2. Initialize 2D - cyclic Blacs-Grid for performing fast calculation
+    int nprow2d = 4;
+    int npcol2d = 2;
+    int iam2d = 0, nprocs2d = 0;
+    int ictxt2d = l->p_PRECISION.blacs_ctxt2d, myrow2d, mycol2d;
+    
+    layout = 'C';   //TODO: may use R instead of C here?
+
+    blacs_pinfo_( &iam2d, &nprocs2d);
+    blacs_get_( &izero, &izero, &ictxt2d);
+    blacs_gridinit_( &ictxt2d, &layout, &nprow2d, &npcol2d );
+    blacs_gridinfo_( &ictxt2d, &nprow2d, &npcol2d, &myrow2d, &mycol2d );
+
+    int bs2d = l->num_lattice_site_var;	//TODO may choose a different blocksize, but in beginning start with bs = 2 * num. testvecs
+					//probably a good choice
+    //						\/ not sure about zero here!
+    int numr2d = numroc_( &N, &bs2d, &iam2d, &izero, &nprocs2d );
+    int lldA2d = numr2d > 1? numr : 1;
+
+     //descinit ( DESC,			    M, N,    MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO )
+    descinit_( l->p_PRECISION.desc_dense_vals2d, &N, &N, &bs2d, &bs2d, &izero, &izero, &ictxt2d, &lldA2d, &info);
+    if (info != 0) error0("Error in descinit for DescA2D, info = %d\n", info);
+
+    //descinit ( DESC,		    M, N,	MB, NB,	    IRSRC, ICSRC, ICTXT, LLD, INFO )
+    descinit_( l->p_PRECISION.desc_rhs2d, &N, &nrhs, &bs2d, &ione, &izero, &izero, &ictxt2d, &lldA2d, &info);
+    if (info != 0) error0("Error in descinit for DescB2D, info = %d\n", info);
 }
 
 

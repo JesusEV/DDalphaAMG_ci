@@ -228,8 +228,11 @@
     vector_PRECISION dense_vals;
     int *desc_dense_vals;
     int *desc_rhs;
+    int *desc_dense_vals2d;
+    int *desc_rhs2d;
     int *ipiv;
-    int blacs_ctxt;
+    int blacs_ctxt1d;
+    int blacs_ctxt2d;
 #endif
 
 
