@@ -193,59 +193,9 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 
     set_some_coarsest_level_improvs_params_for_solve( l, threading );
 
-    // TODO (for Henning) : move all of these sets/resets to a (cleaner) function call
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-      g.coarsest_time = 0;
-      if (g.on_solve) {
-        level_struct *lx = l;
-        int i;
-        for (i = 1; i<g.num_levels; i++){
-          lx = lx->next_level;
-        }
-        if (!lx->idle){ 
-
-	  printf0("call to mumps_setup from top_level.c\n");
-	  mumps_setup_float(lx, threading);        //setup vals, Is, Js
-
-          double t0,t1;
-          START_MASTER(threading)
-          t0 = MPI_Wtime();
-
-#if defined(MUMPS_ADDS)
-          printf0("starting analyze from top_level.c\n");
-
-	  //    g.mumps_id.job = 4; //analyze and factorize
-          g.mumps_id.job = 1; //analyze
-
-          cmumps_c(&(g.mumps_id));
-
-          printf0("analyze done, starting factorize singlethreaded from top_level.c\n");
-          g.mumps_id.job = 2; //factorize
-          cmumps_c(&(g.mumps_id)); //only factorize when on solve
-#elif defined(COARSE_SCALAP)
-	  coarse_scalap_factorize_float( lx, lx->p_float.dense_vals,
-		  lx->p_float.desc_dense_vals, lx->p_float.ipiv, threading );//only factorize when on solve
-#endif
-
-	  t1 = MPI_Wtime();
-#if defined(MUMPS_ADDS)
-	  printf0("MUMPS analyze and factorize time (seconds) : %f \t from top_level.c\n",t1-t0);
-#elif defined(COARSE_SCALAP)
-	  printf0("Invert using scalapack time (seconds) : %f \t from top_level.c\n",t1-t0);
-#endif
-	  g.coarsest_fact_time += t1-t0;
-	  END_MASTER(threading)
-	  SYNC_CORES(threading)
-
-	  //set direct solve as precond during solve phase
-#if defined(MUMPS_ADDS)        
-          lx->p_float.preconditioner = mumps_solve_float;
-	  lx->p_float.eval_operator = coarse_apply_oddeven_operator_float;
-#endif
-	  //use entire coarsest system, not only odd-even Schur-Decomp when using direct solves
-	  if (g.odd_even) lx->p_float.v_end *=2;
-        }
-     }
+    direct_solves_set_reset_float( l, threading );
+    // TODO (for Henning) : move all of these sets/resets to a (cleaner) function call
 #endif
 
 

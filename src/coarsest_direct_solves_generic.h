@@ -6,6 +6,11 @@
 // this function will set up the data format for mumps / csr
 void mumps_setup_PRECISION(level_struct *l, struct Thread *threading);
 
+// this function will set / reset some important variables. It is called in
+// top_level.c, once the setup phase is done and right before the solve phase
+void direct_solves_set_reset_PRECISION(level_struct *l,
+                                       struct Thread *threading);
+
 #ifdef MUMPS_ADDS
 // this function will do all the necessary handling of data for the solve call.
 // e.g. distributing the calculated solution to all processes

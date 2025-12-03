@@ -572,6 +572,55 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 
 }
 
+void direct_solves_set_reset_PRECISION( level_struct *l, struct Thread *threading ){
+  g.coarsest_time = 0;
+    if (g.on_solve) {
+      for (int i = 1; i<g.num_levels; i++) l = l->next_level;
+      if (!l->idle){ 
+
+	  printf0("call to setup from top_level.c\n");
+	  mumps_setup_float(l, threading);        //setup vals, Is, Js
+
+          double t0,t1;
+          START_MASTER(threading)
+          t0 = MPI_Wtime();
+
+#if defined(MUMPS_ADDS)
+          printf0("starting analyze from top_level.c\n");
+
+	  //    g.mumps_id.job = 4; //analyze and factorize
+          g.mumps_id.job = 1; //analyze
+
+          cmumps_c(&(g.mumps_id));
+
+          printf0("analyze done, starting factorize singlethreaded from top_level.c\n");
+          g.mumps_id.job = 2; //factorize
+          cmumps_c(&(g.mumps_id)); //only factorize when on solve
+#elif defined(COARSE_SCALAP)
+	  coarse_scalap_factorize_float( l, l->p_PRECISION.dense_vals,
+		  l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv, threading );//only factorize when on solve
+#endif
+
+	  t1 = MPI_Wtime();
+#if defined(MUMPS_ADDS)
+	  printf0("MUMPS analyze and factorize time (seconds) : %f \t from top_level.c\n",t1-t0);
+#elif defined(COARSE_SCALAP)
+	  printf0("Invert using scalapack time (seconds) : %f \t from top_level.c\n",t1-t0);
+#endif
+	  g.coarsest_fact_time += t1-t0;
+	  END_MASTER(threading)
+	  SYNC_CORES(threading)
+
+	  //set direct solve as precond during solve phase
+#if defined(MUMPS_ADDS)        
+          l->p_PRECISION.preconditioner = mumps_solve_PRECISION;
+	  l->p_PRECISION.eval_operator = coarse_apply_oddeven_operator_PRECISION;
+#endif
+	  //use entire coarsest system, not only odd-even Schur-Decomp when using direct solves
+	  if (g.odd_even) l->p_PRECISION.v_end *=2;
+        }
+     }
+}
 
 #ifdef MUMPS_ADDS
 void mumps_solve_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta,
