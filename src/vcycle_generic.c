@@ -134,10 +134,12 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 		  // b = l->next_level->p_PRECISION->b
 	      if (g.on_solve){
 #if defined(COARSE_SCALAP)
-		  coarse_scalap_solve_PRECISION(
+		scalap_1d_2d_vec_PRECISION( l, threading);
+		coarse_scalap_solve_PRECISION(
 			  l->next_level->p_PRECISION.x, NULL, 
 			  l->next_level->p_PRECISION.b, _NO_RES, 
 			  l->next_level, no_threading);  
+		scalap_2d_1d_vec_PRECISION( l, threading);
 #elif defined(MUMPS_ADDS)
 		  fgmres_iters = fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
 #endif

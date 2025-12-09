@@ -1082,6 +1082,19 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   read_parameter( &save_pt, "coarse grid mumps_drop_tol:", "%le", 1, in, _DEFAULT_SET );
 #endif
 
+#ifdef COARSE_SCALAP
+  // use process grid of size prow2d x pcol2d on coarsest level for scalapack
+  save_pt = &(g.prow2d); g.prow2d = 1;
+  read_parameter( &save_pt, "scalap 2d grid rows:", "%d", 1, in, _DEFAULT_SET );
+  save_pt = &(g.pcol2d); g.pcol2d = g.num_processes;
+  read_parameter( &save_pt, "scalap 2d grid cols:", "%d", 1, in, _DEFAULT_SET );
+  //for now: prow2d x pcol2d should be equal to g.num_processes
+
+  //use blocksize for 2d cyclic pattern from input file
+  save_pt = &(g.bs2d); g.bs2d = 32;
+  read_parameter( &save_pt, "scalap 2d blocksize:", "%d", 1, in, _DEFAULT_SET );
+#endif
+
   save_pt = &(g.setup_m0); g.setup_m0 = g.m0;
   read_parameter( &save_pt, "setup m0:", "%lf", 1, in, _DEFAULT_SET );
 #ifdef HAVE_TM

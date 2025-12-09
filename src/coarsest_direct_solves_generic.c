@@ -40,6 +40,7 @@ void pgetrs_PRECISION(const char*, const int*, const int*, const complex_PRECISI
 //		 void(const char *, const int *, const int *, const _Complex float *, const int *, const int *, const int *, const int *, _Complex float *, const int *, const int *, const int *, int *)
 void pgemv_PRECISION(char*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, PRECISION*, int*,
 	int*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, int*);
+void pgemr2d_PRECISION( const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, int*);
 #endif
 
 void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
@@ -775,6 +776,8 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int* descA, int* ipiv, struct Thread *threading){
     
     printf0("scalapack factorization ongoing...\n");
+   
+   
     int info = 0;
     int ia = 1, ja = 1; //starting indices (global)
     int N = l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes; 
@@ -809,6 +812,10 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 		}    
 	}
     }
+
+    //redistribute Matrix to 2d cyclic pattern
+    scalap_1d_2d_A_PRECISION( l, threading);
+ 
 }
 
 
@@ -846,8 +853,8 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
     if (info != 0) error0("Error in descinit for DescB, info = %d\n", info);
 
     //2. Initialize 2D - cyclic Blacs-Grid for performing fast calculation
-    int nprow2d = 4;
-    int npcol2d = 2;
+    int nprow2d = g.prow2d;
+    int npcol2d = g.pcol2d;
     int iam2d = 0, nprocs2d = 0;
     int ictxt2d = l->p_PRECISION.blacs_ctxt2d, myrow2d, mycol2d;
     
@@ -858,11 +865,12 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
     blacs_gridinit_( &ictxt2d, &layout, &nprow2d, &npcol2d );
     blacs_gridinfo_( &ictxt2d, &nprow2d, &npcol2d, &myrow2d, &mycol2d );
 
-    int bs2d = l->num_lattice_site_var;	//TODO may choose a different blocksize, but in beginning start with bs = 2 * num. testvecs
-					//probably a good choice
-    //						\/ not sure about zero here!
-    int numr2d = numroc_( &N, &bs2d, &iam2d, &izero, &nprocs2d );
-    int lldA2d = numr2d > 1? numr : 1;
+    int bs2d = g.bs2d;
+    int numr2d = numroc_( &N, &bs2d, &myrow2d, &izero, &nprow2d );
+    int lldA2d = numr2d > 1? numr2d : 1;
+
+    printf0("pgrid: %d x %d, with blocksize %d\n", nprow2d, npcol2d, bs2d);
+    printf0("lldA2d: %d\n", lldA2d);
 
      //descinit ( DESC,			    M, N,    MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO )
     descinit_( l->p_PRECISION.desc_dense_vals2d, &N, &N, &bs2d, &bs2d, &izero, &izero, &ictxt2d, &lldA2d, &info);
@@ -873,6 +881,58 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
     if (info != 0) error0("Error in descinit for DescB2D, info = %d\n", info);
 }
 
+void scalap_1d_2d_A_PRECISION(level_struct *l, struct Thread *threading){
+    int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
+    int ia = 1, ja = 1; //starting indices
+    //(global) The row and column indices in the array A indicating the first row and the first column, respectively, of the submatrix of A) to copy. 
+    int ib = 1, jb = 1;
+    int ictxt = l->p_PRECISION.blacs_ctxt2d;
 
+    //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
+    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals, &ia, &ja, l->p_PRECISION.desc_dense_vals,
+	    l->p_PRECISION.dense_vals2d, &ib, &jb, l->p_PRECISION.desc_dense_vals2d, &ictxt);
+}
+
+void scalap_2d_1d_A_PRECISION(level_struct *l, struct Thread *threading){
+    int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
+    int ia = 1, ja = 1; //starting indices
+    //(global) The row and column indices in the array A indicating the first row and the first column, respectively, of the submatrix of A) to copy. 
+    int ib = 1, jb = 1;
+    int ictxt = l->p_PRECISION.blacs_ctxt2d;
+
+    //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
+    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals2d, &ia, &ja,
+	    l->p_PRECISION.desc_dense_vals2d,
+	    l->p_PRECISION.dense_vals, &ib, &jb, l->p_PRECISION.desc_dense_vals, &ictxt);
+
+}
+
+void scalap_1d_2d_vec_PRECISION(level_struct *l, struct Thread *threading){
+    int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
+    int ia = 1, ja = 1; //starting indices
+    //(global) The row and column indices in the array A indicating the first row and the first column, respectively, of the submatrix of A) to copy. 
+    int ib = 1, jb = 1;
+    int ictxt = l->p_PRECISION.blacs_ctxt2d;
+
+    //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
+    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.b, &ia, &ja,
+	    l->p_PRECISION.desc_rhs,
+	    l->p_PRECISION.w, &ib, &jb, l->p_PRECISION.desc_rhs2d, &ictxt);
+    vector_PRECISION_copy(l->p_PRECISION.b, l->p_PRECISION.w, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
+}
+
+void scalap_2d_1d_vec_PRECISION(level_struct *l, struct Thread *threading){
+    int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
+    int ia = 1, ja = 1; //starting indices
+    //(global) The row and column indices in the array A indicating the first row and the first column, respectively, of the submatrix of A) to copy. 
+    int ib = 1, jb = 1;
+    int ictxt = l->p_PRECISION.blacs_ctxt2d;
+
+    //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
+    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.x, &ia, &ja,
+	    l->p_PRECISION.desc_rhs2d,
+	    l->p_PRECISION.w, &ib, &jb, l->p_PRECISION.desc_rhs, &ictxt);
+    vector_PRECISION_copy(l->p_PRECISION.x, l->p_PRECISION.w, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
+}
 #endif
 #endif

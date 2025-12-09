@@ -43,6 +43,23 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading);
 
 void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading);
 
+// this function will move the matrix from 1d (cyclic) pattern to the 2d cyclic
+// pattern
+void scalap_1d_2d_A_PRECISION(level_struct *l, struct Thread *threading);
+
+// this function reverts the 2d cyclic matrix back to DDalphaAMG native 1d
+// (cyclic) pattern
+// probably never used
+void scalap_2d_1d_A_PRECISION(level_struct *l, struct Thread *threading);
+
+// this function will move a vector from 1d (cyclic) pattern to the 2d cyclic
+// pattern matching the 2d cyclic matrix pattern
+void scalap_1d_2d_vec_PRECISION(level_struct *l, struct Thread *threading);
+
+// this function will revert a vector to the 1d (cyclic) pattern from the 2d
+// cyclic pattern matching the 2d cyclic matrix pattern
+void scalap_2d_1d_vec_PRECISION(level_struct *l, struct Thread *threading);
+
 #endif
 
 #endif

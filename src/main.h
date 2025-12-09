@@ -138,6 +138,8 @@
 #define pgetrs_float pcgetrs_
 #define pgetrf_double pzgetrf_
 #define pgetrf_float pcgetrf_
+#define pgemr2d_double pzgemr2d_
+#define pgemr2d_float pcgemr2d_
 #endif
 
 #ifdef SSE
@@ -482,6 +484,10 @@ typedef struct block_struct {
 #endif
 #ifdef MUMPS_ADDS
     double mumps_drop_tol;
+#endif
+#ifdef COARSE_SCALAP
+    int prow2d, pcol2d;
+    int bs2d;
 #endif
     // profiling, analysis, output
     int coarse_iter_count, iter_count, iterator, print, conf_flag, setup_flag, in_setup;
