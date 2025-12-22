@@ -227,6 +227,7 @@
 #ifdef COARSE_SCALAP
     vector_PRECISION dense_vals;
     vector_PRECISION dense_vals2d;
+    vector_PRECISION rhs2d;
     int *desc_dense_vals;
     int *desc_rhs;
     int *desc_dense_vals2d;

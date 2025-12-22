@@ -54,11 +54,13 @@ void scalap_2d_1d_A_PRECISION(level_struct *l, struct Thread *threading);
 
 // this function will move a vector from 1d (cyclic) pattern to the 2d cyclic
 // pattern matching the 2d cyclic matrix pattern
-void scalap_1d_2d_vec_PRECISION(level_struct *l, struct Thread *threading);
+void scalap_1d_2d_vec_PRECISION(vector_PRECISION vec, level_struct *l,
+                                struct Thread *threading);
 
 // this function will revert a vector to the 1d (cyclic) pattern from the 2d
 // cyclic pattern matching the 2d cyclic matrix pattern
-void scalap_2d_1d_vec_PRECISION(level_struct *l, struct Thread *threading);
+void scalap_2d_1d_vec_PRECISION(vector_PRECISION vec, level_struct *l,
+                                struct Thread *threading);
 
 #endif
 

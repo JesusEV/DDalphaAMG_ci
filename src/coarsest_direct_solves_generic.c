@@ -41,6 +41,9 @@ void pgetrs_PRECISION(const char*, const int*, const int*, const complex_PRECISI
 void pgemv_PRECISION(char*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, PRECISION*, int*,
 	int*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, int*);
 void pgemr2d_PRECISION( const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, int*);
+
+void paxpy_PRECISION( const int*, complex_PRECISION*, complex_PRECISION*, const int*, const int*, const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, const int*);
+void pnrm2_PRECISION( const int*, PRECISION*, complex_PRECISION*, const int*, const int*, const int*, const int*);
 #endif
 
 void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
@@ -580,7 +583,7 @@ void direct_solves_set_reset_PRECISION( level_struct *l, struct Thread *threadin
       if (!l->idle){ 
 
 	  printf0("call to setup from top_level.c\n");
-	  mumps_setup_float(l, threading);        //setup vals, Is, Js
+	  mumps_setup_PRECISION(l, threading);        //setup vals, Is, Js
 
           double t0,t1;
           START_MASTER(threading)
@@ -598,8 +601,8 @@ void direct_solves_set_reset_PRECISION( level_struct *l, struct Thread *threadin
           g.mumps_id.job = 2; //factorize
           cmumps_c(&(g.mumps_id)); //only factorize when on solve
 #elif defined(COARSE_SCALAP)
-	  coarse_scalap_factorize_float( l, l->p_PRECISION.dense_vals,
-		  l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv, threading );//only factorize when on solve
+	  coarse_scalap_factorize_PRECISION( l, l->p_PRECISION.dense_vals2d,
+		  l->p_PRECISION.desc_dense_vals2d, l->p_PRECISION.ipiv, threading );//only factorize when on solve
 #endif
 
 	  t1 = MPI_Wtime();
@@ -750,41 +753,44 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 	char trans = 'N';
 
 	int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
-	vector_PRECISION out = NULL;
-	MALLOC(out, complex_PRECISION, l->vector_size);
-	memset(out, 0, l->vector_size * sizeof(complex_PRECISION));
-	vector_PRECISION_copy(out, eta, 0, l->vector_size, l);
+	
+	//rhs2d = eta
+	scalap_1d_2d_vec_PRECISION( eta, l, threading);
+	/*
+	rhs2d = (LU)^-1 rhs2d
 	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals, &ione, &ione,
 		l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv,
 		out, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
-	START_MASTER(threading)
+		*/
+	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals2d, &ione, &ione,
+		l->p_PRECISION.desc_dense_vals2d, l->p_PRECISION.ipiv,
+		l->p_PRECISION.rhs2d, &ione, &ione, l->p_PRECISION.desc_rhs2d, &info );
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
-//	printf0("finished pgetrs!\n");
-	//vector_copy eta -> phi 
-        vector_PRECISION_copy(phi, out, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
+	
+	//phi = rhs2d (which is sol)
+	scalap_2d_1d_vec_PRECISION( phi, l, threading);
 
         g.coarsest_solve_number ++;
         g.coarsest_solve_time += MPI_Wtime();
         printf0("scalap time  = %f, scalap solves:  %d\n", g.coarsest_solve_time, g.coarsest_solve_number);
-	FREE(out, complex_PRECISION, l->vector_size);
-	END_MASTER(threading)
-        SYNC_CORES(threading);
     }
 }
 
 
 void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int* descA, int* ipiv, struct Thread *threading){
     
+    //distribute Matrix to 2d cyclic pattern
+    scalap_1d_2d_A_PRECISION( l, threading);
+
     printf0("scalapack factorization ongoing...\n");
    
    
     int info = 0;
-    int ia = 1, ja = 1; //starting indices (global)
+    int ione = 1; //starting indices (global)
     int N = l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes; 
-    //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO )
-    pgetrf_PRECISION( &N, &N, A, &ia, &ja, descA, ipiv, &info );    
+       //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO )
+    pgetrf_PRECISION( &N, &N, A, &ione, &ione, descA, ipiv, &info );    
     if (info != 0 ) error0("Error during pgetrf_(), info = %d\n", info);
-    printf0("scalap factorization done!\n");
 }
 
 
@@ -813,9 +819,33 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 	}
     }
 
-    //redistribute Matrix to 2d cyclic pattern
-    scalap_1d_2d_A_PRECISION( l, threading);
- 
+
+    /*
+    for (int r = 0; r < g.num_processes; r++){
+	//ausgabe:
+	int skip = 14;
+
+	int nrows = l->num_inner_lattice_sites * l->num_lattice_site_var;
+	int ncols = nrows * g.num_processes;
+	if (g.my_rank == r) { 
+	    printf("r: %d\n", r);
+	    for (int i = 0; i < nrows; i += skip){
+		for (int j = 0; j < ncols; j += skip){
+		    if (l->p_PRECISION.dense_vals[j * nrows + i] == 0) printf("  ");
+		    else printf(" X");
+		}
+		printf("\n");
+		fflush(stdout);
+	    }
+	}
+	//checkpoint
+	sleep(1);
+	MPI_Barrier(MPI_COMM_WORLD);
+
+    }
+    exit(0);
+       */
+        
 }
 
 
@@ -858,7 +888,7 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
     int iam2d = 0, nprocs2d = 0;
     int ictxt2d = l->p_PRECISION.blacs_ctxt2d, myrow2d, mycol2d;
     
-    layout = 'C';   //TODO: may use R instead of C here?
+    layout = 'R';   
 
     blacs_pinfo_( &iam2d, &nprocs2d);
     blacs_get_( &izero, &izero, &ictxt2d);
@@ -883,56 +913,46 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
 
 void scalap_1d_2d_A_PRECISION(level_struct *l, struct Thread *threading){
     int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
-    int ia = 1, ja = 1; //starting indices
-    //(global) The row and column indices in the array A indicating the first row and the first column, respectively, of the submatrix of A) to copy. 
-    int ib = 1, jb = 1;
-    int ictxt = l->p_PRECISION.blacs_ctxt2d;
-
+    int ione = 1; //starting indices
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
-    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals, &ia, &ja, l->p_PRECISION.desc_dense_vals,
-	    l->p_PRECISION.dense_vals2d, &ib, &jb, l->p_PRECISION.desc_dense_vals2d, &ictxt);
+    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals, &ione, &ione, l->p_PRECISION.desc_dense_vals,
+	    l->p_PRECISION.dense_vals2d, &ione, &ione, l->p_PRECISION.desc_dense_vals2d,
+	    &(l->p_PRECISION.blacs_ctxt2d));
 }
 
 void scalap_2d_1d_A_PRECISION(level_struct *l, struct Thread *threading){
+    /*
+       probably never used!
+       */
     int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
-    int ia = 1, ja = 1; //starting indices
-    //(global) The row and column indices in the array A indicating the first row and the first column, respectively, of the submatrix of A) to copy. 
-    int ib = 1, jb = 1;
+    int ione = 1; //starting indices
     int ictxt = l->p_PRECISION.blacs_ctxt2d;
 
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
-    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals2d, &ia, &ja,
+    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals2d, &ione, &ione,
 	    l->p_PRECISION.desc_dense_vals2d,
-	    l->p_PRECISION.dense_vals, &ib, &jb, l->p_PRECISION.desc_dense_vals, &ictxt);
-
+	    l->p_PRECISION.dense_vals, &ione, &ione, l->p_PRECISION.desc_dense_vals, &ictxt);
 }
 
-void scalap_1d_2d_vec_PRECISION(level_struct *l, struct Thread *threading){
+void scalap_1d_2d_vec_PRECISION( vector_PRECISION vec, level_struct *l, struct Thread *threading){
     int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
-    int ia = 1, ja = 1; //starting indices
+    int ione = 1; //starting indices
     //(global) The row and column indices in the array A indicating the first row and the first column, respectively, of the submatrix of A) to copy. 
-    int ib = 1, jb = 1;
     int ictxt = l->p_PRECISION.blacs_ctxt2d;
 
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
-    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.b, &ia, &ja,
-	    l->p_PRECISION.desc_rhs,
-	    l->p_PRECISION.w, &ib, &jb, l->p_PRECISION.desc_rhs2d, &ictxt);
-    vector_PRECISION_copy(l->p_PRECISION.b, l->p_PRECISION.w, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
+    pgemr2d_PRECISION( &N, &ione, vec, &ione, &ione, l->p_PRECISION.desc_rhs, l->p_PRECISION.rhs2d, &ione, &ione, l->p_PRECISION.desc_rhs2d, &ictxt);
 }
 
-void scalap_2d_1d_vec_PRECISION(level_struct *l, struct Thread *threading){
+void scalap_2d_1d_vec_PRECISION( vector_PRECISION vec, level_struct *l, struct Thread *threading){
     int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
-    int ia = 1, ja = 1; //starting indices
+    int ione = 1; //starting indices
     //(global) The row and column indices in the array A indicating the first row and the first column, respectively, of the submatrix of A) to copy. 
-    int ib = 1, jb = 1;
     int ictxt = l->p_PRECISION.blacs_ctxt2d;
 
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
-    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.x, &ia, &ja,
-	    l->p_PRECISION.desc_rhs2d,
-	    l->p_PRECISION.w, &ib, &jb, l->p_PRECISION.desc_rhs, &ictxt);
-    vector_PRECISION_copy(l->p_PRECISION.x, l->p_PRECISION.w, l->p_PRECISION.v_start, l->p_PRECISION.v_end, l );
+    pgemr2d_PRECISION( &N, &ione, l->p_PRECISION.rhs2d, &ione, &ione, l->p_PRECISION.desc_rhs2d, vec, &ione, &ione, l->p_PRECISION.desc_rhs, &ictxt);
 }
 #endif
 #endif
+

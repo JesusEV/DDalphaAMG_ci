@@ -195,7 +195,6 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     direct_solves_set_reset_float( l, threading );
-    // TODO (for Henning) : move all of these sets/resets to a (cleaner) function call
 #endif
 
 

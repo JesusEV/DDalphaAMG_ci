@@ -125,7 +125,8 @@ int main( int argc, char **argv ) {
 #else
 	//compute LU of matrix using scalapack
 	if (g.on_solve){
-		coarse_scalap_factorize_float( lx, lx->p_float.dense_vals, lx->p_float.desc_dense_vals,
+		coarse_scalap_factorize_float( lx, lx->p_float.dense_vals2d,
+			lx->p_float.desc_dense_vals2d,
 		lx->p_float.ipiv, threadx);//only factorize when on solve
         	//printf0("scalapack factorize done in main.c\n");
 	}
