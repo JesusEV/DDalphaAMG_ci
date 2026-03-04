@@ -38,6 +38,8 @@ void pgetrf_PRECISION(const int*, const int*, complex_PRECISION*, const int*, co
 //		void(const int *, const int *, _Complex float *, const int *, const int *, const int *, int *, int *)
 void pgetrs_PRECISION(const char*, const int*, const int*, const complex_PRECISION*, const int*, const int*, const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, int* );
 //		 void(const char *, const int *, const int *, const _Complex float *, const int *, const int *, const int *, const int *, _Complex float *, const int *, const int *, const int *, int *)
+void pgetri_PRECISION( const int*, complex_PRECISION*, const int*, const int*, int*, int*,
+	complex float*, const int*, const int*, int*, int* );
 void pgemv_PRECISION(char*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, PRECISION*, int*,
 	int*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, int*);
 void pgemr2d_PRECISION( const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, int*);
@@ -753,18 +755,22 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 	char trans = 'N';
 
 	int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
+
+	complex_PRECISION alpha = 1.0, beta = 0.0;
+
 	
 	//rhs2d = eta
 	scalap_1d_2d_vec_PRECISION( eta, l, threading);
 	/*
 	rhs2d = (LU)^-1 rhs2d
-	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals, &ione, &ione,
-		l->p_PRECISION.desc_dense_vals, l->p_PRECISION.ipiv,
-		out, &ione, &ione, l->p_PRECISION.desc_rhs, &info );
-		*/
 	pgetrs_PRECISION( &trans, &N, &ione, l->p_PRECISION.dense_vals2d, &ione, &ione,
 		l->p_PRECISION.desc_dense_vals2d, l->p_PRECISION.ipiv,
 		l->p_PRECISION.rhs2d, &ione, &ione, l->p_PRECISION.desc_rhs2d, &info );
+		*/
+	pgemv_PRECISION( &trans, &N, &N, &alpha, l->p_PRECISION.dense_vals2d, &ione, &ione,
+		l->p_PRECISION.desc_dense_vals2d, l->p_PRECISION.rhs2d, &ione, &ione,
+		l->p_PRECISION.desc_rhs2d, &ione, &beta, l->p_PRECISION.rhs2d, &ione, &ione,
+		l->p_PRECISION.desc_rhs2d, &ione); 
 	if (info != 0 ) error0("Error during pgetrs_(), info = %d\n", info);
 	
 	//phi = rhs2d (which is sol)
@@ -788,9 +794,56 @@ void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int
     int info = 0;
     int ione = 1; //starting indices (global)
     int N = l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes; 
-       //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO )
-    pgetrf_PRECISION( &N, &N, A, &ione, &ione, descA, ipiv, &info );    
-    if (info != 0 ) error0("Error during pgetrf_(), info = %d\n", info);
+       //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO)
+    if ( l->p_PRECISION.myrow2d >= 0){
+	pgetrf_PRECISION( &N, &N, l->p_PRECISION.dense_vals2d, &ione, &ione, l->p_PRECISION.desc_dense_vals2d, ipiv, &info );    
+        if (info != 0 ) error0("Error during pgetrf_(), info = %d\n", info);
+    
+	complex PRECISION work_query;
+	int iwork_query;
+
+	int lwork = -1, liwork = -1;
+	pgetri_PRECISION(
+	    &N,
+	    l->p_PRECISION.dense_vals2d,              /* LU-Faktorisierte Matrix */
+	    &ione, &ione,           /* IA, JA */
+	    l->p_PRECISION.desc_dense_vals2d,
+	    ipiv,
+	    &work_query,
+	    &lwork,
+	    &iwork_query,
+	    &liwork,
+	    &info
+	);
+        if (info != 0 ) error0("Error during pgetri_query(), info = %d\n", info);
+	
+	complex_PRECISION *work = NULL;
+	int *iwork = NULL;
+
+	lwork = (int) creal(work_query);
+	liwork = iwork_query;
+	work = malloc(lwork * sizeof(complex_PRECISION));
+	iwork = malloc (liwork * sizeof(int));
+    	pgetri_PRECISION(
+	    &N,
+	    l->p_PRECISION.dense_vals2d,
+	    &ione, &ione,
+	    l->p_PRECISION.desc_dense_vals2d,
+	    ipiv,
+	    work,
+	    &lwork,
+	    iwork,
+	    &liwork,
+	    &info
+	);
+        if (info != 0 ) error0("Error during pgetri_(), info = %d\n", info);
+    
+	free(work);
+	free(iwork);
+    
+    
+    }
+
 }
 
 
@@ -859,13 +912,13 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
     char layout = 'R';
     int info = 0;
     int iam = 0, nprocs = 0;
-    int ictxt1d = l->p_PRECISION.blacs_ctxt1d, myrow, mycol;
+    int ictxt1d = l->p_PRECISION.blacs_ctxt1d, mycol;
     int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
 
     blacs_pinfo_( &iam, &nprocs); //setting rank and number of blacs-processes
     blacs_get_(&izero, &izero, &ictxt1d);			//create context
     blacs_gridinit_(&ictxt1d, &layout, &nprow, &npcol );	//create blacs grid
-    blacs_gridinfo_(&ictxt1d, &nprow, &npcol, &myrow, &mycol);	//set process coordinates of blacs-grid
+    blacs_gridinfo_(&ictxt1d, &nprow, &npcol, &l->p_PRECISION.myrow, &mycol);	//set process coordinates of blacs-grid
 
     //setting the descriptors:
     int bs = l->num_lattice_site_var * l->num_inner_lattice_sites;
@@ -883,41 +936,62 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
     if (info != 0) error0("Error in descinit for DescB, info = %d\n", info);
 
     //2. Initialize 2D - cyclic Blacs-Grid for performing fast calculation
+    int imone = -1;
     int nprow2d = g.prow2d;
     int npcol2d = g.pcol2d;
-    int iam2d = 0, nprocs2d = 0;
-    int ictxt2d = l->p_PRECISION.blacs_ctxt2d, myrow2d, mycol2d;
+    int ictxt2d = l->p_PRECISION.blacs_ctxt2d, mycol2d;
     
-    layout = 'R';   
-
-    blacs_pinfo_( &iam2d, &nprocs2d);
-    blacs_get_( &izero, &izero, &ictxt2d);
+    blacs_get_(&imone, &izero, &ictxt2d);
     blacs_gridinit_( &ictxt2d, &layout, &nprow2d, &npcol2d );
-    blacs_gridinfo_( &ictxt2d, &nprow2d, &npcol2d, &myrow2d, &mycol2d );
+    blacs_gridinfo_( &ictxt2d, &nprow2d, &npcol2d, &l->p_PRECISION.myrow2d, &mycol2d );
 
     int bs2d = g.bs2d;
-    int numr2d = numroc_( &N, &bs2d, &myrow2d, &izero, &nprow2d );
+    int numr2d = numroc_( &N, &bs2d, &l->p_PRECISION.myrow2d, &izero, &nprow2d );
     int lldA2d = numr2d > 1? numr2d : 1;
 
     printf0("pgrid: %d x %d, with blocksize %d\n", nprow2d, npcol2d, bs2d);
     printf0("lldA2d: %d\n", lldA2d);
 
-     //descinit ( DESC,			    M, N,    MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO )
-    descinit_( l->p_PRECISION.desc_dense_vals2d, &N, &N, &bs2d, &bs2d, &izero, &izero, &ictxt2d, &lldA2d, &info);
-    if (info != 0) error0("Error in descinit for DescA2D, info = %d\n", info);
+    if (l->p_PRECISION.myrow2d >= 0) { 
+	 //descinit ( DESC,			    M, N,    MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO )
+	descinit_( l->p_PRECISION.desc_dense_vals2d, &N, &N, &bs2d, &bs2d, &izero, &izero, &ictxt2d, &lldA2d, &info);
+	if (info != 0) error0("Error in descinit for DescA2D, info = %d\n", info);
 
-    //descinit ( DESC,		    M, N,	MB, NB,	    IRSRC, ICSRC, ICTXT, LLD, INFO )
-    descinit_( l->p_PRECISION.desc_rhs2d, &N, &nrhs, &bs2d, &ione, &izero, &izero, &ictxt2d, &lldA2d, &info);
-    if (info != 0) error0("Error in descinit for DescB2D, info = %d\n", info);
+	//descinit ( DESC,		    M, N,	MB, NB,	    IRSRC, ICSRC, ICTXT, LLD, INFO )
+	descinit_( l->p_PRECISION.desc_rhs2d, &N, &nrhs, &bs2d, &ione, &izero, &izero, &ictxt2d, &lldA2d, &info);
+	if (info != 0) error0("Error in descinit for DescB2D, info = %d\n", info);
+    } else {
+	l->p_PRECISION.desc_dense_vals2d[0] = 1;
+	l->p_PRECISION.desc_dense_vals2d[1] = ictxt2d;
+	l->p_PRECISION.desc_dense_vals2d[2] = 0;
+	l->p_PRECISION.desc_dense_vals2d[3] = 0;
+	l->p_PRECISION.desc_dense_vals2d[4] = 0;
+	l->p_PRECISION.desc_dense_vals2d[5] = 0;
+	l->p_PRECISION.desc_dense_vals2d[6] = 0;
+	l->p_PRECISION.desc_dense_vals2d[7] = 0;
+	l->p_PRECISION.desc_dense_vals2d[8] = 0;
+
+	l->p_PRECISION.desc_rhs2d[0] = 1;
+	l->p_PRECISION.desc_rhs2d[1] = ictxt2d;
+	l->p_PRECISION.desc_rhs2d[2] = 0;
+	l->p_PRECISION.desc_rhs2d[3] = 0;
+	l->p_PRECISION.desc_rhs2d[4] = 0;
+	l->p_PRECISION.desc_rhs2d[5] = 0;
+	l->p_PRECISION.desc_rhs2d[6] = 0;
+	l->p_PRECISION.desc_rhs2d[7] = 0;
+	l->p_PRECISION.desc_rhs2d[8] = 0;
+    }
 }
 
 void scalap_1d_2d_A_PRECISION(level_struct *l, struct Thread *threading){
     int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
     int ione = 1; //starting indices
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
-    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals, &ione, &ione, l->p_PRECISION.desc_dense_vals,
+    if (l->p_PRECISION.myrow >= 0 || l->p_PRECISION.myrow2d >= 0){
+        pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals, &ione, &ione, l->p_PRECISION.desc_dense_vals,
 	    l->p_PRECISION.dense_vals2d, &ione, &ione, l->p_PRECISION.desc_dense_vals2d,
 	    &(l->p_PRECISION.blacs_ctxt2d));
+    }
 }
 
 void scalap_2d_1d_A_PRECISION(level_struct *l, struct Thread *threading){
@@ -929,9 +1003,11 @@ void scalap_2d_1d_A_PRECISION(level_struct *l, struct Thread *threading){
     int ictxt = l->p_PRECISION.blacs_ctxt2d;
 
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
-    pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals2d, &ione, &ione,
+    if (l->p_PRECISION.myrow >= 0 || l->p_PRECISION.myrow2d >= 0){
+	pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals2d, &ione, &ione,
 	    l->p_PRECISION.desc_dense_vals2d,
 	    l->p_PRECISION.dense_vals, &ione, &ione, l->p_PRECISION.desc_dense_vals, &ictxt);
+    }
 }
 
 void scalap_1d_2d_vec_PRECISION( vector_PRECISION vec, level_struct *l, struct Thread *threading){
@@ -941,7 +1017,9 @@ void scalap_1d_2d_vec_PRECISION( vector_PRECISION vec, level_struct *l, struct T
     int ictxt = l->p_PRECISION.blacs_ctxt2d;
 
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
-    pgemr2d_PRECISION( &N, &ione, vec, &ione, &ione, l->p_PRECISION.desc_rhs, l->p_PRECISION.rhs2d, &ione, &ione, l->p_PRECISION.desc_rhs2d, &ictxt);
+    if (l->p_PRECISION.myrow >= 0 || l->p_PRECISION.myrow2d >= 0){
+	pgemr2d_PRECISION( &N, &ione, vec, &ione, &ione, l->p_PRECISION.desc_rhs, l->p_PRECISION.rhs2d, &ione, &ione, l->p_PRECISION.desc_rhs2d, &ictxt);
+    }
 }
 
 void scalap_2d_1d_vec_PRECISION( vector_PRECISION vec, level_struct *l, struct Thread *threading){
@@ -951,7 +1029,9 @@ void scalap_2d_1d_vec_PRECISION( vector_PRECISION vec, level_struct *l, struct T
     int ictxt = l->p_PRECISION.blacs_ctxt2d;
 
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
-    pgemr2d_PRECISION( &N, &ione, l->p_PRECISION.rhs2d, &ione, &ione, l->p_PRECISION.desc_rhs2d, vec, &ione, &ione, l->p_PRECISION.desc_rhs, &ictxt);
+    if (l->p_PRECISION.myrow >= 0 || l->p_PRECISION.myrow2d >= 0){
+	pgemr2d_PRECISION( &N, &ione, l->p_PRECISION.rhs2d, &ione, &ione, l->p_PRECISION.desc_rhs2d, vec, &ione, &ione, l->p_PRECISION.desc_rhs, &ictxt);
+    }
 }
 #endif
 #endif

@@ -496,6 +496,8 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
 
     p->blacs_ctxt1d = 0;
     p->blacs_ctxt2d = 0;
+    p->myrow = -1;
+    p->myrow2d = -1;
 #endif
   }
 #endif

@@ -235,6 +235,7 @@
     int *ipiv;
     int blacs_ctxt1d;
     int blacs_ctxt2d;
+    int myrow, myrow2d;
 #endif
 
 
