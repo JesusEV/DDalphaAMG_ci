@@ -478,11 +478,11 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
     MALLOC( p->desc_rhs, int, 9);
     memset( p->desc_rhs, 0,  9 * sizeof(int));
 
-    MALLOC( p->dense_vals2d, complex_PRECISION, mumps_n * nr_nodes * site_var);
-    memset( p->dense_vals2d, 0, mumps_n * nr_nodes * site_var * sizeof(complex_PRECISION));
+    MALLOC( p->dense_vals2d, complex_PRECISION, mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes);
+    memset( p->dense_vals2d, 0, mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes * sizeof(complex_PRECISION));
  
     MALLOC( p->rhs2d, complex_PRECISION, l->inner_vector_size * g.pcol2d);
-    memset( p->dense_vals2d, 0, l->inner_vector_size * g.pcol2d * sizeof(complex_PRECISION));
+    memset( p->rhs2d, 0, l->inner_vector_size * g.pcol2d * sizeof(complex_PRECISION));
     
     MALLOC( p->desc_dense_vals2d, int, 9);
     memset( p->desc_dense_vals2d, 0,  9 * sizeof(int));
@@ -636,7 +636,7 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
       FREE( p->desc_rhs, int, 9);    
       
       FREE( p->dense_vals2d, complex_PRECISION, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var   
-						* l->num_inner_lattice_sites *l->num_lattice_site_var);
+						* l->num_inner_lattice_sites *l->num_lattice_site_var/(g.pcol2d * g.prow2d) * g.num_processes);
 
       FREE( p->rhs2d, complex_PRECISION, l->inner_vector_size * g.pcol2d);
 
