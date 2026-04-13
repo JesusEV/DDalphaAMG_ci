@@ -316,7 +316,12 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
           printf0("|              setup iter: %-3d                             |\n", g.setup_iter[i] );
           printf0("|            test vectors: %-3d                             |\n", g.num_eig_vect[i] );
         } else {
-          printf0("|      coarge grid solver: %-30s  |\n", g.odd_even?"odd even GMRES":"GMRES" );
+#ifdef COARSE_SCALAP
+	  printf0("|coarse grid solver solve: %-30s  |\n", "ScaLAPACK" );
+	  printf0("|coarse grid solver setup: %-30s  |\n", "odd even GMRES" );
+#else
+          printf0("|      coarse grid solver: %-30s  |\n", g.odd_even?"odd even GMRES":"GMRES" );
+#endif
           printf0("|              iterations: %-6d                          |\n", g.coarse_iter );
           printf0("|                  cycles: %-6d                          |\n", g.coarse_restart );
           printf0("|               tolerance: %-5.0le                           |\n", g.coarse_tol );

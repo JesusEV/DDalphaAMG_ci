@@ -27,8 +27,10 @@
 
 #ifdef COARSE_SCALAP
 void blacs_get_(const int*, const int*, int*);
+
 void blacs_pinfo_(int*, int*);
 void blacs_gridinit_(int*, const char*, const int*, const int*);
+void blacs_gridmap_(int *ictxt, int *usermap, int *ldumap, int *nprow, int *npcol);
 void blacs_gridinfo_(const int*, int*, int*, int*, int*);
 void descinit_(int*, const int*, const int*, const int*, const int*, const int*, const int*, const int*, const int*, int*);
 int numroc_(const int*, const int*, const int*, const int*, const int*);
@@ -38,10 +40,8 @@ void pgetrf_PRECISION(const int*, const int*, complex_PRECISION*, const int*, co
 //		void(const int *, const int *, _Complex float *, const int *, const int *, const int *, int *, int *)
 void pgetrs_PRECISION(const char*, const int*, const int*, const complex_PRECISION*, const int*, const int*, const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, int* );
 //		 void(const char *, const int *, const int *, const _Complex float *, const int *, const int *, const int *, const int *, _Complex float *, const int *, const int *, const int *, int *)
-void pgetri_PRECISION( const int*, complex_PRECISION*, const int*, const int*, int*, int*,
-	complex float*, const int*, const int*, int*, int* );
-void pgemv_PRECISION(char*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, PRECISION*, int*,
-	int*, int*, int*, PRECISION*, PRECISION*, int*, int*, int*, int*);
+void pgetri_PRECISION( const int*, complex_PRECISION*, const int*, const int*, int*, int*, complex PRECISION*, const int*, const int*, int*, int* );
+void pgemv_PRECISION(char*, int*, int*, PRECISION*, complex_PRECISION*, int*, int*, int*, complex_PRECISION*, int*, int*, int*, int*, PRECISION*, complex_PRECISION*, int*, int*, int*, int*);
 void pgemr2d_PRECISION( const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, int*);
 
 void paxpy_PRECISION( const int*, complex_PRECISION*, complex_PRECISION*, const int*, const int*, const int*, const int*, complex_PRECISION*, const int*, const int*, const int*, const int*);
@@ -536,15 +536,12 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     //printf0("mu- on node %d, dir %d done!\n", node, dir);
   }	//loop over directions
 
-  
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  //printf0("hopping in mu - done!\n");
+ 
+ //printf0("hopping in mu - done!\n");
 
 #ifdef COARSE_SCALAP	//use Scalapack on coarsest level to solve.
   coarse_scalap_setup_PRECISION( l, threading);
-  MPI_Barrier(MPI_COMM_WORLD);
-  //printf0("generate scalap matrix done\n");
+ //printf0("generate scalap matrix done\n");
 #else
   // increase global indices by 1 to match fortran indexing.
   // spmv doesn't work then anymore
@@ -554,7 +551,6 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
     *(l->p_PRECISION.mumps_Is + i ) = *(l->p_PRECISION.mumps_Is + i ) +1;
   }
 #endif
-
 
 
 //  printf0("freeing ranks\n");
@@ -756,7 +752,7 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 
 	int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
 
-	complex_PRECISION alpha = 1.0, beta = 0.0;
+	PRECISION alpha = 1.0, beta = 0.0;
 
 	
 	//rhs2d = eta
@@ -784,12 +780,11 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 
 
 void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, int* descA, int* ipiv, struct Thread *threading){
-    
-    //distribute Matrix to 2d cyclic pattern
-    scalap_1d_2d_A_PRECISION( l, threading);
-
-    printf0("scalapack factorization ongoing...\n");
    
+    printf0("scalapack factorization ongoing...\n");
+    fflush(stdout);
+   //distribute Matrix to 2d cyclic pattern
+    scalap_1d_2d_A_PRECISION( l, threading);
    
     int info = 0;
     int ione = 1; //starting indices (global)
@@ -854,6 +849,28 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 	    l->num_inner_lattice_sites * l->num_lattice_site_var * l->num_processes *
 	    sizeof(complex_PRECISION));
 
+
+    int global_comm_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &global_comm_size);
+
+    int *glob_ranks = NULL;
+    int *loc_ranks = NULL; //will contain global ranks and corresponding local ranks
+
+    MALLOC( glob_ranks, int, global_comm_size);
+    MALLOC( loc_ranks, int, global_comm_size);
+    for (int i = 0; i<global_comm_size; i++) { glob_ranks[i]= i; loc_ranks[i] = -1;}
+    
+    MPI_Group world_group;
+    MPI_Group local_group;
+
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    MPI_Comm_group(l->gs_PRECISION.level_comm, &local_group);
+
+    MPI_Group_translate_ranks(world_group, global_comm_size, glob_ranks, local_group, loc_ranks);
+
+  //translates from global to local ranks
+
+
     for (int llsite = 0; llsite < l->num_inner_lattice_sites; llsite++ ){ //loop over lattice sites
     //each lattice site contains 9 blocks of each SQUARE(site_var) elements, 1 for self coupling, +
     //2x4 hopping terms (2 in each dimension)
@@ -862,7 +879,7 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 		for (int j = 0; j < l->num_lattice_site_var; j++){ //local index to copy elementwise within a block
 		r = l->p_PRECISION.mumps_Is[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + 
 		    i * l->num_lattice_site_var + j] - 
-			   g.my_rank * l->num_inner_lattice_sites * l->num_lattice_site_var;
+			   loc_ranks[g.my_rank] * l->num_inner_lattice_sites * l->num_lattice_site_var;
 		c = l->p_PRECISION.mumps_Js[llsite*9*SQUARE(l->num_lattice_site_var) + d * SQUARE(l->num_lattice_site_var) + 
 		    i * l->num_lattice_site_var + j];
 		l->p_PRECISION.dense_vals[c * l->num_inner_lattice_sites * l->num_lattice_site_var +
@@ -871,60 +888,39 @@ void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading){
 		}    
 	}
     }
+   
+    free(glob_ranks);
+    free(loc_ranks);
 
-
-    /*
-    for (int r = 0; r < g.num_processes; r++){
-	//ausgabe:
-	int skip = 14;
-
-	int nrows = l->num_inner_lattice_sites * l->num_lattice_site_var;
-	int ncols = nrows * g.num_processes;
-	if (g.my_rank == r) { 
-	    printf("r: %d\n", r);
-	    for (int i = 0; i < nrows; i += skip){
-		for (int j = 0; j < ncols; j += skip){
-		    if (l->p_PRECISION.dense_vals[j * nrows + i] == 0) printf("  ");
-		    else printf(" X");
-		}
-		printf("\n");
-		fflush(stdout);
-	    }
-	}
-	//checkpoint
-	sleep(1);
-	MPI_Barrier(MPI_COMM_WORLD);
-
-    }
-    exit(0);
-       */
-        
 }
 
 
 void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
+
 
     //1. Initialize 1D - (cyclic) Blacs-Grid for reading in/out data
     int izero = 0;
     int ione = 1;
     int nprow = l->num_processes;
     int npcol = 1;
-    char layout = 'R';
     int info = 0;
-    int iam = 0, nprocs = 0;
-    int ictxt1d = l->p_PRECISION.blacs_ctxt1d, mycol;
+    int mycol;
     int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
 
-    blacs_pinfo_( &iam, &nprocs); //setting rank and number of blacs-processes
-    blacs_get_(&izero, &izero, &ictxt1d);			//create context
-    blacs_gridinit_(&ictxt1d, &layout, &nprow, &npcol );	//create blacs grid
+    int ictxt1d = MPI_Comm_c2f(l->gs_PRECISION.level_comm);
+       
+    int usermap[4] = {0, 1, 2, 3};
+    blacs_gridmap_( &ictxt1d, usermap, &nprow, &nprow, &npcol ); 
     blacs_gridinfo_(&ictxt1d, &nprow, &npcol, &l->p_PRECISION.myrow, &mycol);	//set process coordinates of blacs-grid
+    
+    l->p_PRECISION.blacs_ctxt1d = ictxt1d; //blacs_gridmap_ changes ictxt, therefore save new context
+
 
     //setting the descriptors:
     int bs = l->num_lattice_site_var * l->num_inner_lattice_sites;
     int nrhs = 1;
 	   
-    int numr = numroc_( &N, &bs, &iam, &izero, &nprow ); // number of rows stored in each process
+    int numr = numroc_( &N, &bs, &l->p_PRECISION.myrow, &izero, &nprow ); // number of rows stored in each process
     int lldA = numr > 1? numr : 1;	//leading dimension in A (remember, matrix elements are	stored in a column major order)
 
     //descinit ( DESC,			    M, N,    MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO )
@@ -936,21 +932,26 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
     if (info != 0) error0("Error in descinit for DescB, info = %d\n", info);
 
     //2. Initialize 2D - cyclic Blacs-Grid for performing fast calculation
-    int imone = -1;
     int nprow2d = g.prow2d;
     int npcol2d = g.pcol2d;
-    int ictxt2d = l->p_PRECISION.blacs_ctxt2d, mycol2d;
+    int mycol2d;
+
+
+    //TODO: Remove this one the second comm is MPI_COMM_WORLD:	<-- remove this line!
+    MPI_Comm level_comm_dup;
+    MPI_Comm_dup(l->gs_PRECISION.level_comm, &level_comm_dup);
+
+    int ictxt2d = MPI_Comm_c2f(level_comm_dup);
     
-    blacs_get_(&imone, &izero, &ictxt2d);
-    blacs_gridinit_( &ictxt2d, &layout, &nprow2d, &npcol2d );
+    blacs_gridmap_( &ictxt2d, usermap, &nprow2d, &nprow2d, &npcol2d ); 
     blacs_gridinfo_( &ictxt2d, &nprow2d, &npcol2d, &l->p_PRECISION.myrow2d, &mycol2d );
+
+    l->p_PRECISION.blacs_ctxt2d = ictxt2d; //blacs_gridmap_ changes ictxt, therefore save new context
 
     int bs2d = g.bs2d;
     int numr2d = numroc_( &N, &bs2d, &l->p_PRECISION.myrow2d, &izero, &nprow2d );
     int lldA2d = numr2d > 1? numr2d : 1;
 
-    printf0("pgrid: %d x %d, with blocksize %d\n", nprow2d, npcol2d, bs2d);
-    printf0("lldA2d: %d\n", lldA2d);
 
     if (l->p_PRECISION.myrow2d >= 0) { 
 	 //descinit ( DESC,			    M, N,    MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO )
@@ -986,6 +987,7 @@ void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading){
 void scalap_1d_2d_A_PRECISION(level_struct *l, struct Thread *threading){
     int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
     int ione = 1; //starting indices
+   
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
     if (l->p_PRECISION.myrow >= 0 || l->p_PRECISION.myrow2d >= 0){
         pgemr2d_PRECISION( &N, &N, l->p_PRECISION.dense_vals, &ione, &ione, l->p_PRECISION.desc_dense_vals,

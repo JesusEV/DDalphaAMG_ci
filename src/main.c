@@ -101,8 +101,8 @@ int main( int argc, char **argv ) {
       if (!lx->idle){
 
         struct Thread* threadx = &threading;
-
-        SYNC_CORES(threadx)
+	
+	SYNC_CORES(threadx)
         START_MASTER(threadx)
 	END_MASTER(threadx)
         mumps_setup_float(lx, threadx);        //setup vals, Is, Js
@@ -120,7 +120,7 @@ int main( int argc, char **argv ) {
         	cmumps_c(&(g.mumps_id));//only factorize when on solve
 	}
        
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(lx->gs_float.level_comm);
         printf0("mumps analyze + factorize done in main.c\n");
 #else
 	//compute LU of matrix using scalapack
@@ -131,24 +131,22 @@ int main( int argc, char **argv ) {
         	//printf0("scalapack factorize done in main.c\n");
 	}
 #endif
+
         t1 = MPI_Wtime();
 	g.coarsest_fact_time += t1 - t0;
-#ifndef COARSE_SCALAP
+#ifdef MUMPS_ADDS
 	printf0("MUMPS analyze ");
 	if (g.on_solve) printf0("and factorize ");
 	printf0("time (seconds) : %f \t in main.c\n",t1-t0);
 #else
 	if (g.on_solve) printf0("Invert using scalapack time (seconds) : %f \t in main.c\n",t1-t0);
 #endif
-	MPI_Barrier(MPI_COMM_WORLD);
-	printf0("done with factorize\n");
         END_MASTER(threadx)
         SYNC_CORES(threadx)
     
       }
     }
 #endif
-
     MPI_Barrier(MPI_COMM_WORLD);
     printf0("starting iterative Phase\n");
 
