@@ -217,13 +217,15 @@
     vector_PRECISION* pers_comms_ins;
     vector_PRECISION* pers_comms_outs;
 #endif
+  } gmres_PRECISION_struct;
+
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+  typedef struct {
     vector_PRECISION mumps_vals;
     int *mumps_Is, *mumps_Js;
     vector_PRECISION mumps_rhs_loc;
     int *mumps_irhs_loc;
     vector_PRECISION mumps_SOL;
-#endif
 #ifdef COARSE_SCALAP
     vector_PRECISION dense_vals;
     vector_PRECISION dense_vals2d;
@@ -237,9 +239,9 @@
     int blacs_ctxt2d;
     int myrow, myrow2d;
 #endif
-
-
-  } gmres_PRECISION_struct;
+  } ds_wrapper_PRECISION_struct; // wrapper for direct solver (for coarsest
+                                 // level)
+#endif
 
   typedef struct {
     operator_PRECISION_struct op;

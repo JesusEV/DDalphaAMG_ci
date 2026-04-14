@@ -129,27 +129,6 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
 
-#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-    p->mumps_vals = NULL;
-    p->mumps_Is = NULL;
-    p->mumps_Js = NULL;
-
-    p->mumps_rhs_loc = NULL;
-    p->mumps_irhs_loc = NULL;
-    p->mumps_SOL = NULL;
-
-#ifdef COARSE_SCALAP
-    p->dense_vals = NULL;
-    p->desc_dense_vals = NULL;
-    p->desc_rhs = NULL;
-    p->dense_vals2d = NULL;
-    p->rhs2d = NULL;
-    p->desc_dense_vals2d = NULL;
-    p->desc_rhs2d = NULL;
-    p->ipiv = NULL;
-#endif
-#endif
-
 }
 
 
@@ -437,71 +416,6 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
                                          &(p->block_jacobi_PRECISION.local_p), l );
   }
 #endif
-
-#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-  if (l->level==0 && !l->idle) {
-    // Allocate memory for cmumps data format
-    int site_var = l->num_lattice_site_var;
-    int nr_nodes = l->num_inner_lattice_sites;
-    MALLOC( p->mumps_vals, complex_PRECISION, SQUARE(site_var)*nr_nodes * 9);
-    MALLOC( p->mumps_Is, int, SQUARE(site_var)*nr_nodes * 9); // nr. of el per node * nr. of nodes * 9 	//9 = self + T+ + T- + Z+ + Z- + Y+ ...
-    MALLOC(p->mumps_Js, int, SQUARE(site_var)*nr_nodes * 9);
-    // initializing with 0s
-    memset(l->p_PRECISION.mumps_Is, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(int));
-    memset(l->p_PRECISION.mumps_Js, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(int));
-    memset(l->p_PRECISION.mumps_vals, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(complex_PRECISION));
-
-    int mumps_n = site_var * nr_nodes * l->num_processes;	//order of Matrix
-//    int nnz = SQUARE(site_var) * nr_nodes *9 * l->num_processes;	//number of nonzero elements
-//    int nnz_loc = SQUARE(site_var) * nr_nodes *9;
-
-    // Allocating and initializing SOLUTION
-    // will be used only by one process/ p0
-    if (g.my_rank == 0){
-      MALLOC(l->p_PRECISION.mumps_SOL, complex_PRECISION, mumps_n);
-      memset(l->p_PRECISION.mumps_SOL, 0, mumps_n * sizeof(complex_PRECISION));
-    }
-
-    // set up RHS //TODO: case of odd_even, len(rhs) = 2 * (v_end - v_start)?
-    int rhs_len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
-    MALLOC(l->p_PRECISION.mumps_irhs_loc, int, rhs_len);
-    MALLOC(l->p_PRECISION.mumps_rhs_loc, complex_PRECISION, rhs_len);
-    memset(l->p_PRECISION.mumps_rhs_loc, 0, rhs_len * sizeof(complex_PRECISION));
-    memset(l->p_PRECISION.mumps_irhs_loc, 0, rhs_len * sizeof(int));
-#ifdef COARSE_SCALAP
-    MALLOC( p->dense_vals, complex_PRECISION, mumps_n * nr_nodes * site_var);
-    memset( p->dense_vals, 0, mumps_n * nr_nodes * site_var * sizeof(complex_PRECISION));
-    
-    MALLOC( p->desc_dense_vals, int, 9);
-    memset( p->desc_dense_vals, 0,  9 * sizeof(int));
-    
-    MALLOC( p->desc_rhs, int, 9);
-    memset( p->desc_rhs, 0,  9 * sizeof(int));
-
-    MALLOC( p->dense_vals2d, complex_PRECISION, mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes);
-    memset( p->dense_vals2d, 0, mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes * sizeof(complex_PRECISION));
- 
-    MALLOC( p->rhs2d, complex_PRECISION, l->inner_vector_size * g.pcol2d);
-    memset( p->rhs2d, 0, l->inner_vector_size * g.pcol2d * sizeof(complex_PRECISION));
-    
-    MALLOC( p->desc_dense_vals2d, int, 9);
-    memset( p->desc_dense_vals2d, 0,  9 * sizeof(int));
-    
-    MALLOC( p->desc_rhs2d, int, 9);
-    memset( p->desc_rhs2d, 0,  9 * sizeof(int));
-
-    MALLOC( p->ipiv, int, mumps_n + 1);
-    memset( p->ipiv, 0, (mumps_n +1)*sizeof(int));
-//    for (int i = 0; i < mumps_n +1; i++) p->ipiv[i] = i;
-
-    p->blacs_ctxt1d = 0;
-    p->blacs_ctxt2d = 0;
-    p->myrow = -1;
-    p->myrow2d = -1;
-#endif
-  }
-#endif
-
 }
 
 
@@ -615,43 +529,6 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   }
 #endif
 
-#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-  // free cmumps instance
-  if (l->level == 0 && !l->idle){
-#ifdef MUMPS_ADDS
-      g.mumps_id.job = JOB_END;
-      cmumps_c(&(g.mumps_id));
-#endif
-      int site_var = l->num_lattice_site_var;
-      int nr_nodes = l->num_inner_lattice_sites;
-      FREE( p->mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes *9 );
-      FREE( p->mumps_Is,int,SQUARE(site_var)*nr_nodes *9);
-      FREE( p->mumps_Js,int,SQUARE(site_var)*nr_nodes *9);
-      //in case of odd even -> use 2*(v_end - v_start)? 
-      FREE( p->mumps_irhs_loc, int, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
-      FREE( p->mumps_rhs_loc, complex_PRECISION, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
-      FREE( p->mumps_SOL, complex_PRECISION, site_var * nr_nodes * l->num_processes);	//order of Matrix
-#ifdef COARSE_SCALAP
-      FREE( p->dense_vals, complex_PRECISION, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var   
-						* l->num_inner_lattice_sites *l->num_lattice_site_var);
-      FREE( p->desc_dense_vals, int, 9);
-      FREE( p->desc_rhs, int, 9);    
-      
-      FREE( p->dense_vals2d, complex_PRECISION, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var   
-						* l->num_inner_lattice_sites *l->num_lattice_site_var/(g.pcol2d * g.prow2d) * g.num_processes);
-
-      FREE( p->rhs2d, complex_PRECISION, l->inner_vector_size * g.pcol2d);
-
-      FREE( p->desc_dense_vals2d, int, 9);
-      FREE( p->desc_rhs2d, int, 9);    
-      FREE( p->ipiv, int, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var +1);
-
-      
-      blacs_gridexit_( &(p->blacs_ctxt1d));
-      blacs_gridexit_( &(p->blacs_ctxt2d));
-#endif
-  }
-#endif
 
 }
 

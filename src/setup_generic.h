@@ -30,6 +30,11 @@
   void iterative_PRECISION_setup( int setup_iter, level_struct *l, struct Thread *threading );
   void re_setup_PRECISION( level_struct *l, struct Thread *threading );
   void inv_iter_inv_fcycle_PRECISION( int setup_iter, level_struct *l, struct Thread *threading );
-  
+
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+  void direct_solver_PRECISION_setup(level_struct *lx,
+                                     struct Thread *threading);
+  void direct_solver_PRECISION_free(level_struct *lx);
 #endif
 
+#endif

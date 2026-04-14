@@ -379,8 +379,8 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 		// call to factorize
 		cmumps_c(&(g.mumps_id));
 #else	//find inverse with scalapack
-		coarse_scalap_factorize_PRECISION( l, l->p_PRECISION.dense_vals2d,
-			    l->p_PRECISION.desc_dense_vals2d, l->p_PRECISION.ipiv, threading);
+		coarse_scalap_factorize_PRECISION( l, g.ds.dense_vals2d,
+			    g.ds.desc_dense_vals2d, g.ds.ipiv, threading);
 #endif
 
 
@@ -672,3 +672,130 @@ void testvector_analysis_PRECISION( vector_PRECISION *test_vectors, level_struct
   END_UNTHREADED_FUNCTION(threading)
 #endif
 }
+
+
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+void direct_solver_PRECISION_setup(level_struct *lx, struct Thread *threading){
+//allocate memory for direct solver on coarsest level
+  level_struct *l = &lx; //get l as the coarsest level
+  for (int i = 1; i<g.num_levels; i++) {
+    l = l->next_level;
+  }
+ 
+  if (l->level==0) {
+    // Allocate memory for cmumps data format
+    int site_var = l->num_lattice_site_var;
+    int nr_nodes = l->num_inner_lattice_sites;
+    if (!l->idle){
+	MALLOC( g.ds.mumps_vals, complex_PRECISION, SQUARE(site_var)*nr_nodes * 9);
+	MALLOC( g.ds.mumps_Is, int, SQUARE(site_var)*nr_nodes * 9); // nr. of el per node * nr. of nodes * 9 	//9 = self + T+ + T- + Z+ + Z- + Y+ ...
+	MALLOC( g.ds.mumps_Js, int, SQUARE(site_var)*nr_nodes * 9);
+	// initializing with 0s
+	memset(g.ds.mumps_Is, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(int));
+	memset(g.ds.mumps_Js, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(int));
+	memset(g.ds.mumps_vals, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(complex_PRECISION));
+    }
+    int mumps_n = site_var * nr_nodes * l->num_processes;	//order of Matrix
+//    int nnz = SQUARE(site_var) * nr_nodes *9 * l->num_processes;	//number of nonzero elements
+//    int nnz_loc = SQUARE(site_var) * nr_nodes *9;
+
+    // Allocating and initializing SOLUTION
+    // will be used only by one process/ p0
+    if (g.my_rank == 0){
+      MALLOC(g.ds.mumps_SOL, complex_PRECISION, mumps_n);
+      memset(g.ds.mumps_SOL, 0, mumps_n * sizeof(complex_PRECISION));
+    }
+
+    if (!l->idle){
+	int rhs_len = l->p_PRECISION.v_end-l->p_PRECISION.v_start;  //entire vector eta
+	MALLOC(g.ds.mumps_irhs_loc, int, rhs_len);
+	MALLOC(g.ds.mumps_rhs_loc, complex_PRECISION, rhs_len);
+	memset(g.ds.mumps_rhs_loc, 0, rhs_len * sizeof(complex_PRECISION));
+	memset(g.ds.mumps_irhs_loc, 0, rhs_len * sizeof(int));
+    }
+#ifdef COARSE_SCALAP
+
+    if (!l->idle){
+	MALLOC( g.ds.dense_vals, complex_PRECISION, mumps_n * nr_nodes * site_var);
+	memset( g.ds.dense_vals, 0, mumps_n * nr_nodes * site_var * sizeof(complex_PRECISION));
+	
+	MALLOC( g.ds.desc_dense_vals, int, 9);
+	memset( g.ds.desc_dense_vals, 0,  9 * sizeof(int));
+	
+	MALLOC( g.ds.desc_rhs, int, 9);
+	memset( g.ds.desc_rhs, 0,  9 * sizeof(int));
+    }
+    MALLOC( g.ds.dense_vals2d, complex_PRECISION, mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes);
+    memset( g.ds.dense_vals2d, 0, mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes * sizeof(complex_PRECISION));
+ 
+    MALLOC( g.ds.rhs2d, complex_PRECISION, l->inner_vector_size * g.pcol2d);
+    memset( g.ds.rhs2d, 0, l->inner_vector_size * g.pcol2d * sizeof(complex_PRECISION));
+    
+    MALLOC( g.ds.desc_dense_vals2d, int, 9);
+    memset( g.ds.desc_dense_vals2d, 0,  9 * sizeof(int));
+    
+    MALLOC( g.ds.desc_rhs2d, int, 9);
+    memset( g.ds.desc_rhs2d, 0,  9 * sizeof(int));
+
+    MALLOC( g.ds.ipiv, int, mumps_n + 1);
+    memset( g.ds.ipiv, 0, (mumps_n +1)*sizeof(int));
+//    for (int i = 0; i < mumps_n +1; i++) p->ipiv[i] = i;
+
+    g.ds.blacs_ctxt1d = 0;
+    g.ds.blacs_ctxt2d = 0;
+    g.ds.myrow = -1;
+    g.ds.myrow2d = -1;
+#endif
+  }
+
+}
+
+void direct_solver_PRECISION_free(level_struct *lx){
+//free memory of direct solver on coarsest level
+  level_struct *l = &lx; //get l as the coarsest level
+  for (int i = 1; i<g.num_levels; i++) {
+    l = l->next_level;
+  }
+ 
+  // free cmumps instance
+  if (l->level == 0){
+#ifdef MUMPS_ADDS
+      if (!l->idle){
+          g.mumps_id.job = JOB_END;
+	  cmumps_c(&(g.mumps_id));
+      }
+#endif
+      int site_var = l->num_lattice_site_var;
+      int nr_nodes = l->num_inner_lattice_sites;
+      if (!l->idle){
+	  FREE( g.ds.mumps_vals,complex_PRECISION,SQUARE(site_var)*nr_nodes *9 );
+	  FREE( g.ds.mumps_Is,int,SQUARE(site_var)*nr_nodes *9);
+	  FREE( g.ds.mumps_Js,int,SQUARE(site_var)*nr_nodes *9);
+	  //in case of odd even -> use 2*(v_end - v_start)? 
+	  FREE( g.ds.mumps_irhs_loc, int, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
+	  FREE( g.ds.mumps_rhs_loc, complex_PRECISION, l->p_PRECISION.v_end-l->p_PRECISION.v_start);
+	  FREE( g.ds.mumps_SOL, complex_PRECISION, site_var * nr_nodes * l->num_processes);	//order of Matrix
+      }
+#ifdef COARSE_SCALAP
+      if (!l->idle){
+	  FREE( g.ds.dense_vals, complex_PRECISION, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var   
+						    * l->num_inner_lattice_sites *l->num_lattice_site_var);
+	  FREE( g.ds.desc_dense_vals, int, 9);
+	  FREE( g.ds.desc_rhs, int, 9);    
+      }
+      FREE( g.ds.dense_vals2d, complex_PRECISION, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var   
+						* l->num_inner_lattice_sites *l->num_lattice_site_var/(g.pcol2d * g.prow2d) * g.num_processes);
+
+      FREE( g.ds.rhs2d, complex_PRECISION, l->inner_vector_size * g.pcol2d);
+
+      FREE( g.ds.desc_dense_vals2d, int, 9);
+      FREE( g.ds.desc_rhs2d, int, 9);    
+      FREE( g.ds.ipiv, int, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var +1);
+
+      
+      blacs_gridexit_( &(g.ds.blacs_ctxt1d));
+      blacs_gridexit_( &(g.ds.blacs_ctxt2d));
+#endif
+  }
+}
+#endif

@@ -254,6 +254,10 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
     printf0("elapsed time: %lf seconds\n", t1-t0 );
     END_LOCKED_MASTER(threading)
   }
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+  direct_solver_float_setup(&l, &threading);
+#endif
+
   START_LOCKED_MASTER(threading)
 #ifdef PARAMOUTPUT  
   if ( g.method >= -1 && g.print > 0 && !( g.vt.evaluation && g.vt.re_setup ) ) {
@@ -381,6 +385,10 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
 
 
 void method_free( level_struct *l ) {
+
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+  direct_solver_float_free( l);
+#endif
 
 #ifdef PERS_COMMS
   level_struct *lx = l;
@@ -732,6 +740,25 @@ void g_init( level_struct *l ) {
   g.cur_storage = 0;
   g.max_storage = 0;
   g.in_setup = 0;
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+  g.ds.mumps_vals = NULL;
+  g.ds.mumps_Is = NULL;
+  g.ds.mumps_Js = NULL;
+
+  g.ds.mumps_rhs_loc = NULL;
+  g.ds.mumps_irhs_loc = NULL;
+  g.ds.mumps_SOL = NULL;
+#ifdef COARSE_SCALAP
+  g.ds.dense_vals = NULL;
+  g.ds.desc_dense_vals = NULL;
+  g.ds.desc_rhs = NULL;
+  g.ds.dense_vals2d = NULL;
+  g.ds.rhs2d = NULL;
+  g.ds.desc_dense_vals2d = NULL;
+  g.ds.desc_rhs2d = NULL;
+  g.ds.ipiv = NULL;
+#endif
+#endif
 }
 
 void read_global_info( FILE *in ) {

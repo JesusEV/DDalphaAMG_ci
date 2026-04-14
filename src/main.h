@@ -480,13 +480,17 @@ typedef struct block_struct {
     int local_polyprec_d;
 #endif
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+    ds_wrapper_float_struct ds; // wrapper for direct solver
+
     double coarsest_solve_time;
     double coarsest_fact_time;
     int coarsest_solve_number;
 #endif
-#ifdef MUMPS_ADDS
+#if defined(MUMPS_ADDS)
+    CMUMPS_STRUC_C mumps_id;
     double mumps_drop_tol;
 #endif
+
 #ifdef COARSE_SCALAP
     int prow2d, pcol2d;
     int bs2d;
@@ -544,9 +548,6 @@ typedef struct block_struct {
     // for minus hopping
     MPI_Request* pers_comms_recvrs_minus[8];
     MPI_Request* pers_comms_sendrs_minus[8];
-#endif
-#ifdef MUMPS_ADDS
-    CMUMPS_STRUC_C mumps_id;
 #endif
 
     double matmul_time;
