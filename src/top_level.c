@@ -78,8 +78,7 @@ int wilson_driver( vector_double solution, vector_double source, level_struct *l
   for ( int i=0; i<100; i++ ) {
     double tmp_t = -MPI_Wtime();
 #endif
-  
-  vector_double_copy( rhs, source, start, end, l );  
+    vector_double_copy( rhs, source, start, end, l );  
   if ( g.method == -1 ) {
     cgn_double( &(g.p), l, threading );
   } else if ( g.mixed_precision == 2 ) {
@@ -94,7 +93,7 @@ int wilson_driver( vector_double solution, vector_double source, level_struct *l
     //if (g.my_rank==0) printf("elapsed time (solve phase): %-8.4lf seconds\n", elap_time);
 
   } else {
-    iter = fgmres_double( &(g.p), l, threading );
+    iter = fgmres_double( &(g.p), l, threading );  
   }
   vector_double_copy( solution, sol, start, end, l );
 #ifdef WILSON_BENCHMARK
@@ -194,9 +193,10 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
     set_some_coarsest_level_improvs_params_for_solve( l, threading );
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-    direct_solves_set_reset_float( l, threading );
+    direct_solves_set_reset_float( l, threading );  //update coarsest matrix elements.
 #endif
-
+  printf("R: %d, CHECKPOINT A\n", g.my_rank); fflush(stdout);
+  MPI_Barrier(MPI_COMM_WORLD);
 
   START_MASTER(threading)
   g.avg_b1 = 0.0;

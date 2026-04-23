@@ -480,7 +480,7 @@ typedef struct block_struct {
     int local_polyprec_d;
 #endif
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-    ds_wrapper_float_struct ds; // wrapper for direct solver
+    ds_wrapper_float_struct *ds; // wrapper for direct solver
 
     double coarsest_solve_time;
     double coarsest_fact_time;
@@ -756,6 +756,7 @@ typedef struct block_struct {
 #endif
 
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+#include "coarsest_direct_solves.h"
 #include "coarsest_direct_solves_double.h"
 #include "coarsest_direct_solves_float.h"
 #endif

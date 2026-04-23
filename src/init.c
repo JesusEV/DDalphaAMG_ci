@@ -90,26 +90,6 @@ void next_level_setup( vector_double *V, level_struct *l, struct Thread *threadi
       next_level_float_setup( l );
       END_LOCKED_MASTER(threading)
 
-#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-      if (l->level == 1 && !l->next_level->idle){
-#ifdef MUMPS_ADDS
-	//			site_var 			no. of nodes
-        int mumps_n = l->next_level->num_lattice_site_var * l->next_level->num_inner_lattice_sites * l->next_level->num_processes;        //order of Matrix
-//        int nnz = SQUARE(l->next_level->num_lattice_site_var) *l->next_level->num_inner_lattice_sites *9 * g.num_processes; //number of nonzero elements (will not be used in implementation)
-        int nnz_loc = SQUARE(l->next_level->num_lattice_site_var) * l->next_level->num_inner_lattice_sites *9;
-        int rhs_len = l->next_level->p_float.v_end-l->next_level->p_float.v_start;
-	
-	// fill mumps data structure with values
-        mumps_init_float(&(l->next_level->p_float), mumps_n, nnz_loc, rhs_len, l->next_level, threading);
-#endif
-#ifdef COARSE_SCALAP
-	coarse_scalap_init_float(l->next_level, threading);
-#endif
-      }
-#endif
-
-
-
 
       if ( l->depth == 0 ) {
         START_LOCKED_MASTER(threading)
@@ -248,15 +228,48 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
     if ( g.method > 0 )
       if ( g.interpolation && g.num_levels > 1 )
         next_level_setup( V, l, threading );
+
+#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
+      if ( g.mixed_precision ) {
+	  printf0("starting direct_solver_float_setup\n"); fflush(stdout);
+	MPI_Barrier(MPI_COMM_WORLD);
+	{
+	    level_struct *lx = l;
+	    for (int i = 1; i < g.num_levels; i++){
+		lx = lx->next_level;
+	    }
+	    if (!lx->idle){
+		  
+#ifdef MUMPS_ADDS
+		//			site_var 			no. of nodes
+		int mumps_n = lx->num_lattice_site_var * lx->num_inner_lattice_sites * lx->num_processes;        //order of Matrix
+	//        int nnz = SQUARE(l->next_level->num_lattice_site_var) *l->next_level->num_inner_lattice_sites *9 * g.num_processes; //number of nonzero elements (will not be used in implementation)
+		int nnz_loc = SQUARE(lx->num_lattice_site_var) * lx->num_inner_lattice_sites *9;
+		int rhs_len = lx->p_float.v_end-lx->p_float.v_start;
+		
+		// fill mumps data structure with values
+		mumps_init_float(&(lx->p_float), mumps_n, nnz_loc, rhs_len, lx, threading);
+#endif
+	    }
+#ifdef COARSE_SCALAP
+	    direct_solver_float_setup( lx ); //alloc memory
+	    coarse_scalap_init_float( lx, threading); //initialize communicators, descs ... 
+#endif
+	}
+      } else {
+	  printf0("no double-precision version for direct solver implemented yet.\n");
+	  fflush(stdout);
+	  if (g.my_rank == 0) exit(0);
+      }
+#endif
+
+
     START_LOCKED_MASTER(threading)
     t1 = MPI_Wtime();
     g.total_time = t1-t0;
     printf0("elapsed time: %lf seconds\n", t1-t0 );
     END_LOCKED_MASTER(threading)
   }
-#if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-  direct_solver_float_setup(&l, &threading);
-#endif
 
   START_LOCKED_MASTER(threading)
 #ifdef PARAMOUTPUT  
@@ -381,6 +394,8 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
   SYNC_MASTER_TO_ALL(threading)
 #endif
 
+  printf0("finished method_setup\n"); fflush(stdout);
+  MPI_Barrier(MPI_COMM_WORLD);
 }
 
 
@@ -534,7 +549,7 @@ void method_init( int *argc, char ***argv, level_struct *l ) {
   } else {
     strcpy( inputfile, "sample.ini" );
   }
-  
+ 
 #ifdef WRITE_LOGFILE
   g.logfile = fopen( "output.log", "w" );
   fprintf(g.logfile,"---------- log file -----------\n\n");
@@ -715,7 +730,6 @@ void l_init( level_struct *l ) {
 
 
 void g_init( level_struct *l ) {
-
   var_table_init( &(g.vt) );
   operator_double_init( &(g.op_double) );
   operator_float_init( &(g.op_float) );
@@ -741,23 +755,8 @@ void g_init( level_struct *l ) {
   g.max_storage = 0;
   g.in_setup = 0;
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
-  g.ds.mumps_vals = NULL;
-  g.ds.mumps_Is = NULL;
-  g.ds.mumps_Js = NULL;
-
-  g.ds.mumps_rhs_loc = NULL;
-  g.ds.mumps_irhs_loc = NULL;
-  g.ds.mumps_SOL = NULL;
-#ifdef COARSE_SCALAP
-  g.ds.dense_vals = NULL;
-  g.ds.desc_dense_vals = NULL;
-  g.ds.desc_rhs = NULL;
-  g.ds.dense_vals2d = NULL;
-  g.ds.rhs2d = NULL;
-  g.ds.desc_dense_vals2d = NULL;
-  g.ds.desc_rhs2d = NULL;
-  g.ds.ipiv = NULL;
-#endif
+  MALLOC( g.ds, ds_wrapper_float_struct, 1);
+  direct_solver_init( g.ds );
 #endif
 }
 

@@ -94,19 +94,17 @@ int main( int argc, char **argv ) {
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     {
       level_struct *lx = &l;
-      int i;
-      for (i = 1; i<g.num_levels; i++) {
+      for (int i = 1; i<g.num_levels; i++) {
         lx = lx->next_level;
       }
+      double t0 = 0,t1 = 0;
+      struct Thread* threadx = &threading;
       if (!lx->idle){
 
-        struct Thread* threadx = &threading;
-	
 	SYNC_CORES(threadx)
         START_MASTER(threadx)
 	END_MASTER(threadx)
         mumps_setup_float(lx, threadx);        //setup vals, Is, Js
-        double t0 = 0,t1 = 0;
         START_MASTER(threadx)
         t0 = MPI_Wtime();
 
@@ -124,12 +122,14 @@ int main( int argc, char **argv ) {
         printf0("mumps analyze + factorize done in main.c\n");
 #else
 	//compute LU of matrix using scalapack
-	if (g.on_solve){
-		coarse_scalap_factorize_float( lx, g.ds.dense_vals2d,
-			g.ds.desc_dense_vals2d,
-		g.ds.ipiv, threadx);//only factorize when on solve
-        	//printf0("scalapack factorize done in main.c\n");
-	}
+      }
+      if (g.on_solve){    //will be FALSE, no factorize during setup!
+	    coarse_scalap_factorize_float( lx, g.ds->dense_vals2d,
+		    g.ds->desc_dense_vals2d,
+		    g.ds->ipiv, threadx);//only factorize when on solve
+	    //printf0("scalapack factorize done in main.c\n");
+      }
+      if (!lx->idle){
 #endif
 
         t1 = MPI_Wtime();
