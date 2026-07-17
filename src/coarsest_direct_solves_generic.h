@@ -34,7 +34,7 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 // this function computes the inverse for a given Matrix A of size N x N and
 // overwrites the input array with the computed LU-Decomposition
 void coarse_scalap_factorize_PRECISION(level_struct *l, vector_PRECISION A,
-                                       int *descA, int *ipiv,
+                                       lapack_int *descA, lapack_int *ipiv,
                                        struct Thread *threading);
 
 // this function will generate a "dense" memory layout for solving with

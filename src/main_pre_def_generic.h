@@ -73,9 +73,9 @@
 #if defined(POLYPREC) || defined(GCRODR)
   typedef struct
   {
-    int N, nrhs, lda, ldb, info;
+    lapack_int N, nrhs, lda, ldb, info;
 
-    int *ipiv;
+    lapack_int *ipiv;
     vector_PRECISION x, b;
     complex_PRECISION *Hcc;  
 
@@ -89,7 +89,7 @@
   typedef struct {
     char jobvl, jobvr;
 
-    int N, lda, ldb, ldvl, ldvr, info, qr_m, qr_n, qr_lda, qr_k;
+    lapack_int N, lda, ldb, ldvl, ldvr, info, qr_m, qr_n, qr_lda, qr_k;
 
     int *ordr_idxs;
 
@@ -230,14 +230,14 @@
     vector_PRECISION dense_vals;
     vector_PRECISION dense_vals2d;
     vector_PRECISION rhs2d;
-    int *desc_dense_vals;
-    int *desc_rhs;
-    int *desc_dense_vals2d;
-    int *desc_rhs2d;
-    int *ipiv;
-    int blacs_ctxt1d;
-    int blacs_ctxt2d;
-    int myrow, myrow2d;
+    lapack_int *desc_dense_vals;
+    lapack_int *desc_rhs;
+    lapack_int *desc_dense_vals2d;
+    lapack_int *desc_rhs2d;
+    lapack_int *ipiv;
+    lapack_int blacs_ctxt1d;
+    lapack_int blacs_ctxt2d;
+    lapack_int myrow, myrow2d;
 #endif
   } ds_wrapper_PRECISION_struct; // wrapper for direct solver (for coarsest
                                  // level)

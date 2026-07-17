@@ -130,6 +130,9 @@
 #define USE_COMM_WORLD -987654
 #endif
 #ifdef COARSE_SCALAP
+	#ifdef MKL_ILP64
+		#include <mkl.h>
+	#endif
 #define pgesv_double pzgesv_
 #define pgesv_float pcgesv_
 #define pgemv_double pzgemv_
@@ -492,8 +495,8 @@ typedef struct block_struct {
 #endif
 
 #ifdef COARSE_SCALAP
-    int prow2d, pcol2d;
-    int bs2d;
+    lapack_int prow2d, pcol2d;
+    lapack_int bs2d;
 #endif
     // profiling, analysis, output
     int coarse_iter_count, iter_count, iterator, print, conf_flag, setup_flag, in_setup;
@@ -740,7 +743,7 @@ typedef struct block_struct {
   //  #include <mkl_blacs.h>
 
 #if defined(GCRODR) || defined(POLYPREC)
-  #include <lapacke.h>
+  #include <mkl_lapacke.h>
 #ifdef GCRODR
   //#include <mkl_scalapack.h>
   //#include <mkl_blacs.h>

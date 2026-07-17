@@ -3,7 +3,7 @@
 CC = mpicc
 
 # --- CFLAGS -----------------------------------------
-CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -DMKL_Complex8="complex_float" -DMKL_Complex16="complex_double"
+CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -DMKL_ILP64 -m64 -DLAPACK_ILP64 -DMKL_Complex8="complex float" -DMKL_Complex16="complex double"
 #CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
 #CFLAGS = $(CFLAGS_intel)
 CFLAGS = $(CFLAGS_gnu)
@@ -40,75 +40,48 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-LIMEDIR = /home/ramirez/installs/qio/bin
+LIMEDIR = ../../qio/build
 LIMEFLAGS = -DHAVE_LIME -I$(LIMEDIR)/include
-LIMELIB = $(LIMEDIR)/lib64/liblime.a
+LIMELIB = $(LIMEDIR)/lib/liblime.a
 
 # Available flags:
 # -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING
 # -DSINGLE_ALLREDUCE_ARNOLDI
 # -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DDEBUG
 
-OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES #-DSSE -DOPENMP -DPROFILING #-DCOARSE_ODDEVEN_FULL
+OPT_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) $(H5FLAGS) -DPARAMOUTPUT -DTRACK_RES -DSSE -DOPENMP -DPROFILING #-DCOARSE_ODDEVEN_FULL
 OPT_VERSION_FLAGS += -DGCRODR
 # OPT_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
 OPT_VERSION_FLAGS += -DPOLYPREC
 #OPT_VERSION_FLAGS += -DBLOCK_JACOBI -DBJ_DIR_SOLVS #-DPERS_COMMS
 
-DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS #-DSSE -DOPENMP #-DCOARSE_ODDEVEN_FULL
+DEVEL_VERSION_FLAGS = $(CFLAGS) $(LIMEFLAGS) -DDEBUG -DPARAMOUTPUT -DTRACK_RES -DFGMRES_RESTEST -DPROFILING -DCOARSE_RES -DSCHWARZ_RES -DTESTVECTOR_ANALYSIS -DSSE -DOPENMP #-DCOARSE_ODDEVEN_FULL
 DEVEL_VERSION_FLAGS += -DGCRODR
 # DEVEL_VERSION_FLAGS += -DSINGLE_ALLREDUCE_ARNOLDI -DPIPELINED_ARNOLDI
 DEVEL_VERSION_FLAGS += -DPOLYPREC
 #DEVEL_VERSION_FLAGS += -DBLOCK_JACOBI -DBJ_DIR_SOLVS #-DPERS_COMMS
 
-# OPT_VERSION_FLAGS += -DMUMPS_ADDS
-# DEVEL_VERSION_FLAGS += -DMUMPS_ADDS
-
  OPT_VERSION_FLAGS += -DCOARSE_SCALAP
- DEVEL_VERSION_FLAGS += -DCOARSE_SCALAP 
-
-#---------------------------------------------------
-
-# Integration of MUMPS within DDalphaAMG
-
-MUMPSDIR = /usr/local/sw/mumps-5.4.1/
-MUMPS_LIBS = $(MUMPSDIR)lib/
-
-LMETISDIR = /usr/local/sw/metis-5.1.0/install/lib/
-LMETIS=-L$(LMETISDIR) -lmetis
-LPMETISDIR = /usr/local/sw/parmetis-4.0.3/install/lib/
-LPMETIS=-L$(LPMETISDIR) -lparmetis
-
-LSCOTCHDIR = /usr/local/sw/scotch-6.1.1/lib/
-LSCOTCH = -L$(LSCOTCHDIR) -lptesmumps -lptscotch -lptscotcherr -lscotch -lscotcherr
-
-LPORD=-L$(MUMPS_LIBS) -lpord
-LIBMUMPS_COMMON = -L$(MUMPS_LIBS)/ -lmumps_common
-
-LORDERINGS = $(LPMETIS) $(LMETIS) $(LSCOTCH) $(LPORD) -L/usr/lib/hpc/gnu7/mpi/openmpi/3.1.4/lib64/ -lmpi -lmpi_mpifh -lmpi_usempif08 -lmpi_usempi_ignore_tkr
-
-# Enable the following three to activate MUMPS within DDalphaAMG
- LIBSMUMPS = -L$(MUMPS_LIBS) -lcmumps -ldmumps -lmumps_common -lpord -lsmumps -lzmumps $(LIBMUMPS_COMMON) $(LORDERINGS) -lpthread -lz
-
+ DEVEL_VERSION_FLAGS += -DCOARSE_SCALAP
 #---------------------------------------------------
 # lapack and scalapack linkages
 
-LAPACK_DIR = dependencies/lapack-3.9.0
+LAPACK_DIR = /p/project1/mul-tra/leemhuis1/lapack_ILP64
 LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
 LAPACKE_INCLUDE = -I$(LAPACKE_DIR)/include
 BLASLIB      = $(LAPACK_DIR)/librefblas.a
 LAPACKLIB    = $(LAPACK_DIR)/liblapack.a
 LAPACKELIB   = $(LAPACK_DIR)/liblapacke.a
-LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
+LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB) 
 
 #LAPACKE_INCLUDE =
 #LAPACK_LIBRARIES =
 
 SPBLAS_LIBRARIES = 
 
-SCALAPACK_DIR = /usr/lib/hpc/gnu7/openmpi3/scalapack/2.0.2/
+SCALAPACK_DIR = /p/project1/mul-tra/leemhuis1/scalapack_ILP64
 SCALAPACK_INCLUDE = -I$(SCALAPACK_DIR)/include/
-SCALAPACK_LIBRARIES = -L$(SCALAPACK_DIR)/lib64/ -lscalapack -lblacs
+SCALAPACK_LIBRARIES = $(SCALAPACK_DIR)/libscalapack_ILP64.a -L$(SCALAPACK_DIR) -lflexiblas
 
 #---------------------------------------------------
 
@@ -125,7 +98,7 @@ install: copy
 .SECONDARY:
 
 $(BINDIR)/DDalphaAMG : $(OBJ) 
-	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
+	$(CC) $(OPT_VERSION_FLAGS) -o $@ $(OBJ) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
 
 DDalphaAMG : $(BINDIR)/DDalphaAMG
 	ln -sf $(BINDIR)/$@ $@
@@ -134,7 +107,7 @@ DDalphaAMG_devel: $(BINDIR)/DDalphaAMG_devel
 	ln -sf $(BINDIR)/$@ $@
 
 $(BINDIR)/DDalphaAMG_devel : $(OBJDB)
-	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
+	$(CC) -g $(DEVEL_VERSION_FLAGS) -o $@ $(OBJDB) $(H5LIB) $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
 
 $(LIBDIR)/libDDalphaAMG.a: $(OBJ)
 	ar rc $@ $(OBJ)
@@ -147,7 +120,7 @@ $(LIBDIR)/libDDalphaAMG_devel.a: $(OBJDB)
 	ranlib $@
 
 $(TSTDIR)/%: $(LIB) $(TSTDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) $(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran $(LIBSMUMPS)
+	$(CC) $(CFLAGS) -o $@ $@.c -I$(INCDIR) $(LAPACKE_INCLUDE) -L$(LIBDIR) -lDDalphaAMG $(LIMELIB) $(SCALAPACK_LIBRARIES) $(LAPACK_LIBRARIES) -lm -lgfortran
 
 $(DOCDIR)/user_doc.pdf: $(DOCDIR)/user_doc.tex $(DOCDIR)/user_doc.bib
 	( cd $(DOCDIR); pdflatex user_doc; bibtex user_doc; pdflatex user_doc; pdflatex user_doc; )
@@ -156,10 +129,10 @@ $(INCDIR)/%: $(SRCDIR)/%
 	cp $(SRCDIR)/`basename $@` $@
 
 $(BUILDDIR)/%.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) $(OPT_VERSION_FLAGS) $(LAPACKE_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
+	$(CC) $(OPT_VERSION_FLAGS) $(LAPACKE_INCLUDE) -c $< -o $@
 
 $(BUILDDIR)/%_devel.o: $(GSRCDIR)/%.c $(SRCDIR)/*.h
-	$(CC) -g $(DEVEL_VERSION_FLAGS) $(LAPACKE_INCLUDE) -c $< -o $@ $(LIBSMUMPS)
+	$(CC) -g $(DEVEL_VERSION_FLAGS) $(LAPACKE_INCLUDE) -c $< -o $@
 
 $(GSRCDIR)/%.h: $(SRCDIR)/%.h $(firstword $(MAKEFILE_LIST))
 	cp $< $@

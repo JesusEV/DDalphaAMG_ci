@@ -45,16 +45,16 @@ void inv_tri_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
 {
 
   //#define trtri_double LAPACKE_ztrtri
-  trtri_PRECISION( LAPACK_COL_MAJOR, 'U', 'N', eigen_struct->qr_k, eigen_struct->qr_R[0],
-                   eigen_struct->qr_k);
+  trtri_PRECISION( LAPACK_COL_MAJOR, 'U', 'N', (lapack_int) eigen_struct->qr_k, eigen_struct->qr_R[0],
+                   (lapack_int) eigen_struct->qr_k);
 }
 
 void qr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
 {
 
   //#define geqr2_double LAPACKE_zgeqr2
-  geqr2_PRECISION( LAPACK_COL_MAJOR, eigen_struct->qr_m, eigen_struct->qr_n, eigen_struct->qr_QR[0],
-                   eigen_struct->qr_lda, eigen_struct->qr_tau );
+  geqr2_PRECISION( LAPACK_COL_MAJOR, (lapack_int) eigen_struct->qr_m, (lapack_int) eigen_struct->qr_n, eigen_struct->qr_QR[0],
+                   (lapack_int) eigen_struct->qr_lda, eigen_struct->qr_tau );
 
 }
 
@@ -62,8 +62,8 @@ void q_from_qr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
 {
 
   //#define ungqr_double LAPACKE_zungqr
-  ungqr_PRECISION( LAPACK_COL_MAJOR, eigen_struct->qr_m, eigen_struct->qr_n, eigen_struct->qr_k,
-                   eigen_struct->qr_QR[0], eigen_struct->qr_lda, eigen_struct->qr_tau );
+  ungqr_PRECISION( LAPACK_COL_MAJOR, (lapack_int) eigen_struct->qr_m, (lapack_int) eigen_struct->qr_n, (lapack_int) eigen_struct->qr_k,
+                   eigen_struct->qr_QR[0], (lapack_int) eigen_struct->qr_lda, eigen_struct->qr_tau );
 
 }
 
@@ -71,17 +71,17 @@ void gen_eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
 {
 
   eigen_struct->info = ggev_PRECISION( LAPACK_COL_MAJOR, eigen_struct->jobvl, eigen_struct->jobvr,
-                                       eigen_struct->N, eigen_struct->A, eigen_struct->lda,
-                                       eigen_struct->B, eigen_struct->ldb, eigen_struct->w, eigen_struct->beta,
-                                       eigen_struct->vl, eigen_struct->ldvl, eigen_struct->vr, eigen_struct->ldvr );
+                                       (lapack_int) eigen_struct->N, eigen_struct->A, (lapack_int) eigen_struct->lda,
+                                       eigen_struct->B, (lapack_int) eigen_struct->ldb, eigen_struct->w, eigen_struct->beta,
+                                       eigen_struct->vl, (lapack_int) eigen_struct->ldvl, eigen_struct->vr, (lapack_int) eigen_struct->ldvr );
 }
 
 void eigslvr_PRECISION(eigslvr_PRECISION_struct* eigen_struct)
 {
 
   eigen_struct->info = geev_PRECISION( LAPACK_ROW_MAJOR, eigen_struct->jobvl, eigen_struct->jobvr,
-                                      eigen_struct->N, eigen_struct->A, eigen_struct->lda, eigen_struct->w,
-                                      eigen_struct->vl, eigen_struct->ldvl, eigen_struct->vr, eigen_struct->ldvr );       
+                                      (lapack_int) eigen_struct->N, eigen_struct->A, (lapack_int) eigen_struct->lda, eigen_struct->w,
+                                      eigen_struct->vl, (lapack_int) eigen_struct->ldvl, eigen_struct->vr, (lapack_int) eigen_struct->ldvr );       
 }
 
 void dirctslvr_PRECISION(dirctslvr_PRECISION_struct* dirctslvr)
@@ -89,8 +89,8 @@ void dirctslvr_PRECISION(dirctslvr_PRECISION_struct* dirctslvr)
 
     memcpy( dirctslvr->x, dirctslvr->b, sizeof(complex_PRECISION)*(dirctslvr->N) );  
 
-    dirctslvr->info = gesv_PRECISION( LAPACK_COL_MAJOR, dirctslvr->N, dirctslvr->nrhs, dirctslvr->Hcc, 
-                                    dirctslvr->lda, dirctslvr->ipiv, dirctslvr->x, dirctslvr->ldb ); 
+    dirctslvr->info = gesv_PRECISION( LAPACK_COL_MAJOR, (lapack_int) dirctslvr->N, (lapack_int) dirctslvr->nrhs, dirctslvr->Hcc, 
+                                    (lapack_int) dirctslvr->lda, (lapack_int * )dirctslvr->ipiv, dirctslvr->x, (lapack_int) dirctslvr->ldb ); 
 }
 
 #ifdef GCRODR
@@ -101,7 +101,7 @@ void gels_via_givens_PRECISION( int ida, int idb, complex_PRECISION* a, int lda,
   int i,j;
 
   if ( g.on_solve==0 ) {
-    gels_PRECISION( LAPACK_COL_MAJOR, 'N', ida, idb, 1, a, lda, b, ldb );
+    gels_PRECISION( LAPACK_COL_MAJOR, 'N', (lapack_int) ida, (lapack_int) idb, 1, a, (lapack_int) lda, b, (lapack_int) ldb );
     return;
   }
 

@@ -127,6 +127,10 @@
 #define pgetrs_float pcgetrs_
 #define pgetrf_double pzgetrf_
 #define pgetrf_float pcgetrf_
+#define pgemr2d_double pzgemr2d_
+#define pgemr2d_float pcgemr2d_
+#define pgetri_double pzgetri_
+#define pgetri_float pcgetri_
 #endif
 
 #ifdef SSE
@@ -702,6 +706,11 @@ typedef struct block_struct {
   #include "gcrodr_double.h"
   #include "gcrodr_float.h"
 #endif
+
+#include "miscellaneous.h"
+#include "miscellaneous_float.h"
+#include "miscellaneous_double.h"
+
 
 #ifdef BLOCK_JACOBI
   #include "block_jacobi_double.h"
