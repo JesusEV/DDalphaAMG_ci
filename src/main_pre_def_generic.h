@@ -73,9 +73,13 @@
 #if defined(POLYPREC) || defined(GCRODR)
   typedef struct
   {
+#ifdef COARSE_SCALAP
     lapack_int N, nrhs, lda, ldb, info;
-
     lapack_int *ipiv;
+#else
+    int N, nrhs, lda, ldb, info;
+    int *ipiv;
+#endif
     vector_PRECISION x, b;
     complex_PRECISION *Hcc;  
 
@@ -89,8 +93,11 @@
   typedef struct {
     char jobvl, jobvr;
 
+#ifdef COARSE_SCALAP
     lapack_int N, lda, ldb, ldvl, ldvr, info, qr_m, qr_n, qr_lda, qr_k;
-
+#else
+    int N, lda, ldb, ldvl, ldvr, info, qr_m, qr_n, qr_lda, qr_k;
+#endif
     int *ordr_idxs;
 
     complex_PRECISION *ordr_keyscpy, *qr_tau;
