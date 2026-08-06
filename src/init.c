@@ -253,7 +253,13 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
 	    }
 #ifdef COARSE_SCALAP
 	    direct_solver_float_setup( lx ); //alloc memory
+      printf0("starting scalap_init_float\n"); fflush(stdout);
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	    coarse_scalap_init_float( lx, threading); //initialize communicators, descs ... 
+      printf0("coarse_scalap_init_float done!\n"); fflush(stdout);
+	MPI_Barrier(MPI_COMM_WORLD);
+
 #endif
 	}
       } else {

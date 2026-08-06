@@ -700,9 +700,9 @@ void direct_solver_PRECISION_setup(level_struct *l){
 
     // Allocating and initializing SOLUTION
     // will be used only by one process/ p0
-    	MPI_Barrier(MPI_COMM_WORLD);
+  /*  	MPI_Barrier(MPI_COMM_WORLD);
 	printf0("CHECKPOINT 0\n"); fflush(stdout);
-	
+*/	
 #ifdef MUMS_ADDS
     if (g.my_rank == 0){
       MALLOC(g.ds->mumps_SOL, complex_PRECISION, mumps_n);
@@ -717,12 +717,12 @@ void direct_solver_PRECISION_setup(level_struct *l){
 	memset(g.ds->mumps_irhs_loc, 0, rhs_len * sizeof(int));
     }
 #endif
-    	MPI_Barrier(MPI_COMM_WORLD);
+  /*  	MPI_Barrier(MPI_COMM_WORLD);
 	printf0("CHECKPOINT 1\n"); 
 	printf0("N: %ld, nr_nodes: %ld, site_var: %ld\n", mumps_n, nr_nodes, site_var);
 	printf0("size of A1d: %ld complex_floats (%dBytes)\n", mumps_n* nr_nodes* site_var, sizeof(complex_float)); 
 	fflush(stdout);
-	
+*/	
 	
 #ifdef COARSE_SCALAP
     if (l->idle){   //just use one element (beeing 0) as placeholder. mem. must be allocated for scalapack
@@ -748,12 +748,12 @@ void direct_solver_PRECISION_setup(level_struct *l){
 		//move the follwing lines in a similar if-clause as above. 
 		//how to check whether Process_i is part of the 2d-P-Grid? 
 		//for now: All processes allocate mem and could participate in computation
- 	MPI_Barrier(MPI_COMM_WORLD);
+ /*	MPI_Barrier(MPI_COMM_WORLD);
 	printf0("CHECKPOINT 2\n"); 
 	printf0("pcol2d: %d, prow2d: %d, num_procs: %d\n", g.pcol2d, g.prow2d, g.num_processes);
 	printf0("size of A2d: %ld complex_floats (%dBytes)\n", mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes, sizeof(complex_float)); 
 	fflush(stdout);
-	
+*/	
     MALLOC( g.ds->dense_vals2d, complex_float, mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes);
     memset( g.ds->dense_vals2d, 0, mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes * sizeof(complex_float));
  
@@ -776,9 +776,9 @@ void direct_solver_PRECISION_setup(level_struct *l){
     g.ds->myrow2d = -1;
 #endif
 
-    	MPI_Barrier(MPI_COMM_WORLD);
+/*    	MPI_Barrier(MPI_COMM_WORLD);
 	printf0("CHECKPOINT 3\n"); fflush(stdout);
-	
+*/	
 }
 
 void direct_solver_PRECISION_free(level_struct *lx){

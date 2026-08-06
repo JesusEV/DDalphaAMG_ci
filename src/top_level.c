@@ -63,7 +63,6 @@ void rhs_define( vector_double rhs, level_struct *l, struct Thread *threading ) 
 
 
 int wilson_driver( vector_double solution, vector_double source, level_struct *l, struct Thread *threading ) {
-  
   int iter = 0, start = threading->start_index[l->depth], end = threading->end_index[l->depth];
   
   vector_double rhs = (g.mixed_precision==2 && g.method >= 0)?g.p_MP.dp.b:g.p.b;
@@ -195,9 +194,11 @@ void solve_driver( level_struct *l, struct Thread *threading ) {
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
     direct_solves_set_reset_float( l, threading );  //update coarsest matrix elements.
 #endif
+/*
   printf("R: %d, CHECKPOINT A\n", g.my_rank); fflush(stdout);
   MPI_Barrier(MPI_COMM_WORLD);
-
+*/
+    
   START_MASTER(threading)
   g.avg_b1 = 0.0;
   g.avg_b2 = 0.0;

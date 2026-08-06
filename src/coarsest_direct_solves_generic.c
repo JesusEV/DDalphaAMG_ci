@@ -788,8 +788,8 @@ void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
 
 void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, lapack_int* descA, lapack_int* ipiv, struct Thread *threading){
 
-     printf0("starting coarse_scalap_factorize_PRECISION...\n"); fflush(stdout);
-	MPI_Barrier(MPI_COMM_WORLD);     
+//    printf0("starting coarse_scalap_factorize_PRECISION...\n"); fflush(stdout);
+//	MPI_Barrier(MPI_COMM_WORLD);     
 
     //distribute Matrix to 2d cyclic pattern
     scalap_1d_2d_A_PRECISION( l, threading);
@@ -799,7 +799,6 @@ void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, lap
        //		    ( M,    N,	    A,		IA, JA, DESCA, IPIV, INFO)
     if ( g.ds->myrow2d >= 0){
 	printf0("starting pgetrf_PRECISION...\n"); fflush(stdout);
-	MPI_Barrier(MPI_COMM_WORLD);     
 
 	pgetrf_PRECISION( &N, &N, g.ds->dense_vals2d, &ione, &ione, g.ds->desc_dense_vals2d, ipiv, &info );    
         if (info != 0 ) error0("Error during pgetrf_(), info = %d\n", info);
@@ -829,9 +828,6 @@ void coarse_scalap_factorize_PRECISION( level_struct *l, vector_PRECISION A, lap
 	liwork = iwork_query;
 	work = malloc(lwork * sizeof(complex_PRECISION));
 	iwork = malloc (liwork * sizeof(lapack_int));
-
-	printf0("starting pgetrf_PRECISION...\n"); fflush(stdout);
-	MPI_Barrier(MPI_COMM_WORLD);     
 
     	pgetri_PRECISION(
 	    &N,
@@ -951,8 +947,9 @@ MPI_Barrier(MPI_COMM_WORLD);*/
     if (!l->idle){
 	//setting the descriptors:
 	lapack_int bs = l->num_lattice_site_var * l->num_inner_lattice_sites;
-	printf0("N: %lld, bs: %lld, myrow: %lld, zero: %lld, nprow: %lld\n", N, bs, g.ds->myrow, izero, nprow);
-       	fflush(stdout); 
+/*	printf0("N: %lld, bs: %lld, myrow: %lld, zero: %lld, nprow: %lld\n", N, bs, g.ds->myrow, izero, nprow);
+       	fflush(stdout); */
+
 	lapack_int numr = numroc_( &N, &bs, &g.ds->myrow, &izero, &nprow ); // number of rows stored in each process
 //	lapack_int numr = numroc_( &N, &N, &g.ds->myrow, &izero, &nprow ); // number of rows stored in each process
 	lapack_int lldA = numr > 1? numr : 1;	//leading dimension in A (remember, matrix elements are	stored in a column major order)
@@ -1071,13 +1068,13 @@ void scalap_1d_2d_A_PRECISION(level_struct *l, struct Thread *threading){
 
     lapack_int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
     lapack_int ione = 1; //starting indices
-    printf0("starting scalap_1d_2d_A_PRECISION...!\n");     
+/*    printf0("starting scalap_1d_2d_A_PRECISION...!\n");     
     printf0("m: %lld, n: %lld, a: ---, ia: %lld, ja: %lld, desca: [%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld], b: ---, ib, jb, descb: [%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld], ictxt: %lld\n", 
 		N, N, ione, ione, g.ds->desc_dense_vals[0], g.ds->desc_dense_vals[1], g.ds->desc_dense_vals[2], g.ds->desc_dense_vals[3], g.ds->desc_dense_vals[4], g.ds->desc_dense_vals[5], g.ds->desc_dense_vals[6], g.ds->desc_dense_vals[7], g.ds->desc_dense_vals[8],
 	    	g.ds->desc_dense_vals2d[0], g.ds->desc_dense_vals2d[1], g.ds->desc_dense_vals2d[2], g.ds->desc_dense_vals2d[3], g.ds->desc_dense_vals2d[4], g.ds->desc_dense_vals2d[5], g.ds->desc_dense_vals2d[6], g.ds->desc_dense_vals2d[7], g.ds->desc_dense_vals2d[8],
 	    g.ds->blacs_ctxt2d);fflush(stdout);
     MPI_Barrier(MPI_COMM_WORLD);    
-    
+  */  
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
     if (g.ds->myrow >= 0 || g.ds->myrow2d >= 0){
         pgemr2d_PRECISION( &N, &N, g.ds->dense_vals, &ione, &ione, g.ds->desc_dense_vals,

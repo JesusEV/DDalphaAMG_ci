@@ -29,7 +29,37 @@ extern struct common_thread_data *commonthreaddata;
 extern struct Thread *no_threading;
 
 int main( int argc, char **argv ) {
-    
+
+/*	
+    printf("sizeof(int)      = %zu  (__SIZEOF_INT__   = %d)\n", sizeof(int),   __SIZEOF_INT__);
+    printf("sizeof(long)     = %zu  (__SIZEOF_LONG__  = %d)\n", sizeof(long),  __SIZEOF_LONG__);
+    printf("sizeof(void*)    = %zu\n", sizeof(void*));
+    printf("sizeof(ptrdiff_t)= %zu\n", sizeof(ptrdiff_t));
+    printf("__INT_MAX__      = %ld\n", (long)__INT_MAX__);
+    printf("__LONG_MAX__     = %ld\n", (long)__LONG_MAX__);
+    // Prüfe, ob der Compiler ein ILP64‑Makro setzt 
+#ifdef __ILP64__
+    puts("__ILP64__ is defined");
+#else
+    puts("__ILP64__ is NOT defined");
+#endif
+#if defined(MKL_ILP64) || defined(ILP64)
+    printf("ILP64 mode is active\n");
+    printf("Index type size = %zu\n", sizeof(MKL_INT));  // oder sizeof(MKL_INT)
+#endif
+    #ifdef ILP64
+        puts("ILP64 is defined");
+    #else
+        puts("ILP64 is NOT defined");
+    #endif
+
+    #ifdef MKL_ILP64
+        puts("MKL_ILP64 is defined");
+    #else
+        puts("MKL_ILP64 is NOT defined");
+    #endif
+*/
+
 #ifdef HAVE_HDF5
   h5info.filename=NULL;
   h5info.file_id=-1; 
