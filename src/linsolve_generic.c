@@ -775,6 +775,10 @@ int fgmres_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread 
     printf0("| coarsest grid direct solve calls: %-8.2d               |\n",
 	    g.coarsest_solve_number);
 #endif
+#if defined(COARSE_SCALAP)
+    printf0("| scalap vec redist time: %-8.4lf seconds (%04.1lf%%)         |\n",
+	    g.scalap_comm_time, 100*(g.scalap_comm_time/(t1-t0)) );   
+#endif
     printf0("|  consumed core minutes*: %-8.2le (solve only)           |\n", ((t1-t0)*g.num_processes*MAX(1,threading->n_core))/60.0 );
     printf0("|    max used mem/MPIproc: %-8.2le GB                     |\n", g.max_storage/1024.0 );
     printf0("+----------------------------------------------------------+\n");

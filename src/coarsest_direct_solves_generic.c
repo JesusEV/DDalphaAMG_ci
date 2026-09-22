@@ -577,6 +577,8 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
 void direct_solves_set_reset_PRECISION( level_struct *lx, struct Thread *threading ){
 
     g.coarsest_time = 0;
+    g.coarsest_solve_time = 0;
+    g.scalap_comm_time = 0;
     if (g.on_solve) {
       level_struct *l = lx;
       for (int i = 1; i<g.num_levels; i++) l = l->next_level;
@@ -1100,6 +1102,12 @@ void scalap_2d_1d_A_PRECISION(level_struct *l, struct Thread *threading){
 }
 
 void scalap_1d_2d_vec_PRECISION( vector_PRECISION vec, level_struct *l, struct Thread *threading){
+	
+    START_MASTER(threading)
+    g.scalap_comm_time -= MPI_Wtime();
+    END_MASTER(threading)
+    SYNC_CORES(threading);
+
     lapack_int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
     lapack_int ione = 1; //starting indices
     //(global) The row and column indices in the array A indicating the first row and the first column, respectively, of the submatrix of A) to copy. 
@@ -1108,10 +1116,20 @@ void scalap_1d_2d_vec_PRECISION( vector_PRECISION vec, level_struct *l, struct T
     //pgemr2d_PRECISION( m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt);
     if (g.ds->myrow >= 0 || g.ds->myrow2d >= 0){
 	pgemr2d_PRECISION( &N, &ione, vec, &ione, &ione, g.ds->desc_rhs, g.ds->rhs2d, &ione, &ione, g.ds->desc_rhs2d, &ictxt);
-    }
+    }	
+    START_MASTER(threading)
+    g.scalap_comm_time += MPI_Wtime();
+    END_MASTER(threading)
+    SYNC_CORES(threading);
 }
 
 void scalap_2d_1d_vec_PRECISION( vector_PRECISION vec, level_struct *l, struct Thread *threading){
+ 	
+    START_MASTER(threading)
+    g.scalap_comm_time -= MPI_Wtime();
+    END_MASTER(threading)
+    SYNC_CORES(threading);
+
     lapack_int N = l->num_processes * l->num_inner_lattice_sites * l->num_lattice_site_var;
     lapack_int ione = 1; //starting indices
     //(global) The row and column indices in the array A indicating the first row and the first column, respectively, of the submatrix of A) to copy. 
@@ -1121,6 +1139,10 @@ void scalap_2d_1d_vec_PRECISION( vector_PRECISION vec, level_struct *l, struct T
     if (g.ds->myrow >= 0 || g.ds->myrow2d >= 0){
 	pgemr2d_PRECISION( &N, &ione, g.ds->rhs2d, &ione, &ione, g.ds->desc_rhs2d, vec, &ione, &ione, g.ds->desc_rhs, &ictxt);
     }
+    START_MASTER(threading)
+    g.scalap_comm_time += MPI_Wtime();
+    END_MASTER(threading)
+    SYNC_CORES(threading);
 }
 #endif
 #endif

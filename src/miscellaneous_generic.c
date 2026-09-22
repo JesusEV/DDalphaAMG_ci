@@ -5,6 +5,9 @@ void coarsest_level_resets_PRECISION( level_struct* l, struct Thread* threading 
 
   START_MASTER(threading)
   g.coarsest_time = 0.0;
+#ifdef COARSE_SCALAP
+  g.coarsest_solve_time = 0;
+#endif
   END_MASTER(threading)
 
 #ifdef POLYPREC

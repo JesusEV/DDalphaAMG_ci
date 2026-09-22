@@ -138,6 +138,9 @@ void DDalphaAMG_update_parameters( DDalphaAMG_parameters *mg_params, DDalphaAMG_
   g.coarsest_fact_time = 0;
   g.coarsest_solve_number = 0;
 #endif
+#if defined(COARSE_SCALAP)
+  g.scalap_comm_time = 0;
+#endif
   g.iter_count = 0;
   g.coarse_iter_count = 0;
 

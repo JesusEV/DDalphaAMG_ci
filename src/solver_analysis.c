@@ -128,6 +128,9 @@ void prof_init( level_struct *l ) {
 #if defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
   if ( l->depth == 0 ) { g.coarsest_solve_time=0; g.coarsest_solve_number=0; }
 #endif
+#if defined(COARSE_SCALAP)
+  if ( l->depth == 0 ) { g.scalap_comm_time=0; }
+#endif
   prof_double_init( l );
   prof_float_init( l );
   if ( l->next_level != NULL )

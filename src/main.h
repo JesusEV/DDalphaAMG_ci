@@ -495,6 +495,7 @@ typedef struct block_struct {
 #endif
 
 #ifdef COARSE_SCALAP
+    double scalap_comm_time;
     lapack_int prow2d, pcol2d;
     lapack_int bs2d;
 #endif
