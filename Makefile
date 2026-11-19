@@ -3,7 +3,7 @@
 CC = mpicc
 
 # --- CFLAGS -----------------------------------------
-CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -DMKL_ILP64 -m64 -DLAPACK_ILP64 -DMKL_Complex8="complex float" -DMKL_Complex16="complex double"
+CFLAGS_gnu = -std=gnu99 -Wall -pedantic -O3 -ffast-math -fopenmp -m64 -DLAPACK_ILP64
 #CFLAGS_intel = -std=gnu99 -Wall -pedantic -O3  -xHOST -qopenmp 
 #CFLAGS = $(CFLAGS_intel)
 CFLAGS = $(CFLAGS_gnu)
@@ -40,7 +40,7 @@ DEP = $(patsubst %.c,%.dep,$(GSRC))
 # H5LIB=-lhdf5 -lz
 
 # --- FLAGS FOR LIME ---------------------------------
-LIMEDIR = ../../qio/build
+LIMEDIR = /pc2/users/h/hpchele/opt/lime
 LIMEFLAGS = -DHAVE_LIME -I$(LIMEDIR)/include
 LIMELIB = $(LIMEDIR)/lib/liblime.a
 
@@ -66,22 +66,23 @@ DEVEL_VERSION_FLAGS += -DPOLYPREC
 #---------------------------------------------------
 # lapack and scalapack linkages
 
-LAPACK_DIR = /p/project1/mul-tra/leemhuis1/lapack_ILP64
-LAPACKE_DIR = $(LAPACK_DIR)/LAPACKE
-LAPACKE_INCLUDE = -I$(LAPACKE_DIR)/include
-BLASLIB      = $(LAPACK_DIR)/librefblas.a
-LAPACKLIB    = $(LAPACK_DIR)/liblapack.a
-LAPACKELIB   = $(LAPACK_DIR)/liblapacke.a
-LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB) 
+# ILP64-LAPACK, installiert mit CMake (BUILD_INDEX64=ON, LAPACKE=ON)
+LAPACK_DIR = /pc2/users/h/hpchele/opt/lapack-ilp64
+LAPACKE_INCLUDE = -I$(LAPACK_DIR)/include
+BLASLIB      = $(LAPACK_DIR)/lib64/libblas64.a
+LAPACKLIB    = $(LAPACK_DIR)/lib64/liblapack64.a
+LAPACKELIB   = $(LAPACK_DIR)/lib64/liblapacke64.a
+LAPACK_LIBRARIES = $(LAPACKELIB) $(LAPACKLIB) $(BLASLIB)
 
 #LAPACKE_INCLUDE =
 #LAPACK_LIBRARIES =
 
 SPBLAS_LIBRARIES = 
 
-SCALAPACK_DIR = /p/project1/mul-tra/leemhuis1/scalapack_ILP64
-SCALAPACK_INCLUDE = -I$(SCALAPACK_DIR)/include/
-SCALAPACK_LIBRARIES = $(SCALAPACK_DIR)/libscalapack_ILP64.a -L$(SCALAPACK_DIR) -lflexiblas
+# ILP64-ScaLAPACK (Reference-ScaLAPACK, gebaut mit SLmake.inc)
+SCALAPACK_DIR = /pc2/users/h/hpchele/scalapack_ilp64
+SCALAPACK_INCLUDE =
+SCALAPACK_LIBRARIES = $(SCALAPACK_DIR)/libscalapack.a
 
 #---------------------------------------------------
 
