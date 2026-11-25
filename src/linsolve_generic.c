@@ -124,10 +124,7 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
 
-  if ( g.method==2 ) {
-    if ( g.mixed_precision!=2 ) {
-      error0("Method=9 only implemented in combination with mixed_precision=2\n");
-    }
+  if ( g.richardson ) {
     richardson_PRECISION_init( p );
   }
 }
@@ -423,7 +420,7 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
   }
 #endif
 
-  if ( g.method==2 ) {
+  if ( g.richardson ) {
     richardson_PRECISION_alloc( vl, p, l );
   }
 }
@@ -549,7 +546,7 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   }
 #endif
 
-  if ( g.method==2 ) {
+  if ( g.richardson ) {
     richardson_PRECISION_free( p );
   }
 }
@@ -2114,7 +2111,7 @@ void richardson_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_P
     vector_PRECISION_saxpy( phi, phi, p->richardson_r, p->richardson_omega, start, end, l );
   }
 
-  // when g.method=2, Dphi has to be provided
+  // with mixed_precision=2 and method=2, fgmres_float expects Dphi = D*phi from the smoother
   if ( Dphi!=NULL ) apply_operator_PRECISION( Dphi, phi, p, l, threading );
 }
 
@@ -2127,8 +2124,8 @@ void richardson_update_omega_PRECISION( gmres_PRECISION_struct *p, level_struct 
   vector_PRECISION v1=p->richardson_w, v2=p->richardson_r;
   compute_core_start_end( p->v_start, p->v_end, &start, &end, l, threading );
 
-  // number of power iteration iters
-  int pi_iters = 5;
+  // number of power iteration iters (ini: "richardson power iterations:")
+  int pi_iters = (g.richardson_pi_iters>0)?g.richardson_pi_iters:5;
 
   // do a bit of power iteration to roughly estimate the max eigenvalue
 

@@ -278,7 +278,10 @@ void method_setup( vector_double *V, level_struct *l, struct Thread *threading )
     if ( g.method > 0 ) {
       printf0("+----------------------------------------------------------+\n");
       printf0("|%17s cycles: %-6d                          |\n", "preconditioner", l->n_cy );
-      printf0("|            inner solver: %-26s      |\n", g.method==4?"GMRES":"minimal residual iteration" );
+      if ( g.method == 2 && g.richardson )
+        printf0("|                smoother: %-26s      |\n", "Richardson (omega via PI)" );
+      else
+        printf0("|            inner solver: %-26s      |\n", g.method==4?"GMRES":"minimal residual iteration" );
       printf0("|               precision: %6s                          |\n", g.mixed_precision?"single":"double" );
     }
     for ( int i=0; i<g.num_levels; i++ ) {
@@ -1073,6 +1076,11 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   
   save_pt = &(g.method); g.method = 2;
   read_parameter( &save_pt, "method:", "%d", 1, in, _DEFAULT_SET );
+  // Richardson smoother: only used together with method=2 (replaces red-black Schwarz)
+  save_pt = &(g.richardson); g.richardson = 0;
+  read_parameter( &save_pt, "richardson smoother:", "%d", 1, in, _DEFAULT_SET );
+  save_pt = &(g.richardson_pi_iters); g.richardson_pi_iters = 5;
+  read_parameter( &save_pt, "richardson power iterations:", "%d", 1, in, _DEFAULT_SET );
   save_pt = &(g.restart); g.restart = 30;
   read_parameter( &save_pt, "iterations between restarts:", "%d", 1, in, _DEFAULT_SET );
   save_pt = &(g.max_restart); g.max_restart = 20;
@@ -1165,9 +1173,21 @@ void validate_parameters( int ls, level_struct *l ) {
   }
 
   ASSERT( ASCENDING( 0, g.rhs, 2 ) );
-  // special case : Richardson is g.method=9
-  if ( g.method!=9 ) {
-    ASSERT( ASCENDING( -1, g.method, 5 ) );
+  ASSERT( ASCENDING( -1, g.method, 5 ) );
+  if ( g.richardson ) {
+    if ( g.method != 2 )
+      error0("richardson smoother: 1 requires method: 2\n");
+#ifdef INIT_ONE_PREC
+    if ( g.mixed_precision != 2 )
+      error0("richardson smoother: 1 requires mixed precision: 2 (INIT_ONE_PREC is defined)\n");
+#else
+    if ( g.mixed_precision == 0 )
+      error0("richardson smoother: 1 requires mixed precision: 1 or 2\n");
+#endif
+    // on intermediate levels Richardson borrows the K-cycle FGMRES struct
+    if ( g.num_levels > 2 && !g.kcycle )
+      error0("richardson smoother: 1 with more than 2 levels requires kcycle: 1\n");
+    ASSERT( g.richardson_pi_iters > 0 );
   }
   
   ASSERT( IMPLIES( g.vt.evaluation, g.rhs <= 2 ) );
