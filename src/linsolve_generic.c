@@ -2175,6 +2175,11 @@ void richardson_update_omega_PRECISION( gmres_PRECISION_struct *p, level_struct 
 
   p->richardson_omega = cabs(lmax);
   p->richardson_omega = 1.0 / (2.0*p->richardson_omega / 3.0);
+  START_MASTER(threading)
+  if ( g.print > 0 )
+    printf0("richardson omega update: depth %d, pi iters %d, |lambda_max| ~ %e, omega = %e\n",
+            l->depth, pi_iters, (double)cabs(lmax), (double)p->richardson_omega );
+  END_MASTER(threading)
 }
 
 
