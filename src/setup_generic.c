@@ -330,6 +330,8 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
         coarse_operator_PRECISION_set_couplings( &(l->next_level->s_PRECISION.op), l->next_level, threading );
       }
       re_setup_PRECISION( l->next_level, threading );
+
+      l->next_level->p_PRECISION.richardson_update_omega = 1;
     }
   }
 //#if defined(POLYPREC) || defined(GCRODR) || defined(BLOCK_JACOBI) || defined(MUMPS_ADDS) || defined(COARSE_SCALAP)
@@ -483,6 +485,8 @@ void inv_iter_2lvl_extension_setup_PRECISION( int setup_iter, level_struct *l, s
       coarse_operator_PRECISION_setup( l->is_PRECISION.interpolation, l );
 #endif
       conf_PRECISION_gather( &(l->next_level->s_PRECISION.op), &(l->next_level->op_PRECISION), l->next_level );
+      // coarse operator changed -> Richardson omega on that level has to be re-estimated
+      l->next_level->p_PRECISION.richardson_update_omega = 1;
       END_LOCKED_MASTER(threading)
       if ( !l->next_level->idle && l->next_level->level > 0 ) {
         START_LOCKED_MASTER(threading)

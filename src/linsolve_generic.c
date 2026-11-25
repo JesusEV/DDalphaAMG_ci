@@ -129,6 +129,15 @@ void fgmres_PRECISION_struct_init( gmres_PRECISION_struct *p ) {
   local_fgmres_PRECISION_struct_init( &(p->block_jacobi_PRECISION.local_p) );
 #endif
 
+  if ( g.richardson ) {
+    richardson_PRECISION_init( p );
+  }
+}
+
+
+void richardson_PRECISION_init( gmres_PRECISION_struct *p ) {
+  p->richardson_w = NULL;
+  p->richardson_r = NULL;
 }
 
 
@@ -416,6 +425,20 @@ void fgmres_PRECISION_struct_alloc( int m, int n, long int vl, PRECISION tol, co
                                          &(p->block_jacobi_PRECISION.local_p), l );
   }
 #endif
+  if ( g.richardson ) {
+    richardson_PRECISION_alloc( vl, p, l );
+  }
+}
+
+
+void richardson_PRECISION_alloc( long int vl, gmres_PRECISION_struct *p, level_struct *l ) {
+  p->richardson_vl = vl;
+
+  MALLOC( p->richardson_w, complex_PRECISION, vl );
+  MALLOC( p->richardson_r, complex_PRECISION, vl );
+
+  // indicate that the omega in Richardson needs to be updated
+  p->richardson_update_omega = 1;
 }
 
 
@@ -529,7 +552,15 @@ void fgmres_PRECISION_struct_free( gmres_PRECISION_struct *p, level_struct *l ) 
   }
 #endif
 
+  if ( g.richardson ) {
+    richardson_PRECISION_free( p );
+  }
+}
 
+
+void richardson_PRECISION_free( gmres_PRECISION_struct *p ) {
+  FREE( p->richardson_w, complex_PRECISION, p->richardson_vl );
+  FREE( p->richardson_r, complex_PRECISION, p->richardson_vl );
 }
 
 
@@ -2078,6 +2109,72 @@ void compute_solution_PRECISION( vector_PRECISION x, vector_PRECISION *V, comple
       vector_PRECISION_saxpy( x, x, V[i], y[i], start, end, l );
     }
   }
+}
+
+
+void richardson_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECISION eta, int n, int res,
+                           gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
+
+  int start, end, i;
+  compute_core_start_end( p->v_start, p->v_end, &start, &end, l, threading );
+
+  if ( p->richardson_update_omega==1 ) {
+    richardson_update_omega_PRECISION( p, l, threading );
+    p->richardson_update_omega = 0;
+  }
+
+  // initial guess
+  if ( res == _NO_RES ) {
+    vector_PRECISION_define( phi, 0, start, end, l );
+  }
+
+  for ( i=0; i<n; i++ ) {
+    // 1. compute residual
+    apply_operator_PRECISION( p->richardson_w, phi, p, l, threading );
+    vector_PRECISION_minus( p->richardson_r, eta, p->richardson_w, start, end, l );
+
+    // 2. update solution
+    vector_PRECISION_saxpy( phi, phi, p->richardson_r, p->richardson_omega, start, end, l );
+  }
+
+  // with mixed_precision=2 and method=2, fgmres_float expects Dphi = D*phi from the smoother
+  if ( Dphi!=NULL ) apply_operator_PRECISION( Dphi, phi, p, l, threading );
+}
+
+
+void richardson_update_omega_PRECISION( gmres_PRECISION_struct *p, level_struct *l, struct Thread *threading ) {
+
+  int start, end, i;
+  PRECISION norm;
+  complex_PRECISION lmax;
+  vector_PRECISION v1=p->richardson_w, v2=p->richardson_r;
+  compute_core_start_end( p->v_start, p->v_end, &start, &end, l, threading );
+
+  // number of power iteration iters (ini: "richardson power iterations:")
+  int pi_iters = (g.richardson_pi_iters>0)?g.richardson_pi_iters:5;
+
+  // do a bit of power iteration to roughly estimate the max eigenvalue
+
+  vector_PRECISION_define_random( v1, start, end, l );
+  norm = global_norm_PRECISION( v1, p->v_start, p->v_end, l, threading );
+  vector_PRECISION_scale( v1, v1, 1.0/norm, start, end, l );
+
+  for ( i=0; i<pi_iters; i++ ) {
+    // 1. apply D
+    apply_operator_PRECISION( v2, v1, p, l, threading );
+
+    // 2. normalize and copy back to original
+    norm = global_norm_PRECISION( v2, p->v_start, p->v_end, l, threading );
+    vector_PRECISION_scale( v1, v2, 1.0/norm, start, end, l );
+  }
+
+  // compute the Rayleigh quotient
+  apply_operator_PRECISION( v2, v1, p, l, threading );
+  norm = global_norm_PRECISION( v1, p->v_start, p->v_end, l, threading );
+  lmax = global_inner_product_PRECISION( v1, v2, p->v_start, p->v_end, l, threading ) / (norm*norm);
+
+  p->richardson_omega = cabs(lmax);
+  p->richardson_omega = 1.0 / (2.0*p->richardson_omega / 3.0);
 }
 
 

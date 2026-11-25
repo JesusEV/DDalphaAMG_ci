@@ -25,6 +25,10 @@
 void fgmres_MP_struct_init( gmres_MP_struct *p ) {
   fgmres_float_struct_init( &(p->sp) );
   fgmres_double_struct_init( &(p->dp) );
+
+  if ( g.richardson ) {
+    richardson_float_init( &(p->sp) );
+  }
 }
 
 
@@ -140,7 +144,11 @@ void fgmres_MP_struct_alloc( int m, int n, long int vl, double tol, const int pr
       p->sp.Z[i] = p->sp.w + total; total += vl;
     }
   }
-  
+
+  if ( g.richardson ) {
+    richardson_float_alloc( vl, &(p->sp), l );
+  }
+
   ASSERT( p->sp.total_storage == total );
 }  
    
@@ -156,7 +164,10 @@ void fgmres_MP_struct_free( gmres_MP_struct *p ) {
   // double precision
   FREE( p->dp.H[0], complex_double, p->dp.total_storage );
   FREE( p->dp.H, complex_double*, p->dp.restart_length );
-  
+
+  if ( g.richardson ) {
+    richardson_float_free( &(p->sp) );
+  }
 } 
   
   
