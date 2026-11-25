@@ -130,7 +130,12 @@
 #define USE_COMM_WORLD -987654
 #endif
 #ifdef COARSE_SCALAP
+#ifdef MKL_ILP64
+#include <mkl.h>
+#else
 #include <lapacke.h>
+#endif
+#define pgesv_double pzgesv_
 #define pgesv_double pzgesv_
 #define pgesv_float pcgesv_
 #define pgemv_double pzgemv_
@@ -742,7 +747,11 @@ typedef struct block_struct {
   //  #include <mkl_blacs.h>
 
 #if defined(GCRODR) || defined(POLYPREC)
-  #include <lapacke.h>
+#ifdef MKL_ILP64
+#include <mkl_lapacke.h>
+#else
+#include <lapacke.h>
+#endif
 #ifdef GCRODR
   //#include <mkl_scalapack.h>
   //#include <mkl_blacs.h>

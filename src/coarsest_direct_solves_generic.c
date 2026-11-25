@@ -629,6 +629,39 @@ void direct_solves_set_reset_PRECISION( level_struct *lx, struct Thread *threadi
 	  //use entire coarsest system, not only odd-even Schur-Decomp when using direct solves
 	  if (g.odd_even) l->p_PRECISION.v_end *=2;
         }
+
+#ifdef COARSE_SCALAP
+      {   // --- einmaliger Test des direkten Lösers ---
+        static int checked = 0;
+        if (!checked) {
+          int vs = MAX(l->vector_size, 1), ivs = l->inner_vector_size;
+          vector_PRECISION b = NULL, x = NULL, r = NULL;
+          MALLOC(b, complex_PRECISION, vs); MALLOC(x, complex_PRECISION, vs); MALLOC(r, complex_PRECISION, vs);
+          memset(b, 0, vs*sizeof(complex_PRECISION)); memset(x, 0, vs*sizeof(complex_PRECISION));
+
+          srand(1234);                                                   // fester Seed
+          if (!l->idle) vector_PRECISION_define_random(b, 0, ivs, l);
+
+          int n0 = g.coarsest_solve_number; double t0s = g.coarsest_solve_time, t0c = g.scalap_comm_time;
+          coarse_scalap_solve_PRECISION(x, NULL, b, _NO_RES, l, no_threading);   // ALLE Prozesse (kollektiv)
+          g.coarsest_solve_number = n0; g.coarsest_solve_time = t0s; g.scalap_comm_time = t0c;
+
+          if (!l->idle) {
+            operator_PRECISION_struct *op = &(l->oe_op_PRECISION);
+            coarse_diag_ee_PRECISION(r, x, op, l, no_threading);
+            coarse_diag_oo_PRECISION(r, x, op, l, no_threading);
+            coarse_hopping_term_PRECISION(r, x, op, _FULL_SYSTEM, l, no_threading);
+            vector_PRECISION_minus(r, b, r, 0, ivs, l);                  // r = b - A x
+            printf0("direct solver check: ||b - A x||/||b|| = %.2e\n",
+                    (double)(global_norm_PRECISION(r, 0, ivs, l, no_threading) /
+                             global_norm_PRECISION(b, 0, ivs, l, no_threading)));
+          }
+          FREE(b, complex_PRECISION, vs); FREE(x, complex_PRECISION, vs); FREE(r, complex_PRECISION, vs);
+          checked = 1;
+        }
+      }
+#endif
+
      }
 }
 
