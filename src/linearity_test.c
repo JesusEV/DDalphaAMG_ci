@@ -56,7 +56,7 @@ void linearity_test( level_struct *l, struct Thread *threading ) {
 #ifdef HAVE_TM1p1
   vs *= 2;
 #endif
-  const complex_double alpha = 0.37 + 1.21*_Complex_I;
+  const complex_double alpha = 0.314 + 1.592*_Complex_I;
 
   // one contiguous block for all 11 vectors
   vector_double buf = NULL;

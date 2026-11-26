@@ -1,0 +1,339 @@
+
++- subspace correction methods for QCD applications -+
+|                                                    |
+|  Use option >> -? << for help                      |
+|                                                    |
++----------------------------------------------------+
+
+
+Number of Processes: 8
+Program is being started...
+
+
+
++----------------------------------------------------------+
+| The DDalphaAMG solver library.                           |
+| Copyright (C) 2016, Matthias Rottmann, Artur Strebel,    |
+|       Simon Heybrock, Simone Bacchio, Bjoern Leder.      |
+|                                                          |
+| This program comes with ABSOLUTELY NO WARRANTY.          |
++----------------------------------------------------------+
+
+configuration: conf/8x8x8x8b6.0000id3n1
+
+Desired average plaquette: 1.7772950976130 in [0,3]
+BASIS4: tmLQCD basis
+antiperiodic in time boundary conditions
+Configuration stored...
+average plaquette: 0.5924316992043
+
++----------------------------------------------------------+
+| read in and set up the parallel dirac operator           |
+| elapsed wall clock time: 0.0135924    seconds            |
++----------------------------------------------------------+
+initial definition --- depth: 0
+richardson omega update: depth 0, pi iters 5, |lambda_max| ~ 5.594847e+00, omega = 2.681038e-01
+depth: 0, time spent for setting up next coarser operator: 0.049126 seconds
+malloc of "p->gcrodr_float.lsp_H[0]" failed: pointer is not NULL (build/gsrc/gcrodr_float.c:122).
+initial definition --- depth: 1
+richardson omega update: depth 1, pi iters 5, |lambda_max| ~ 3.654421e+00, omega = 4.104617e-01
+depth: 1, time spent for setting up next coarser operator: 0.028944 seconds
+
+initial coarse grid correction is defined
+starting direct_solver_float_setup
+starting scalap_init_float
+coarse_scalap_init_float done!
+elapsed time: 0.304998 seconds
+
++----------------------------------------------------------+
+| 3-level method                                           |
+| postsmoothing K-cycle                                    |
+| FGMRES + red-black multiplicative Schwarz                |
+|          restart length: 10                              |
+|                      m0: -0.600000                       |
+|                     csw: +1.000000                       |
+|                      mu: +0.001000                       |
++----------------------------------------------------------+
+|   preconditioner cycles: 1                               |
+|                smoother: Richardson (omega via PI)       |
+|               precision: single                          |
++---------------------- depth  0 --------------------------+
+|          global lattice: 8   8   8   8                   |
+|           local lattice: 4   4   4   8                   |
+|           block lattice: 2   2   2   2                   |
+|        post smooth iter: 5                               |
+|     smoother inner iter: 4                               |
+|              setup iter: 4                               |
+|            test vectors: 24                              |
++---------------------- depth  1 --------------------------+
+|          global lattice: 4   4   4   4                   |
+|           local lattice: 2   2   2   4                   |
+|           block lattice: 2   2   2   2                   |
+|        post smooth iter: 5                               |
+|     smoother inner iter: 4                               |
+|              setup iter: 2                               |
+|            test vectors: 28                              |
++---------------------- depth  2 --------------------------+
+|          global lattice: 2   2   2   2                   |
+|           local lattice: 1   1   1   2                   |
+|           block lattice: 1   1   1   1                   |
+|coarse grid solver solve: ScaLAPACK                       |
+|coarse grid solver setup: odd even GMRES                  |
+|              iterations: 30                              |
+|                  cycles: 50                              |
+|               tolerance: 1e-01                           |
++----------------------------------------------------------+
+|          K-cycle length: 5                               |
+|        K-cycle restarts: 2                               |
+|       K-cycle tolerance: 1e-01                           |
++----------------------------------------------------------+
+
+
++----------------------------------------------------------+
+| solver profiling                                         |
++----------------------------------------------------------+
+| depth:   0 / level:   2                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 7.58e-04(     32) |
+|       2 flop vector operations, float: 5.45e-04(    168) |
+|       6 flop vector operations, float: 3.43e-05(      6) |
+|       8 flop vector operations, float: 1.08e-03(    144) |
+|                copy operations, float: 1.08e-03(    100) |
+|           set value operations, float: 7.86e-03(     97) |
+|  interpolation and restriction, float: 2.84e-03(     24) |
+|                  self coupling, float: 9.11e-03(    150) |
+|              neighbor coupling, float: 2.65e-02(    150) |
+|                       smoother, float: 3.84e-02(    144) |
+|             operator comm init, float: 1.13e-03(    900) |
+|             operator comm wait, float: 3.25e-03(    900) |
+|                     allreduces, float: 5.13e-04(     32) |
+|     Gram-Schmidt on aggregates, float: 4.86e-03(      1) |
++----------------------------------------------------------+
+| depth:   1 / level:   1                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 3.01e-04(     36) |
+|       2 flop vector operations, float: 2.55e-04(    196) |
+|       6 flop vector operations, float: 6.82e-06(      6) |
+|       8 flop vector operations, float: 3.33e-04(    168) |
+|                copy operations, float: 3.32e-03(    688) |
+|           set value operations, float: 3.78e-03(   2493) |
+|                  self coupling, float: 2.83e-02(    174) |
+|              neighbor coupling, float: 1.26e-01(    174) |
+|                       smoother, float: 1.56e-01(    168) |
+|             operator comm init, float: 1.70e-03(   1044) |
+|             operator comm wait, float: 1.44e-03(   1044) |
+|                     allreduces, float: 2.09e-04(     36) |
+|     Gram-Schmidt on aggregates, float: 7.42e-04(      1) |
++----------------------------------------------------------+
+| depth:   2 / level:   0                time    ( count ) |
++----------------------------------------------------------+
++----------------------------------------------------------+
+| flop/lattice site:  9.88e+06                             |
+| flop/s/MPIprocess:  1.66e+10                             |
++----------------------------------------------------------+
+
+finished method_setup
+direct coarse pre-setup time (seconds) : 0.000720
+starting iterative Phase
+depth: 0, bootstrap step number 1...
+depth: 0, time spent for setting up next coarser operator: 0.044648 seconds
+depth: 1, time spent for setting up next coarser operator: 0.029133 seconds
+
+Pre-constructing coarsest-level data ...
+GEVP time : 0.0002145655
+... done
+
+depth: 1, bootstrap step number 1...
+richardson omega update: depth 1, pi iters 5, |lambda_max| ~ 3.533868e+00, omega = 4.244640e-01
+depth: 1, time spent for setting up next coarser operator: 0.029426 seconds
+
+Pre-constructing coarsest-level data ...
+GEVP time : 0.0001359582
+... done
+
+depth: 0, bootstrap step number 2...
+depth: 0, time spent for setting up next coarser operator: 0.044704 seconds
+depth: 1, time spent for setting up next coarser operator: 0.032262 seconds
+
+Pre-constructing coarsest-level data ...
+GEVP time : 0.0001349039
+... done
+
+depth: 1, bootstrap step number 1...
+richardson omega update: depth 1, pi iters 5, |lambda_max| ~ 3.492422e+00, omega = 4.295014e-01
+depth: 1, time spent for setting up next coarser operator: 0.030453 seconds
+
+Pre-constructing coarsest-level data ...
+GEVP time : 0.0001597740
+... done
+
+depth: 0, bootstrap step number 3...
+depth: 0, time spent for setting up next coarser operator: 0.045771 seconds
+depth: 1, time spent for setting up next coarser operator: 0.032029 seconds
+
+Pre-constructing coarsest-level data ...
+GEVP time : 0.0001411587
+... done
+
+depth: 1, bootstrap step number 1...
+richardson omega update: depth 1, pi iters 5, |lambda_max| ~ 3.482695e+00, omega = 4.307010e-01
+depth: 1, time spent for setting up next coarser operator: 0.028878 seconds
+
+Pre-constructing coarsest-level data ...
+GEVP time : 0.0001324229
+... done
+
+depth: 1, bootstrap step number 2...
+depth: 1, time spent for setting up next coarser operator: 0.033958 seconds
+
+Pre-constructing coarsest-level data ...
+GEVP time : 0.0001533926
+... done
+
+depth: 0, bootstrap step number 4...
+depth: 0, time spent for setting up next coarser operator: 0.051348 seconds
+depth: 1, time spent for setting up next coarser operator: 0.029245 seconds
+
+Pre-constructing coarsest-level data ...
+GEVP time : 0.0001360886
+... done
+
+depth: 1, bootstrap step number 1...
+richardson omega update: depth 1, pi iters 5, |lambda_max| ~ 3.493884e+00, omega = 4.293217e-01
+depth: 1, time spent for setting up next coarser operator: 0.029096 seconds
+
+Pre-constructing coarsest-level data ...
+GEVP time : 0.0001596138
+... done
+
+depth: 1, bootstrap step number 2...
+depth: 1, time spent for setting up next coarser operator: 0.028866 seconds
+
+Pre-constructing coarsest-level data ...
+GEVP time : 0.0001320392
+... done
+
+
+performed 4 iterative setup steps
+elapsed time: 4.374582 seconds (1.274969 seconds on coarse grid)
+
+
++----------------------------------------------------------+
+| solver profiling                                         |
++----------------------------------------------------------+
+| depth:   0 / level:   2                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 1.84e-03(    192) |
+|          process inner product, float: 1.05e-02(     96) |
+|       2 flop vector operations, float: 2.78e-03(    672) |
+|       8 flop vector operations, float: 1.26e-02(   1584) |
+|        other vector operations, float: 2.26e-02(      4) |
+|                copy operations, float: 1.26e-03(     96) |
+|  interpolation and restriction, float: 4.34e-02(    192) |
+|                  self coupling, float: 3.44e-02(    480) |
+|              neighbor coupling, float: 8.99e-02(    480) |
+|                       smoother, float: 1.31e-01(    480) |
+|             operator comm init, float: 4.02e-03(   2880) |
+|             operator comm wait, float: 5.28e-03(   2880) |
+|                     allreduces, float: 1.76e-03(    284) |
+|     Gram-Schmidt on aggregates, float: 1.96e-02(      4) |
++----------------------------------------------------------+
+| depth:   1 / level:   1                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 1.76e-02(    464) |
+|          process inner product, float: 5.66e-03(    168) |
+|       2 flop vector operations, float: 4.91e-03(   3336) |
+|       6 flop vector operations, float: 2.86e-05(     24) |
+|       8 flop vector operations, float: 1.31e-02(   4908) |
+|        other vector operations, float: 1.32e-02(      6) |
+|                copy operations, float: 8.56e-03(   2584) |
+|           set value operations, float: 1.70e-02(  25848) |
+|  interpolation and restriction, float: 7.27e-02(   1056) |
+|                  self coupling, float: 5.27e-01(   2928) |
+|              neighbor coupling, float: 2.24e+00(   2928) |
+|                       smoother, float: 2.53e+00(   2640) |
+|             operator comm init, float: 2.61e-02(  17568) |
+|             operator comm wait, float: 2.78e-02(  17568) |
+|                     allreduces, float: 1.71e-02(    626) |
+|     Gram-Schmidt on aggregates, float: 1.95e-02(     20) |
++----------------------------------------------------------+
+| depth:   2 / level:   0                time    ( count ) |
++----------------------------------------------------------+
+|           global inner product, float: 1.53e-02(    581) |
+|          process inner product, float: 4.73e-03(   1054) |
+|       2 flop vector operations, float: 2.57e-04(   1568) |
+|       6 flop vector operations, float: 3.71e-06(      5) |
+|       8 flop vector operations, float: 3.41e-03(  12999) |
+|                copy operations, float: 3.10e-04(   2024) |
+|           set value operations, float: 1.79e-02(  50243) |
+|                  self coupling, float: 8.16e-02(   6072) |
+|              neighbor coupling, float: 5.50e-01(   6072) |
+|             operator comm init, float: 3.28e-02(  72864) |
+|             operator comm wait, float: 4.31e-02(  72864) |
+|                     allreduces, float: 2.49e-02(   3181) |
+|           Hessenberg: qr update float: 1.39e-04(  23952) |
+|          Hessenberg: bkwd subst float: 5.84e-06(    465) |
++----------------------------------------------------------+
+| flop/lattice site:  1.45e+08                             |
+| flop/s/MPIprocess:  1.70e+10                             |
++----------------------------------------------------------+
+
+scalap time  = 0.000846, scalap solves:  1
+gmres iters = 0
+scalap time  = 0.001285, scalap solves:  2
+gmres iters = 0
+scalap time  = 0.001750, scalap solves:  3
+gmres iters = 0
+scalap time  = 0.002411, scalap solves:  4
+gmres iters = 0
+scalap time  = 0.002842, scalap solves:  5
+gmres iters = 0
+scalap time  = 0.003479, scalap solves:  6
+gmres iters = 0
+scalap time  = 0.003908, scalap solves:  7
+gmres iters = 0
+scalap time  = 0.004325, scalap solves:  8
+gmres iters = 0
+scalap time  = 0.004774, scalap solves:  9
+gmres iters = 0
+scalap time  = 0.005209, scalap solves:  10
+gmres iters = 0
+
++----------------------------------------------------------+
+|           linearity test of the preconditioner           |
++----------------------------------------------------------+
+| alpha = +0.31+1.59i, 5 applications,    0.068 s           |
+| precision of M: single  unit roundoff: 1.192093e-07      |
+| ||M(x)|| / ||x||                         : 4.421871e-01 |
+| homogeneity   ||M(ax)-aM(x)||/||aM(x)||  : 2.770360e-07 |
+| additivity    ||M(x+y)-Mx-My||/||Mx+My|| : 2.835470e-07 |
+| repeatability ||M(x)_5-M(x)_1||/||M(x)|| : 0.000000e+00 |
++----------------------------------------------------------+
+| => M is linear and stationary up to rounding (< 1.2e-04) |
++----------------------------------------------------------+
+
+[31mwarning: amount of not freed memory: 1.176785 MB
+[0m[1795691458.496598] [aicomp04:108898:0]          mpool.c:38   UCX  WARN  object 0x22ba1c0 was not returned to mpool ucp_requests
+[1795691458.496610] [aicomp04:108898:0]          mpool.c:38   UCX  WARN  object 0x22ba380 was not returned to mpool ucp_requests
+[1795691458.496613] [aicomp04:108898:0]          mpool.c:38   UCX  WARN  object 0x22ba700 was not returned to mpool ucp_requests
+[1795691458.496668] [aicomp04:108899:0]          mpool.c:38   UCX  WARN  object 0x2653400 was not returned to mpool ucp_requests
+[1795691458.496680] [aicomp04:108899:0]          mpool.c:38   UCX  WARN  object 0x26535c0 was not returned to mpool ucp_requests
+[1795691458.496683] [aicomp04:108899:0]          mpool.c:38   UCX  WARN  object 0x2653940 was not returned to mpool ucp_requests
+[1795691458.496561] [aicomp04:108900:0]          mpool.c:38   UCX  WARN  object 0x1036380 was not returned to mpool ucp_requests
+[1795691458.496577] [aicomp04:108900:0]          mpool.c:38   UCX  WARN  object 0x1036540 was not returned to mpool ucp_requests
+[1795691458.496580] [aicomp04:108900:0]          mpool.c:38   UCX  WARN  object 0x10368c0 was not returned to mpool ucp_requests
+[1795691458.496562] [aicomp04:108901:0]          mpool.c:38   UCX  WARN  object 0xe26440 was not returned to mpool ucp_requests
+[1795691458.496573] [aicomp04:108901:0]          mpool.c:38   UCX  WARN  object 0xe26600 was not returned to mpool ucp_requests
+[1795691458.496576] [aicomp04:108901:0]          mpool.c:38   UCX  WARN  object 0xe26980 was not returned to mpool ucp_requests
+[1795691458.496596] [aicomp04:108902:0]          mpool.c:38   UCX  WARN  object 0x1875380 was not returned to mpool ucp_requests
+[1795691458.496609] [aicomp04:108902:0]          mpool.c:38   UCX  WARN  object 0x1875540 was not returned to mpool ucp_requests
+[1795691458.496612] [aicomp04:108902:0]          mpool.c:38   UCX  WARN  object 0x18758c0 was not returned to mpool ucp_requests
+[1795691458.496566] [aicomp04:108903:0]          mpool.c:38   UCX  WARN  object 0x1cac3c0 was not returned to mpool ucp_requests
+[1795691458.496577] [aicomp04:108903:0]          mpool.c:38   UCX  WARN  object 0x1cac580 was not returned to mpool ucp_requests
+[1795691458.496580] [aicomp04:108903:0]          mpool.c:38   UCX  WARN  object 0x1cac900 was not returned to mpool ucp_requests
+[1795691458.496598] [aicomp04:108904:0]          mpool.c:38   UCX  WARN  object 0x114a380 was not returned to mpool ucp_requests
+[1795691458.496610] [aicomp04:108904:0]          mpool.c:38   UCX  WARN  object 0x114a540 was not returned to mpool ucp_requests
+[1795691458.496613] [aicomp04:108904:0]          mpool.c:38   UCX  WARN  object 0x114a8c0 was not returned to mpool ucp_requests
+[1795691458.496530] [aicomp04:108897:0]          mpool.c:38   UCX  WARN  object 0x27c44c0 was not returned to mpool ucp_requests
+[1795691458.496542] [aicomp04:108897:0]          mpool.c:38   UCX  WARN  object 0x27c4680 was not returned to mpool ucp_requests
+[1795691458.496545] [aicomp04:108897:0]          mpool.c:38   UCX  WARN  object 0x27c4a00 was not returned to mpool ucp_requests
