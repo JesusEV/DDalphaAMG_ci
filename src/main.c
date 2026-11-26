@@ -187,7 +187,12 @@ int main( int argc, char **argv ) {
 
     g.on_solve = 1;
 
-    solve_driver( &l, &threading );
+    // test whether the preconditioner of the outer FGMRES is a fixed linear map
+    if ( g.linearity_test )
+      linearity_test( &l, &threading );
+
+    if ( g.linearity_test != 2 )
+      solve_driver( &l, &threading );
   }
 
   finalize_common_thread_data(commonthreaddata);

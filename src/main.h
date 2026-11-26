@@ -467,7 +467,7 @@ typedef struct block_struct {
         **global_lattice, **local_lattice, **block_lattice, 
         *post_smooth_iter, *block_iter, *setup_iter, *ncycle,
         method, odd_even, rhs, propagator_coords[4],
-        richardson, richardson_pi_iters,
+        richardson, richardson_pi_iters, linearity_test,
         interpolation, randomize, *num_eig_vect, num_coarse_eig_vect, kcycle, wcycle, mixed_precision,
         restart, max_restart, kcycle_restart, kcycle_max_restart, coarse_iter, coarse_restart;
     double tol, coarse_tol, kcycle_tol, csw, rho, *relax_fac;
@@ -697,6 +697,7 @@ typedef struct block_struct {
 #include "vcycle_double.h"
 #include "solver_analysis.h"
 #include "top_level.h"
+#include "linearity_test.h"
 #include "ghost.h"
 #include "init_float.h"
 #include "init_double.h"

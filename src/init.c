@@ -1160,6 +1160,9 @@ void read_solver_parameters( FILE *in, level_struct *l ) {
   read_parameter( &save_pt, "richardson smoother:", "%d", 1, in, _DEFAULT_SET );
   save_pt = &(g.richardson_pi_iters); g.richardson_pi_iters = 5;
   read_parameter( &save_pt, "richardson power iterations:", "%d", 1, in, _DEFAULT_SET );
+  // linearity test of the preconditioner: 0 = off, 1 = test before solve, 2 = test only
+  save_pt = &(g.linearity_test); g.linearity_test = 0;
+  read_parameter( &save_pt, "linearity test:", "%d", 1, in, _DEFAULT_SET );
   save_pt = &(g.restart); g.restart = 30;
   read_parameter( &save_pt, "iterations between restarts:", "%d", 1, in, _DEFAULT_SET );
   save_pt = &(g.max_restart); g.max_restart = 20;
@@ -1252,6 +1255,7 @@ void validate_parameters( int ls, level_struct *l ) {
   }
 
   ASSERT( ASCENDING( 0, g.rhs, 2 ) );
+  ASSERT( ASCENDING( 0, g.linearity_test, 2 ) );
   ASSERT( ASCENDING( -1, g.method, 5 ) );
   if ( g.richardson ) {
     if ( g.method != 2 )
