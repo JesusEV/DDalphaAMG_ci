@@ -148,6 +148,8 @@
 #define pgemr2d_float pcgemr2d_
 #define pgetri_double pzgetri_
 #define pgetri_float pcgetri_
+#define pgemm_double pzgemm_
+#define pgemm_float pcgemm_
 #endif
 
 #ifdef SSE

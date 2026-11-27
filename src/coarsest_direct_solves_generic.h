@@ -25,40 +25,40 @@ void mumps_init_PRECISION(gmres_PRECISION_struct *p, int mumps_n, int nnz_loc,
 #endif
 
 #ifdef COARSE_SCALAP
-// this function computes the solution for a given LU decomposition of A stored
-// in input A for a given RHS B
-void coarse_scalap_solve_PRECISION(vector_PRECISION phi, vector_PRECISION Dphi,
-                                   vector_PRECISION eta, int res,
-                                   level_struct *l, struct Thread *threading);
+// Direct solver on the odd-even Schur complement S = D_ee - D_eo D_oo^{-1} D_oe
 
-// this function computes the inverse for a given Matrix A of size N x N and
-// overwrites the input array with the computed LU-Decomposition
-void coarse_scalap_factorize_PRECISION(level_struct *l, vector_PRECISION A,
-                                       lapack_int *descA, lapack_int *ipiv,
-                                       struct Thread *threading);
+// solves D x = b on the coarsest level: b_e <- b_e - D_eo D_oo^{-1} b_o,
+// x_e = S^{-1} b_e (dense, scalapack), x_o = D_oo^{-1} (b_o - D_oe x_e).
+// b is overwritten. Collective over all processes.
+void coarse_scalap_solve_oddeven_PRECISION(vector_PRECISION x, vector_PRECISION b,
+                                           level_struct *l, struct Thread *threading);
 
-// this function will generate a "dense" memory layout for solving with
-// scalapack
+// x_e = S^{-1} b_e on the even parts of x and b. Collective over all processes.
+void coarse_scalap_apply_Sinv_PRECISION(vector_PRECISION x, vector_PRECISION b,
+                                        level_struct *l, struct Thread *threading);
+
+// computes S = D_ee - D_eo (D_oo^{-1} D_oe) with pgemm and overwrites it with
+// its explicit inverse (pgetrf + pgetri). Collective over all processes.
+void coarse_scalap_factorize_PRECISION(level_struct *l, struct Thread *threading);
+
+// sorts the locally assembled rows of D into the 1D blocks D_ee, D_eo, D_oe,
+// D_zz and computes D_oo^{-1} D_oe locally (no communication)
 void coarse_scalap_setup_PRECISION(level_struct *l, struct Thread *threading);
 
+// BLACS grids, descriptors, one-time allocation of the 2D arrays and workspace
 void coarse_scalap_init_PRECISION(level_struct *l, struct Thread *threading);
 
-// this function will move the matrix from 1d (cyclic) pattern to the 2d cyclic
-// pattern
+// one-time test: ||b - D x||/||b|| and ||x_e - S^{-1} S x_e||/||x_e||
+void coarse_scalap_selftest_PRECISION(level_struct *l);
+
+// moves D_ee, D_eo and D_oo^{-1} D_oe from the 1D to the 2D block cyclic pattern
 void scalap_1d_2d_A_PRECISION(level_struct *l, struct Thread *threading);
 
-// this function reverts the 2d cyclic matrix back to DDalphaAMG native 1d
-// (cyclic) pattern
-// probably never used
-void scalap_2d_1d_A_PRECISION(level_struct *l, struct Thread *threading);
-
-// this function will move a vector from 1d (cyclic) pattern to the 2d cyclic
-// pattern matching the 2d cyclic matrix pattern
+// moves the even part of vec from the 1D pattern to rhs2d (2D block cyclic)
 void scalap_1d_2d_vec_PRECISION(vector_PRECISION vec, level_struct *l,
                                 struct Thread *threading);
 
-// this function will revert a vector to the 1d (cyclic) pattern from the 2d
-// cyclic pattern matching the 2d cyclic matrix pattern
+// moves sol2d (2D block cyclic) to the even part of vec (1D pattern)
 void scalap_2d_1d_vec_PRECISION(vector_PRECISION vec, level_struct *l,
                                 struct Thread *threading);
 

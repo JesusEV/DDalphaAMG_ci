@@ -385,8 +385,7 @@ void re_setup_PRECISION( level_struct *l, struct Thread *threading ) {
 		cmumps_c(&(g.mumps_id));
 #else	//find inverse with scalapack
         }
-	coarse_scalap_factorize_PRECISION( l, g.ds->dense_vals2d,
-			    g.ds->desc_dense_vals2d, g.ds->ipiv, threading);
+	coarse_scalap_factorize_PRECISION( l, threading );
 	if (!l->idle){
 #endif
 		t1 = MPI_Wtime();
@@ -699,6 +698,7 @@ void direct_solver_PRECISION_setup(level_struct *l){
 	memset(g.ds->mumps_vals, 0, SQUARE(site_var)*nr_nodes * 9 * sizeof(complex_PRECISION));
     }
     lapack_int mumps_n = site_var * nr_nodes * l->num_processes;	//order of Matrix
+    (void) mumps_n;	// only used by MUMPS
 //    int nnz = SQUARE(site_var) * nr_nodes *9 * l->num_processes;	//number of nonzero elements
 //    int nnz_loc = SQUARE(site_var) * nr_nodes *9;
 
@@ -729,55 +729,35 @@ void direct_solver_PRECISION_setup(level_struct *l){
 */	
 	
 #ifdef COARSE_SCALAP
-    if (l->idle){   //just use one element (beeing 0) as placeholder. mem. must be allocated for scalapack
-	MALLOC( g.ds->dense_vals, complex_float, 1 );
-	memset( g.ds->dense_vals, 0, 1 * sizeof(complex_float));
-	
-	MALLOC( g.ds->desc_dense_vals, lapack_int, 9);
-	memset( g.ds->desc_dense_vals, 0,  9 * sizeof(lapack_int));
-	
-	MALLOC( g.ds->desc_rhs, lapack_int, 9);
-	memset( g.ds->desc_rhs, 0,  9 * sizeof(lapack_int));
+    // memory for the 1D (DDalphaAMG native) parts of the odd-even decomposition.
+    // The 2D block cyclic arrays and the pgetri workspace depend on the BLACS grid
+    // and are allocated once in coarse_scalap_init_PRECISION.
+    // Every local coarsest lattice holds equally many even and odd sites
+    // (checked in coarse_scalap_init_PRECISION), hence all blocks are N_h x N_h.
+    g.ds->bs_h = site_var * nr_nodes / 2;            // rows per process (even or odd part)
+    g.ds->N_h  = g.ds->bs_h * l->num_processes;      // global size of S
+
+    if (l->idle){   // one element as placeholder, scalapack routines need a valid pointer
+	g.ds->len_mat1d = 1;
+	g.ds->len_doo = 0;
     } else {
-	MALLOC( g.ds->desc_dense_vals, lapack_int, 9);
-	memset( g.ds->desc_dense_vals, 0,  9 * sizeof(lapack_int));
-
-	MALLOC( g.ds->desc_rhs, lapack_int, 9);
-	memset( g.ds->desc_rhs, 0,  9 * sizeof(lapack_int));
-
-	MALLOC( g.ds->dense_vals, complex_float, mumps_n * nr_nodes * site_var);
-	memset( g.ds->dense_vals, 0, mumps_n * nr_nodes * site_var * sizeof(complex_float));
+	g.ds->len_mat1d = (long) g.ds->bs_h * (long) g.ds->N_h;
+	g.ds->len_doo = (long) SQUARE(site_var) * (nr_nodes / 2);
+	MALLOC( g.ds->Doo_blocks, complex_float, g.ds->len_doo );
+	memset( g.ds->Doo_blocks, 0, g.ds->len_doo * sizeof(complex_float) );
     }
-    		//TODO:
-		//move the follwing lines in a similar if-clause as above. 
-		//how to check whether Process_i is part of the 2d-P-Grid? 
-		//for now: All processes allocate mem and could participate in computation
- /*	MPI_Barrier(MPI_COMM_WORLD);
-	printf0("CHECKPOINT 2\n"); 
-	printf0("pcol2d: %d, prow2d: %d, num_procs: %d\n", g.pcol2d, g.prow2d, g.num_processes);
-	printf0("size of A2d: %ld complex_floats (%dBytes)\n", mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes, sizeof(complex_float)); 
-	fflush(stdout);
-*/	
-    MALLOC( g.ds->dense_vals2d, complex_float, mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes);
-    memset( g.ds->dense_vals2d, 0, mumps_n * nr_nodes * site_var /(g.pcol2d * g.prow2d) * g.num_processes * sizeof(complex_float));
- 
-    MALLOC( g.ds->rhs2d, complex_float, l->inner_vector_size * g.pcol2d);
-    memset( g.ds->rhs2d, 0, l->inner_vector_size * g.pcol2d * sizeof(complex_float));
-    
-    MALLOC( g.ds->desc_dense_vals2d, lapack_int, 9);
-    memset( g.ds->desc_dense_vals2d, 0,  9 * sizeof(lapack_int));
-    
-    MALLOC( g.ds->desc_rhs2d, lapack_int, 9);
-    memset( g.ds->desc_rhs2d, 0,  9 * sizeof(lapack_int));
-
-    MALLOC( g.ds->ipiv, lapack_int, mumps_n + 1);
-    memset( g.ds->ipiv, 0, (mumps_n +1)*sizeof(lapack_int));
-//    for (int i = 0; i < mumps_n +1; i++) p->ipiv[i] = i;
+    MALLOC( g.ds->S1d, complex_float, g.ds->len_mat1d );
+    MALLOC( g.ds->Deo1d, complex_float, g.ds->len_mat1d );
+    MALLOC( g.ds->DooinvDoe1d, complex_float, g.ds->len_mat1d );
+    memset( g.ds->S1d, 0, g.ds->len_mat1d * sizeof(complex_float) );
+    memset( g.ds->Deo1d, 0, g.ds->len_mat1d * sizeof(complex_float) );
+    memset( g.ds->DooinvDoe1d, 0, g.ds->len_mat1d * sizeof(complex_float) );
 
     g.ds->blacs_ctxt1d = 0;
     g.ds->blacs_ctxt2d = 0;
     g.ds->myrow = -1;
     g.ds->myrow2d = -1;
+    g.ds->mycol2d = -1;
 #endif
 
 /*    	MPI_Barrier(MPI_COMM_WORLD);
@@ -814,21 +794,26 @@ void direct_solver_PRECISION_free(level_struct *lx){
 #endif
 #ifdef COARSE_SCALAP
       if (!l->idle){
-	  FREE( g.ds->dense_vals, complex_PRECISION, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var   
-						    * l->num_inner_lattice_sites *l->num_lattice_site_var);
-	  FREE( g.ds->desc_dense_vals, int, 9);
-	  FREE( g.ds->desc_rhs, int, 9);    
+	  int site_var = l->num_lattice_site_var;
+	  int nr_nodes = l->num_inner_lattice_sites;
+	  FREE( g.ds->mumps_vals, complex_PRECISION, SQUARE(site_var)*nr_nodes *9 );
+	  FREE( g.ds->mumps_Is, int, SQUARE(site_var)*nr_nodes *9 );
+	  FREE( g.ds->mumps_Js, int, SQUARE(site_var)*nr_nodes *9 );
+	  FREE( g.ds->Doo_blocks, complex_float, g.ds->len_doo );
       }
-      FREE( g.ds->dense_vals2d, complex_PRECISION, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var   
-						* l->num_inner_lattice_sites *l->num_lattice_site_var/(g.pcol2d * g.prow2d) * g.num_processes);
+      FREE( g.ds->S1d, complex_float, g.ds->len_mat1d );
+      FREE( g.ds->Deo1d, complex_float, g.ds->len_mat1d );
+      FREE( g.ds->DooinvDoe1d, complex_float, g.ds->len_mat1d );
 
-      FREE( g.ds->rhs2d, complex_PRECISION, l->inner_vector_size * g.pcol2d);
+      FREE( g.ds->S2d, complex_float, g.ds->len_mat2d );
+      FREE( g.ds->Deo2d, complex_float, g.ds->len_mat2d );
+      FREE( g.ds->DooinvDoe2d, complex_float, g.ds->len_mat2d );
+      FREE( g.ds->rhs2d, complex_float, g.ds->len_vec2d );
+      FREE( g.ds->sol2d, complex_float, g.ds->len_vec2d );
+      FREE( g.ds->ipiv, lapack_int, g.ds->len_ipiv );
+      if ( g.ds->work != NULL ) FREE( g.ds->work, complex_float, g.ds->lwork );
+      if ( g.ds->iwork != NULL ) FREE( g.ds->iwork, lapack_int, g.ds->liwork );
 
-      FREE( g.ds->desc_dense_vals2d, int, 9);
-      FREE( g.ds->desc_rhs2d, int, 9);    
-      FREE( g.ds->ipiv, int, l->num_inner_lattice_sites * l->num_processes * l->num_lattice_site_var +1);
-
-      
       blacs_gridexit_( &(g.ds->blacs_ctxt1d));
       blacs_gridexit_( &(g.ds->blacs_ctxt2d));
 #endif

@@ -161,10 +161,12 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 			// b = l->next_level->p_PRECISION->b
 			if (g.on_solve){
 #if defined(COARSE_SCALAP)
-			    coarse_scalap_solve_PRECISION(
-				  l->next_level->p_PRECISION.x, NULL, 
-				  l->next_level->p_PRECISION.b, _NO_RES, 
-				  l->next_level, no_threading);  
+			    // direct solve on the odd-even Schur complement (overwrites b),
+			    // collective over all processes, also the idle ones
+			    coarse_scalap_solve_oddeven_PRECISION(
+				  l->next_level->p_PRECISION.x,
+				  l->next_level->p_PRECISION.b,
+				  l->next_level, no_threading);
 #elif defined(MUMPS_ADDS)
 			    fgmres_iters = fgmres_PRECISION( &(l->next_level->p_PRECISION), l->next_level, threading );
 #endif
@@ -249,10 +251,6 @@ void vcycle_PRECISION( vector_PRECISION phi, vector_PRECISION Dphi, vector_PRECI
 #if defined(MUMPS_ADDS)
 			if (!g.on_solve){
 			    l->next_level->p_PRECISION.preconditioner = mumps_solve_PRECISION;
-			}
-#elif defined(COARSE_SCALAP)
-			if (!g.on_solve){
-			    l->next_level->p_PRECISION.preconditioner = coarse_scalap_solve_PRECISION;
 			}
 #endif
 			START_MASTER(threading)

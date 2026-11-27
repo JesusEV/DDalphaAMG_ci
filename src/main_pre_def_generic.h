@@ -235,17 +235,32 @@
     int *mumps_irhs_loc;
     vector_PRECISION mumps_SOL;
 #ifdef COARSE_SCALAP
-    vector_PRECISION dense_vals;
-    vector_PRECISION dense_vals2d;
-    vector_PRECISION rhs2d;
-    lapack_int *desc_dense_vals;
-    lapack_int *desc_rhs;
-    lapack_int *desc_dense_vals2d;
-    lapack_int *desc_rhs2d;
+    // Direct solver on the odd-even Schur complement
+    //   S = D_ee - D_eo D_oo^{-1} D_oe
+    // Since every local coarsest lattice has as many even as odd sites, all
+    // four blocks (and S) have the same global size N_h x N_h with N_h = N/2,
+    // so one descriptor per layout (1D / 2D) serves all of them.
+
+    // 1D layout (DDalphaAMG native, process r holds the block rows of its own sites)
+    vector_PRECISION S1d;           // initially D_ee (local even rows, all even columns)
+    vector_PRECISION Deo1d;         // D_eo           (local even rows, all odd columns)
+    vector_PRECISION DooinvDoe1d;   // D_oo^{-1} D_oe (local odd rows, all even columns)
+    vector_PRECISION Doo_blocks;    // diagonal blocks D_zz of the local odd sites (column major)
+    // 2D block cyclic layout (computations)
+    vector_PRECISION S2d;           // S, after coarse_scalap_factorize: S^{-1}
+    vector_PRECISION Deo2d;
+    vector_PRECISION DooinvDoe2d;
+    vector_PRECISION rhs2d, sol2d;  // even part of rhs / solution
+    vector_PRECISION work;          // workspace for pgetri
+    lapack_int *iwork;              // workspace for pgetri
     lapack_int *ipiv;
+    lapack_int desc_mat1d[9], desc_vec1d[9];
+    lapack_int desc_mat2d[9], desc_vec2d[9];
+    lapack_int N_h, bs_h;           // global size of S and 1D block size (= rows per process)
+    long len_mat1d, len_doo, len_mat2d, len_vec2d, len_ipiv, lwork, liwork; // allocation lengths
     lapack_int blacs_ctxt1d;
     lapack_int blacs_ctxt2d;
-    lapack_int myrow, myrow2d;
+    lapack_int myrow, myrow2d, mycol2d;
 #endif
   } ds_wrapper_PRECISION_struct; // wrapper for direct solver (for coarsest
                                  // level)
