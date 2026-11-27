@@ -190,14 +190,19 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
   int core_start = start; // start and end lattice site number for each process. 
   int core_end = start+nr_nodes;
   int comm_nr[4] = {0, 0, 0, 0}; // will hold the number elements to communicate in the corresponding direction
+  int ghost_start[4] = {0, 0, 0, 0}; // first ghost index of the mu+ ghost layer in each direction
   int dir;
   int node;
 
-  // count the number of elements to communicate in the corresponding direction:
+  // count the number of elements to communicate in the corresponding direction
+  // and find the start of the ghost layer of each direction:
   for (dir = T; dir <= X; dir++){
+    ghost_start[dir] = -1;
     for (node = core_start; node < core_end; node++){
-      if (op->neighbor_table[5*node+1+dir] >= nr_nodes){
+      int nb = op->neighbor_table[5*node+1+dir];
+      if (nb >= nr_nodes){
         comm_nr[dir]++;
+        if (ghost_start[dir] < 0 || nb < ghost_start[dir]) ghost_start[dir] = nb;
       }
     }
   }
@@ -325,7 +330,12 @@ void mumps_setup_PRECISION(level_struct *l, struct Thread *threading){
      // computing and storing column indices Js
       if (comm_nr[dir] > 0 && op->neighbor_table[index+1+dir] >= l->num_inner_lattice_sites){
 
-	li = boundary_table[op->neighbor_table[index + 1 + dir] % comm_nr[dir]]; //will hold the index of neighboring lattice site on neighboring domain
+	// index of the neighboring lattice site on the neighboring domain:
+	// the k-th site of the mu+ ghost layer is the k-th entry of the boundary table
+	// (both ordered even sites first, then odd sites, lexicographic within each part).
+	// The ghost layer of direction dir starts at ghost_start[dir], which in general is
+	// NOT a multiple of comm_nr[dir] (e.g. local lattice 2 1 1 2), so "% comm_nr" is wrong.
+	li = boundary_table[op->neighbor_table[index + 1 + dir] - ghost_start[dir]];
 
         for (k = 0; k < SQUARE(num_site_var/2); k ++){
 //FINDME
